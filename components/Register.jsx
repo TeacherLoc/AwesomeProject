@@ -9,30 +9,24 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-
 const Register = ({ setIsRegistering }) => {
  const [newEmail, setNewEmail] = useState('');
  const [newPassword, setNewPassword] = useState('');
- const [confirmPassword, setConfirmPassword] = useState(''); // New state for confirm password
+ const [confirmPassword, setConfirmPassword] = useState('');
  const [showPassword, setShowPassword] = useState(false);
-
 
  const toggleShowPassword = () => {
  setShowPassword(!showPassword);
  };
-
 
  const handleRegister = () => {
  if (newPassword !== confirmPassword) {
  Alert.alert('Error', 'Passwords do not match.');
  return;
  }
- // Implement your registration logic here
- // For example, you can send the newEmail and newPassword to a server
  Alert.alert('Success', `Registered with email: ${newEmail} and password: ${newPassword}`);
- setIsRegistering(false); // Go back to login form after registration
+ setIsRegistering(false);
  };
-
 
  return (
  <View style={styles.container}>
@@ -64,7 +58,6 @@ const Register = ({ setIsRegistering }) => {
  />
  </TouchableOpacity>
  </View>
- {/* Confirm Password Input */}
  <View style={styles.inputContainer}>
  <Icon name="lock" size={20} color="#888" style={styles.icon} />
  <TextInput
@@ -91,7 +84,6 @@ const Register = ({ setIsRegistering }) => {
  </View>
  );
 };
-
 
 const styles = StyleSheet.create({
  container: {
@@ -146,6 +138,5 @@ const styles = StyleSheet.create({
  padding: 5,
  },
 });
-
 
 export default Register;

@@ -5,17 +5,17 @@ const Project5= () => {
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        {/* Square 1 */}
+        {/* H 1 */}
         <View style={[styles.box, styles.box1]}>
           <Text style={styles.text}>Square 1</Text>
         </View>
 
-        {/* Square 2 */}
+        {/* H 2 */}
         <View style={[styles.box, styles.box2]}>
           <Text style={styles.text}>Square 2</Text>
         </View>
 
-        {/* Square 3 */}
+        {/* H 3 */}
         <View style={[styles.box, styles.box3]}>
           <Text style={styles.text}>Square 3</Text>
         </View>
