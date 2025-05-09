@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "86886142020",
+    "firebase_url": "https://awesome-3bfad-default-rtdb.firebaseio.com",
+    "project_id": "awesome-3bfad",
+    "storage_bucket": "awesome-3bfad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:86886142020:android:8de46db3fda69686032c11",
+        "android_client_info": {
+          "package_name": "com.awesomeproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQrU0s0TarzYeQ0mkY42tk-6HTdqsO3zg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
