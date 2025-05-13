@@ -30,7 +30,7 @@ const AppNavigator = () => {
                 setFirebaseAuthChecked(true);
             }
         });
-        return subscriber; // Cleanup subscription on unmount
+        return subscriber;
     }, [userToken, contextSignOut, firebaseAuthChecked]); // Giữ nguyên dependencies nếu chúng vẫn liên quan
 
     if (contextIsLoading || !firebaseAuthChecked) {

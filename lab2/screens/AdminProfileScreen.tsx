@@ -158,7 +158,7 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
                         editable={!isSaving}
                     />
                 ) : (
-                    <Text style={styles.value}>{profile.phone || 'Not set'}</Text>
+                    <Text style={styles.value}>{profile.phone || 'Chưa có số điện thoại'}</Text>
                 )}
             </View>
 

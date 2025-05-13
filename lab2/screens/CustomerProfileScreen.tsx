@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 // filepath: screens/Customer/CustomerProfileScreen.tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, Button, Alert, ActivityIndicator } from 'react-native';
@@ -49,7 +50,7 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
             // AppNavigator sẽ tự động phát hiện thay đổi trạng thái và chuyển hướng
             Alert.alert('Logged Out', 'You have been logged out.');
         } catch (error) {
-            console.error("Error signing out: ", error);
+            console.error('Error signing out: ', error);
             Alert.alert('Error', 'Could not log out. Please try again.');
         }
     };
@@ -161,7 +162,6 @@ const styles = StyleSheet.create({
     },
     logoutButton: {
         marginTop: 40,
-    }
-});
+    }});
 
 export default CustomerProfileScreen;

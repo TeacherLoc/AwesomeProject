@@ -1,62 +1,118 @@
 // filepath: screens/Admin/CustomerListScreen.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { COLORS } from '../theme/colors'; // Import COLORS
+import { getFirestore, collection, getDocs, query, where, doc, deleteDoc } from '@react-native-firebase/firestore'; // Added doc, deleteDoc, updateDoc
 
-// Mock function to get customers
+// Function to get customers from Firestore
 const fetchAdminCustomers = async () => {
-    await new Promise(resolve => setTimeout(resolve, 400)); // Simulate delay
-    return [
-        { id: 'cust123', name: 'John Doe', email: 'john.doe@email.com', phone: '123-456-7890', totalAppointments: 5 },
-        { id: 'cust456', name: 'Jane Smith', email: 'jane.s@email.com', phone: '987-654-3210', totalAppointments: 2 },
-        { id: 'cust789', name: 'Alice Brown', email: 'alice.b@email.com', phone: '555-123-4567', totalAppointments: 8 },
-        { id: 'cust101', name: 'Bob White', email: 'bob.w@email.com', phone: '111-222-3333', totalAppointments: 1 },
-    ];
+    const firestoreInstance = getFirestore();
+    const usersCollectionRef = collection(firestoreInstance, 'users');
+    const q = query(usersCollectionRef, where('role', '==', 'customer'));
+    try {
+        const querySnapshot = await getDocs(q);
+        const customersList = querySnapshot.docs.map(documentSnapshot => ({
+            id: documentSnapshot.id,
+            ...documentSnapshot.data(),
+            totalAppointments: documentSnapshot.data().totalAppointments || 0,
+        }));
+        return customersList;
+    } catch (error) {
+        console.error('Error fetching customers: ', error);
+        return []; // Return empty array on error
+    }
 };
 
-const CustomerListScreen = ({ _navigation }: { _navigation: any }) => {
+const CustomerListScreen = ({ navigation }: { navigation: any }) => {
     const [customers, setCustomers] = useState<any[]>([]);
     const [filteredCustomers, setFilteredCustomers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
-    useEffect(() => {
-        const loadCustomers = async () => {
-            setLoading(true);
-            const data = await fetchAdminCustomers();
-            setCustomers(data);
-            setFilteredCustomers(data); // Initialize filtered list
-            setLoading(false);
-        };
-        loadCustomers();
-        // Could add focus listener if needed
-    }, []);
+    const loadCustomers = async () => {
+        setLoading(true);
+        const data = await fetchAdminCustomers();
+        setCustomers(data);
+        setFilteredCustomers(data);
+        setLoading(false);
+    };
 
-    const handleSearch = (query: string) => {
-        setSearchQuery(query);
-        if (!query) {
+    useEffect(() => {
+        // Load customers when the screen mounts
+        loadCustomers();
+
+        // Optional: Reload customers when the screen comes into focus
+        const unsubscribe = navigation.addListener('focus', () => {
+            loadCustomers();
+        });
+
+        return unsubscribe; // Cleanup listener on unmount
+    }, [navigation]);
+
+    const handleSearch = (text: string) => {
+        setSearchQuery(text);
+        if (!text.trim()) {
             setFilteredCustomers(customers);
         } else {
-            const lowerCaseQuery = query.toLowerCase();
+            const lowerCaseQuery = text.toLowerCase();
             const filtered = customers.filter(cust =>
                 cust.name.toLowerCase().includes(lowerCaseQuery) ||
                 cust.email.toLowerCase().includes(lowerCaseQuery) ||
-                (cust.phone && cust.phone.includes(query)) // Direct match for phone
+                (cust.phone && cust.phone.includes(text))
             );
             setFilteredCustomers(filtered);
         }
     };
 
+    const handleDeleteCustomer = async (customerId: string) => {
+        Alert.alert(
+            'Xác nhận xoá',
+            'Bạn có chắc chắn muốn xoá khách hàng này không?',
+            [
+                { text: 'Huỷ', style: 'cancel' },
+                {
+                    text: 'Xoá',
+                    onPress: async () => {
+                        try {
+                            const firestoreInstance = getFirestore();
+                            await deleteDoc(doc(firestoreInstance, 'users', customerId));
+                            Alert.alert('Thành công', 'Đã xoá khách hàng.');
+                            // Refresh the list
+                            setCustomers(prevCustomers => prevCustomers.filter(cust => cust.id !== customerId));
+                            setFilteredCustomers(prevFiltered => prevFiltered.filter(cust => cust.id !== customerId));
+                        } catch (error) {
+                            console.error('Error deleting customer: ', error);
+                            Alert.alert('Lỗi', 'Không thể xoá khách hàng. Vui lòng thử lại.');
+                        }
+                    },
+                    style: 'destructive',
+                },
+            ]
+        );
+    };
+
+    const handleEditCustomer = (customer: any) => {
+        navigation.navigate('EditCustomerScreen', { customerData: customer });
+        console.log('Edit customer: ', customer);
+        Alert.alert('Chức năng sửa', `Đây là thông tin bảo mật của: ${customer.name}. Hãy cẩn thận khi sửa đổi!`);
+    };
 
     const renderItem = ({ item }: { item: any }) => (
         <View style={styles.item}>
             <View style={styles.itemDetails}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemEmail}>{item.email}</Text>
-                <Text style={styles.itemPhone}>{item.phone || 'No phone'}</Text>
-                <Text style={styles.itemAppointments}>Appointments: {item.totalAppointments}</Text>
+                <Text style={styles.itemPhone}>{item.phone || 'Chưa có SĐT'}</Text>
+                <Text style={styles.itemAppointments}>Lịch hẹn: {item.totalAppointments}</Text>
             </View>
-            {/* <Button title="Details" onPress={() => handleViewDetails(item.id)} color={COLORS.primary} /> */}
+            <View style={styles.actionsContainer}>
+                <TouchableOpacity onPress={() => handleEditCustomer(item)} style={[styles.actionButton, styles.editButton]}>
+                    <Text style={styles.actionButtonText}>Sửa</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleDeleteCustomer(item.id)} style={[styles.actionButton, styles.deleteButton]}>
+                    <Text style={styles.actionButtonText}>Xoá</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 
@@ -66,12 +122,10 @@ const CustomerListScreen = ({ _navigation }: { _navigation: any }) => {
 
     return (
         <View style={styles.container}>
-             {/* Title is usually handled by Stack Navigator header, but keeping if it's a local title */}
-             {/* <Text style={styles.title}>Manage Customers</Text> */}
-             <TextInput
+            <TextInput
                 style={styles.searchBar}
-                placeholder="Search by Name, Email, or Phone..."
-                placeholderTextColor={COLORS.textLight} // Màu cho placeholder
+                placeholder="Tìm theo Tên, Email, hoặc SĐT..."
+                placeholderTextColor={COLORS.textLight}
                 value={searchQuery}
                 onChangeText={handleSearch}
             />
@@ -79,7 +133,7 @@ const CustomerListScreen = ({ _navigation }: { _navigation: any }) => {
                 data={filteredCustomers}
                 renderItem={renderItem}
                 keyExtractor={item => item.id}
-                ListEmptyComponent={<Text style={styles.emptyText}>No customers found.</Text>}
+                ListEmptyComponent={<Text style={styles.emptyText}>Không tìm thấy khách hàng nào.</Text>}
                 contentContainerStyle={styles.listContentContainer}
             />
         </View>
@@ -89,33 +143,23 @@ const CustomerListScreen = ({ _navigation }: { _navigation: any }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundLight, // Nền chung
+        backgroundColor: COLORS.backgroundLight,
     },
     listContentContainer: {
-        paddingBottom: 10, // Để item cuối không bị che khuất nếu có tab bar
+        paddingBottom: 10,
     },
-    // title: { // If you need a local title (not from header)
-    //     fontSize: 20,
-    //     fontWeight: 'bold',
-    //     padding: 15,
-    //     backgroundColor: COLORS.white,
-    //     textAlign: 'center',
-    //     color: COLORS.textDark,
-    //     borderBottomWidth: 1,
-    //     borderBottomColor: COLORS.border,
-    // },
     searchBar: {
-        height: 45, // Tăng chiều cao một chút
-        borderColor: COLORS.border, // Viền search bar
+        height: 45,
+        borderColor: COLORS.border,
         borderWidth: 1,
         borderRadius: 8,
         paddingHorizontal: 15,
         marginHorizontal: 10,
-        marginTop: 10, // Thêm margin top
-        marginBottom: 5, // Giảm margin bottom
-        backgroundColor: COLORS.white, // Nền search bar
+        marginTop: 10,
+        marginBottom: 5,
+        backgroundColor: COLORS.white,
         fontSize: 15,
-        color: COLORS.textDark, // Màu chữ khi nhập
+        color: COLORS.textDark,
     },
     centered: {
         flex: 1,
@@ -124,15 +168,15 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.backgroundLight,
     },
     item: {
-        backgroundColor: COLORS.white, // Nền item
+        backgroundColor: COLORS.white,
         padding: 15,
-        marginVertical: 6, // Khoảng cách giữa các item
-        marginHorizontal: 10, // Khoảng cách ngang
+        marginVertical: 6,
+        marginHorizontal: 10,
         borderRadius: 8,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        shadowColor: COLORS.black, // Màu shadow
+        shadowColor: COLORS.black,
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2.5,
@@ -145,30 +189,52 @@ const styles = StyleSheet.create({
     itemName: {
         fontSize: 16,
         fontWeight: '500',
-        color: COLORS.textDark, // Màu tên khách hàng
+        color: COLORS.textDark,
     },
     itemEmail: {
         fontSize: 14,
-        color: COLORS.textMedium, // Màu email
+        color: COLORS.textMedium,
         marginTop: 4,
     },
     itemPhone: {
         fontSize: 14,
-        color: COLORS.textMedium, // Màu số điện thoại
+        color: COLORS.textMedium,
         marginTop: 4,
     },
-     itemAppointments: {
+    itemAppointments: {
         fontSize: 13,
-        color: COLORS.primary, // Màu số lượng cuộc hẹn (màu chủ đạo)
+        color: COLORS.primary,
         marginTop: 6,
         fontWeight: 'bold',
+    },
+    actionsContainer: {
+        flexDirection: 'column',
+    },
+    actionButton: {
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 5,
+        marginLeft: 5,
+        marginVertical: 3,
+        minWidth: 60,
+        alignItems: 'center',
+    },
+    editButton: {
+        backgroundColor: COLORS.secondary,
+    },
+    deleteButton: {
+        backgroundColor: COLORS.primary,
+    },
+    actionButtonText: {
+        color: COLORS.white,
+        fontSize: 13,
+        fontWeight: '500',
     },
     emptyText: {
         textAlign: 'center',
         marginTop: 50,
         fontSize: 16,
-        color: COLORS.textMedium, // Màu chữ khi không có khách hàng
-    }
-});
+        color: COLORS.textMedium,
+    }});
 
 export default CustomerListScreen;

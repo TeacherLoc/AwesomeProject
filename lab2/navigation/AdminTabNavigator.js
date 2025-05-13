@@ -10,6 +10,7 @@ import AdminTransactionListScreen from '../screens/TransactionListScreen';
 import AdminCustomerListScreen from '../screens/CustomerListScreen';
 import AdminProfileScreen from '../screens/AdminProfileScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen'; // Pointing to Admin folder
+import EditCustomerScreen from '../screens/EditCustomerScreen'; // Import EditCustomerScreen
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -48,6 +49,7 @@ const ProfileStackNavigator = () => (
 const CustomerStackNavigator = () => (
     <Stack.Navigator screenOptions={commonStackScreenOptions}>
         <Stack.Screen name="AdminCustomerList" component={AdminCustomerListScreen} options={{ title: 'Quản lý khách hàng' }} />
+        <Stack.Screen name="EditCustomerScreen" component={EditCustomerScreen} options={{ title: 'Sửa thông tin KH' }} />
     </Stack.Navigator>
 );
 
