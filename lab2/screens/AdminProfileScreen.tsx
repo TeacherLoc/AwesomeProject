@@ -120,7 +120,7 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
 
     return (
         <ScrollView style={styles.container}>
-            <Text style={styles.pageTitle}>Admin Profile</Text>
+            <Text style={styles.pageTitle}>Hồ sơ máy chủ</Text>
 
             <View style={styles.fieldContainer}>
                 <Text style={styles.label}>Email:</Text>
@@ -128,12 +128,12 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
             </View>
 
             <View style={styles.fieldContainer}>
-                <Text style={styles.label}>Role:</Text>
+                <Text style={styles.label}>Chức vụ:</Text>
                 <Text style={styles.value}>{profile.role}</Text>
             </View>
 
             <View style={styles.fieldContainer}>
-                <Text style={styles.label}>Name:</Text>
+                <Text style={styles.label}>Tên:</Text>
                 {editing ? (
                     <TextInput
                         style={styles.input}
@@ -164,9 +164,9 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
 
             {editing ? (
                 <View style={styles.buttonGroup}>
-                    <Button title={isSaving ? 'Saving...' : 'Save Changes'} onPress={handleUpdateProfile} disabled={isSaving} color={COLORS.primary}/>
+                    <Button title={isSaving ? 'Đang cập nhật...' : 'Đồng ý'} onPress={handleUpdateProfile} disabled={isSaving} color={COLORS.primary}/>
                     <View style={{ height: 10 }} />
-                    <Button title="Cancel" color={COLORS.textLight} onPress={() => {
+                    <Button title="Huỷ" color={COLORS.textLight} onPress={() => {
                         setName(profile.name);
                         setPhone(profile.phone || '');
                         setEditing(false);
@@ -180,6 +180,11 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
 
             <View style={styles.buttonGroup}>
                 <Button title="Đổi mật khẩu" onPress={() => navigation.navigate('AdminChangePassword')} color={COLORS.primary} />
+            </View>
+
+            {/* Thêm nút điều hướng đến Yêu cầu mật khẩu */}
+            <View style={styles.buttonGroup}>
+                <Button title="Yêu cầu đặt lại mật khẩu" onPress={() => navigation.navigate('AdminPasswordRequests')} color={COLORS.primary} />
             </View>
 
             <View style={[styles.buttonGroup, styles.logoutButtonContainer]}>

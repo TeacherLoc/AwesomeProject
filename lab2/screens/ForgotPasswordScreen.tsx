@@ -1,42 +1,52 @@
 // filepath: screens/Auth/ForgotPasswordScreen.tsx
 import React, { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, StyleSheet, Alert, SafeAreaView, ActivityIndicator } from 'react-native';
-import auth from '@react-native-firebase/auth';
-import { COLORS } from '../theme/colors'; // Import COLORS
+import firestore from '@react-native-firebase/firestore';
+import { COLORS } from '../theme/colors';
 
 const ForgotPasswordScreen = ({ navigation }: { navigation: any }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleResetPassword = async () => {
-    if (!email.trim()) {
+  const handleRequestPasswordReset = async () => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
         Alert.alert('Lỗi', 'Vui lòng nhập địa chỉ email của bạn.');
         return;
     }
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
+    if (!emailRegex.test(trimmedEmail)) {
         Alert.alert('Lỗi', 'Địa chỉ email không hợp lệ.');
         return;
     }
 
     setLoading(true);
     try {
-      await auth().sendPasswordResetEmail(email.trim());
-      Alert.alert('Kiểm tra email của bạn', 'Một liên kết đặt lại mật khẩu đã được gửi đến địa chỉ email của bạn.');
-      navigation.goBack();
+      // Bỏ qua việc kiểm tra 'users' collection từ client.
+      // Chỉ tạo yêu cầu với email người dùng nhập vào.
+      // Admin sẽ là người xác minh email này khi duyệt.
+      await firestore().collection('passwordResetRequests').add({
+        userEmail: trimmedEmail, // Chỉ lưu email
+        status: 'pending',
+        requestTimestamp: firestore.FieldValue.serverTimestamp(),
+        // Không cần userId hay userName ở bước này từ client
+      });
+
+      Alert.alert(
+        'Yêu cầu đã được gửi',
+        'Yêu cầu đặt lại mật khẩu của bạn đã được gửi đến quản trị viên. Bạn sẽ nhận được email hướng dẫn nếu yêu cầu được chấp thuận.'
+      );
+      navigation.goBack(); // Hoặc điều hướng đến màn hình chờ nếu bạn muốn làm phức tạp hơn
+
     } catch (error: any) {
-      if (error.code === 'auth/user-not-found') {
-        Alert.alert('Lỗi', 'Không tìm thấy người dùng với địa chỉ email này.');
-      } else if (error.code === 'auth/invalid-email') {
-        Alert.alert('Lỗi', 'Địa chỉ email không hợp lệ!');
+      console.error('Forgot Password Request Error: ', error);
+      if (error.code === 'firestore/permission-denied') {
+          Alert.alert('Lỗi', 'Không có quyền gửi yêu cầu. Vui lòng kiểm tra lại cài đặt Firestore Rules.');
       } else if (error.code === 'auth/network-request-failed') {
         Alert.alert('Lỗi', 'Lỗi mạng. Vui lòng kiểm tra kết nối và thử lại.');
+      } else {
+        Alert.alert('Lỗi', `Đã xảy ra lỗi khi gửi yêu cầu: ${error.message}`);
       }
-      else {
-        Alert.alert('Lỗi', `Không thể gửi email đặt lại mật khẩu: ${error.message}`);
-      }
-      console.error('Forgot Password Error: ', error);
     } finally {
         setLoading(false);
     }
@@ -45,7 +55,7 @@ const ForgotPasswordScreen = ({ navigation }: { navigation: any }) => {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Quên mật khẩu</Text>
-      <Text style={styles.subtitle}>Nhập địa chỉ email của bạn dưới đây để nhận hướng dẫn đặt lại mật khẩu.</Text>
+      <Text style={styles.subtitle}>Nhập địa chỉ email đã đăng ký. Nếu được chấp thuận, bạn sẽ nhận được email hướng dẫn đặt lại mật khẩu.</Text>
       <TextInput
         style={styles.input}
         placeholder="Nhập email của bạn"
@@ -58,8 +68,8 @@ const ForgotPasswordScreen = ({ navigation }: { navigation: any }) => {
       {loading ? (
         <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
       ) : (
-        <TouchableOpacity style={styles.button} onPress={handleResetPassword} disabled={loading}>
-          <Text style={styles.buttonText}>Đặt lại mật khẩu</Text>
+        <TouchableOpacity style={styles.button} onPress={handleRequestPasswordReset} disabled={loading}>
+          <Text style={styles.buttonText}>Gửi yêu cầu</Text>
         </TouchableOpacity>
       )}
       <TouchableOpacity onPress={() => navigation.goBack()} disabled={loading} style={styles.backButton}>
@@ -72,7 +82,7 @@ const ForgotPasswordScreen = ({ navigation }: { navigation: any }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundLight, // Changed background color
+        backgroundColor: COLORS.backgroundLight,
         alignItems: 'center',
         justifyContent: 'center',
         padding: 20,
@@ -81,51 +91,52 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 10,
-        color: COLORS.textDark, // Changed title color
+        color: COLORS.textDark,
         textAlign: 'center',
     },
     subtitle: {
-        fontSize: 14, // Adjusted font size
-        color: COLORS.textMedium, // Changed subtitle color
+        fontSize: 14,
+        color: COLORS.textMedium,
         textAlign: 'center',
-        marginBottom: 30, // Increased margin
+        marginBottom: 30,
+        paddingHorizontal: 10,
     },
     input: {
         borderWidth: 1,
-        borderColor: COLORS.border, // Changed border color
+        borderColor: COLORS.border,
         borderRadius: 8,
-        marginBottom: 20, // Increased margin
+        marginBottom: 20,
         paddingHorizontal: 15,
         paddingVertical: 12,
         width: '100%',
         height: 50,
         fontSize: 16,
-        backgroundColor: COLORS.white, // Added background for input
-        color: COLORS.textDark, // Changed text color
+        backgroundColor: COLORS.white,
+        color: COLORS.textDark,
     },
     button: {
-        backgroundColor: COLORS.primary, // Changed button background color
-        paddingVertical: 15, // Adjusted padding
+        backgroundColor: COLORS.primary,
+        paddingVertical: 15,
         borderRadius: 8,
         alignItems: 'center',
         width: '100%',
         marginTop: 10,
     },
     buttonText: {
-        color: COLORS.white, // Changed button text color
+        color: COLORS.white,
         fontSize: 16,
         fontWeight: 'bold',
     },
     link: {
-        color: COLORS.primary, // Changed link color
+        color: COLORS.primary,
         fontSize: 14,
     },
     loader: {
-        marginTop: 20, // Adjusted margin
-    },
-    backButton: { // Added style for the back button for better touch area and spacing
         marginTop: 20,
-        padding: 10, // Add some padding for easier touch
+    },
+    backButton: {
+        marginTop: 20,
+        padding: 10,
     }});
 
 export default ForgotPasswordScreen;

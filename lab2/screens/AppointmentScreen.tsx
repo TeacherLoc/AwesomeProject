@@ -88,7 +88,6 @@ const styles = StyleSheet.create({
     buttonContainer: {
         marginTop: 'auto', // Push button to the bottom
         width: '100%',
-    }
-});
+    }});
 
 export default AppointmentScreen;

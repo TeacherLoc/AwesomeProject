@@ -32,16 +32,16 @@ const AppointmentListScreen = ({ navigation }: { navigation: any }) => {
 
     const handleDelete = (id: string) => {
         Alert.alert(
-            "Cancel Appointment",
-            "Are you sure you want to cancel this appointment?",
+            'Cancel Appointment',
+            'Are you sure you want to cancel this appointment?',
             [
                 { text: "No", style: "cancel" },
                 {
                     text: "Yes", onPress: () => {
                         // --- Add API call to delete ---
-                        console.log("Deleting appointment:", id);
+                        console.log('Deleting appointment:', id);
                         setAppointments(prev => prev.filter(apt => apt.id !== id));
-                        Alert.alert("Success", "Appointment cancelled.");
+                        Alert.alert('Success', 'Appointment cancelled.');
                         // --- End API call ---
                     }
                 }

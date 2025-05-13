@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+/* eslint-disable react-native/no-inline-styles */
+/* eslint-disable react/no-unstable-nested-components */
+import React, { useState, useEffect, useCallback, useLayoutEffect } from 'react';
 import {
     View,
     Text,
@@ -10,14 +12,14 @@ import {
     Alert,
     Image} from 'react-native';
 import { COLORS } from '../theme/colors';
-import { getFirestore, collection, getDocs, query, orderBy } from '@react-native-firebase/firestore'; // Import Firestore functions
+import { getFirestore, collection, getDocs, query, orderBy } from '@react-native-firebase/firestore';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 // Function to get services from Firestore
-const fetchServicesForCustomer = async () => {
+const fetchAdminServices = async () => {
     const firestoreInstance = getFirestore();
     const servicesCollectionRef = collection(firestoreInstance, 'services');
-    // Bạn có thể thêm orderBy nếu muốn sắp xếp, ví dụ theo tên hoặc giá
-    const q = query(servicesCollectionRef, orderBy('name')); // Sắp xếp theo tên dịch vụ
+    const q = query(servicesCollectionRef, orderBy('name'));
     try {
         const querySnapshot = await getDocs(q);
         const servicesList = querySnapshot.docs.map(documentSnapshot => ({
@@ -26,21 +28,35 @@ const fetchServicesForCustomer = async () => {
         }));
         return servicesList;
     } catch (error) {
-        console.error('Error fetching services: ', error);
-        Alert.alert('Lỗi', 'Không thể tải danh sách dịch vụ.');
-        return []; // Return empty array on error
+        console.error('Error fetching admin services: ', error);
+        Alert.alert('Lỗi', 'Không thể tải danh sách dịch vụ cho admin.');
+        return [];
     }
 };
 
-const CustomerServiceListScreen = ({ navigation }: { navigation: any }) => {
+const AdminServiceListScreen = ({ navigation }: { navigation: any }) => {
     const [services, setServices] = useState<any[]>([]);
     const [filteredServices, setFilteredServices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const loadServices = useCallback(async () => {
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            title: 'Quản lý Dịch vụ',
+            headerRight: () => (
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('AdminAddService')}
+                    style={{ marginRight: 15 }}
+                >
+                    <Icon name="plus-circle" size={28} color={COLORS.primary} />
+                </TouchableOpacity>
+            ),
+        });
+    }, [navigation]);
+
+    const loadAdminServices = useCallback(async () => {
         setLoading(true);
-        const data = await fetchServicesForCustomer();
+        const data = await fetchAdminServices();
         setServices(data);
         setFilteredServices(data);
         setLoading(false);
@@ -48,11 +64,11 @@ const CustomerServiceListScreen = ({ navigation }: { navigation: any }) => {
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
-            loadServices();
+            loadAdminServices();
         });
-        loadServices(); // Load initial data
+        loadAdminServices();
         return unsubscribe;
-    }, [navigation, loadServices]);
+    }, [navigation, loadAdminServices]);
 
     const handleSearch = (text: string) => {
         setSearchQuery(text);
@@ -61,33 +77,32 @@ const CustomerServiceListScreen = ({ navigation }: { navigation: any }) => {
         } else {
             const lowerCaseQuery = text.toLowerCase();
             const filtered = services.filter(service =>
-                service.name.toLowerCase().includes(lowerCaseQuery) ||
+                service.name?.toLowerCase().includes(lowerCaseQuery) ||
                 (service.description && service.description.toLowerCase().includes(lowerCaseQuery))
             );
             setFilteredServices(filtered);
         }
     };
 
-    const handleSelectService = (service: any) => {
-        // Navigate to CustomerServiceDetailScreen, passing serviceId
-        navigation.navigate('CustomerServiceDetail', { serviceId: service.id });
+    const handleSelectServiceForAdmin = (service: any) => {
+        navigation.navigate('AdminServiceDetail', { serviceId: service.id, serviceData: service });
     };
 
     const renderServiceItem = ({ item }: { item: any }) => (
-        <TouchableOpacity onPress={() => handleSelectService(item)} style={styles.itemContainer}>
+        <TouchableOpacity onPress={() => handleSelectServiceForAdmin(item)} style={styles.itemContainer}>
             {item.imageUrl && (
                 <Image source={{ uri: item.imageUrl }} style={styles.itemImage} resizeMode="cover" />
             )}
             <View style={styles.itemContent}>
                 <Text style={styles.itemName}>{item.name}</Text>
-                {item.price && (
+                {item.price !== undefined && (
                     <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')}K</Text>
                 )}
                 {item.duration && (
                      <Text style={styles.itemDuration}>Thời gian: {item.duration}</Text>
                 )}
                 <Text style={styles.itemDescription} numberOfLines={2}>
-                    {item.description || 'Xem chi tiết để biết thêm...'}
+                    {item.description || 'Chưa có mô tả.'}
                 </Text>
             </View>
             <View style={styles.chevronContainer}>
@@ -113,7 +128,7 @@ const CustomerServiceListScreen = ({ navigation }: { navigation: any }) => {
                 data={filteredServices}
                 renderItem={renderServiceItem}
                 keyExtractor={item => item.id}
-                ListEmptyComponent={<View style={styles.centered}><Text style={styles.emptyText}>Không có dịch vụ nào.</Text></View>}
+                ListEmptyComponent={<View style={styles.centered}><Text style={styles.emptyText}>Chưa có dịch vụ nào. Hãy thêm mới!</Text></View>}
                 contentContainerStyle={styles.listContentContainer}
             />
         </View>
@@ -133,7 +148,7 @@ const styles = StyleSheet.create({
         height: 45,
         borderColor: COLORS.border,
         borderWidth: 1,
-        borderRadius: 25, // Bo tròn hơn
+        borderRadius: 25,
         paddingHorizontal: 20,
         margin: 10,
         backgroundColor: COLORS.white,
@@ -152,7 +167,7 @@ const styles = StyleSheet.create({
         padding: 15,
         marginVertical: 8,
         flexDirection: 'row',
-        alignItems: 'center', // Căn giữa các item theo chiều dọc
+        alignItems: 'center',
         shadowColor: COLORS.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
@@ -166,7 +181,7 @@ const styles = StyleSheet.create({
         marginRight: 15,
     },
     itemContent: {
-        flex: 1, // Cho phép nội dung text co giãn
+        flex: 1,
     },
     itemName: {
         fontSize: 17,
@@ -204,5 +219,5 @@ const styles = StyleSheet.create({
         color: COLORS.textMedium,
     }});
 
-export default CustomerServiceListScreen;
+export default AdminServiceListScreen;
 
