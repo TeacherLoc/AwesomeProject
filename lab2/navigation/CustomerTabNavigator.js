@@ -6,8 +6,6 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Or your preferred icon set
 import { COLORS } from '../theme/colors';
 
-
-
 // Import Customer Screens
 import CustomerServiceListScreen from '../screens/ServiceListScreen';
 import CustomerServiceDetailScreen from '../screens/CustomerServiceDetailScreen';
@@ -16,6 +14,7 @@ import CustomerAppointmentListScreen from '../screens/CustomerAppointmentListScr
 import CustomerProfileScreen from '../screens/CustomerProfileScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import CustomerAppointmentDetailScreen from '../screens/CustomerAppointmentDetailScreen';
+import HealthNewsScreen from '../screens/HealthNewsScreen'; // Import màn hình mới
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -74,6 +73,8 @@ const CustomerTabNavigator = () => {
                         iconName = focused ? 'calendar-check-o' : 'calendar';
                     } else if (route.name === 'ProfileTab') {
                         iconName = focused ? 'user-circle' : 'user-circle-o';
+                    } else if (route.name === 'HealthNewsTab') {
+                        iconName = focused ? 'heartbeat' : 'heartbeat';
                     }
                     return <Icon name={iconName} size={size * 0.9} color={color} />;
                 },
@@ -97,6 +98,16 @@ const CustomerTabNavigator = () => {
             <Tab.Screen name="ServicesTab" component={ServiceStackNavigator} options={{ title: 'Dịch vụ' }} />
             <Tab.Screen name="AppointmentsTab" component={AppointmentStackNavigator} options={{ title: 'Lịch hẹn' }} />
             <Tab.Screen name="ProfileTab" component={ProfileStackNavigator} options={{ title: 'Cá nhân' }} />
+            <Tab.Screen
+                name="HealthNewsTab"
+                component={HealthNewsScreen}
+                options={{
+                    title: 'Sức Khỏe',
+                    tabBarIcon: ({ color, size }) => (
+                        <Icon name="heartbeat" color={color} size={size} />
+                    ),
+                }}
+            />
         </Tab.Navigator>
     );
 };
