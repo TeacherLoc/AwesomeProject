@@ -1,30 +1,29 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Linking, Image } from 'react-native';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { COLORS } from '../theme/colors';
-import Icon from 'react-native-vector-icons/FontAwesome'; // Hoặc icon set bạn dùng
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 // Định nghĩa kiểu cho params của route
 type AdminAppointmentDetailScreenRouteParams = {
     appointmentId: string;
 };
 
-// Định nghĩa kiểu cho props của màn hình (nếu bạn không dùng useRoute/useNavigation)
-// type AdminAppointmentDetailScreenProps = {
-//     route: RouteProp<{ params: AdminAppointmentDetailScreenRouteParams }, 'params'>;
-//     navigation: StackNavigationProp<any>; // Hoặc type cụ thể hơn cho Stack Navigator của bạn
-// };
-
-interface AppointmentDetail extends Appointment {
-    // Thêm các trường chi tiết khác nếu cần, ví dụ thông tin dịch vụ, thông tin khách hàng đầy đủ
-    serviceDetails?: { name: string; description?: string; duration?: string };
-    customerDetails?: { name: string; email?: string; phone?: string };
+// Interface cho Review
+interface Review {
+    id: string;
+    appointmentId: string;
+    userId: string;
+    rating: number;
+    comment: string;
+    imageBase64?: string;
+    createdAt: FirebaseFirestoreTypes.Timestamp | Date;
 }
 
-interface Appointment { // Giữ lại interface Appointment cơ bản
+interface Appointment {
     id: string;
     serviceName: string;
     appointmentDateTime: FirebaseFirestoreTypes.Timestamp;
@@ -34,14 +33,19 @@ interface Appointment { // Giữ lại interface Appointment cơ bản
     customerName?: string;
     customerEmail?: string;
     requestTimestamp?: FirebaseFirestoreTypes.Timestamp;
-    // Thêm các trường thời gian cập nhật trạng thái nếu có
     confirmedAt?: FirebaseFirestoreTypes.Timestamp;
     rejectedAt?: FirebaseFirestoreTypes.Timestamp;
     cancelledAt?: FirebaseFirestoreTypes.Timestamp;
     completedAt?: FirebaseFirestoreTypes.Timestamp;
-    notes?: string; // Ghi chú của admin hoặc khách hàng
+    notes?: string;
+    reviewId?: string;
+    hasReview?: boolean;
 }
 
+interface AppointmentDetail extends Appointment {
+    serviceDetails?: { name: string; description?: string; duration?: string };
+    customerDetails?: { name: string; email?: string; phone?: string };
+}
 
 const AdminAppointmentDetailScreen: React.FC = () => {
     const route = useRoute<RouteProp<{ params: AdminAppointmentDetailScreenRouteParams }, 'params'>>();
@@ -52,24 +56,77 @@ const AdminAppointmentDetailScreen: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
 
+    const [existingReview, setExistingReview] = useState<Review | null>(null);
+    const [loadingReview, setLoadingReview] = useState(false);
+
+    const fetchExistingReview = useCallback(async (currentAppointmentId: string, reviewId?: string) => {
+        if (!reviewId && !currentAppointmentId) {
+            console.log('[AdminReview] No reviewId or appointmentId to fetch review.');
+            setExistingReview(null);
+            return;
+        }
+        setLoadingReview(true);
+        setExistingReview(null);
+        try {
+            let reviewDocSnap;
+            if (reviewId) {
+                console.log(`[AdminReview] Fetching review by reviewId: ${reviewId}`);
+                reviewDocSnap = await firestore().collection('reviews').doc(reviewId).get();
+            } else {
+                console.log(`[AdminReview] Fetching review by appointmentId: ${currentAppointmentId}`);
+                const reviewsQuery = await firestore().collection('reviews')
+                    .where('appointmentId', '==', currentAppointmentId)
+                    .limit(1)
+                    .get();
+                if (!reviewsQuery.empty) {
+                    reviewDocSnap = reviewsQuery.docs[0];
+                }
+            }
+
+            if (reviewDocSnap && reviewDocSnap.exists()) {
+                const reviewData = reviewDocSnap.data() as any; // Tạm thời dùng any để linh hoạt hơn với createdAt
+                console.log(`[AdminReview] Found review: ${reviewDocSnap.id}`);
+                console.log('[AdminReview] reviewData.createdAt type:', typeof reviewData.createdAt, reviewData.createdAt);
+                setExistingReview({
+                    ...reviewData,
+                    id: reviewDocSnap.id,
+                    createdAt: reviewData.createdAt && typeof reviewData.createdAt.toDate === 'function' ? reviewData.createdAt.toDate() : reviewData.createdAt,
+                });
+            } else {
+                console.log(`[AdminReview] No review found for appointment ${currentAppointmentId} (reviewId: ${reviewId})`);
+                setExistingReview(null);
+            }
+        } catch (error) {
+            console.error('[AdminReview] Error fetching existing review: ', error);
+            setExistingReview(null);
+        } finally {
+            setLoadingReview(false);
+        }
+    }, []);
+
     const fetchAppointmentDetails = useCallback(async () => {
         setLoading(true);
+        setAppointment(null);
+        setExistingReview(null);
         try {
             const docRef = firestore().collection('appointments').doc(appointmentId);
             const docSnap = await docRef.get();
 
             if (docSnap.exists()) {
                 const data = docSnap.data() as Appointment;
-                // Bạn có thể fetch thêm thông tin chi tiết về service hoặc customer nếu cần
-                // Ví dụ:
-                // const serviceSnap = await firestore().collection('services').doc(data.serviceId).get();
-                // const customerSnap = await firestore().collection('users').doc(data.customerId).get();
+                console.log('[AdminApptDetail] Fetched appointment data:', JSON.stringify(data, null, 2));
                 setAppointment({
                     ...data,
                     id: docSnap.id,
-                    // serviceDetails: serviceSnap.exists() ? serviceSnap.data() : undefined,
-                    // customerDetails: customerSnap.exists() ? customerSnap.data() : undefined,
                 });
+
+                if (data.status === 'completed' && (data.reviewId || data.hasReview)) {
+                    console.log(`[AdminApptDetail] Appointment is completed and has review info. reviewId: ${data.reviewId}, hasReview: ${data.hasReview}. Fetching review.`);
+                    fetchExistingReview(data.id, data.reviewId);
+                } else {
+                    console.log(`[AdminApptDetail] Appointment NOT completed or NO review info. Status: ${data.status}, reviewId: ${data.reviewId}, hasReview: ${data.hasReview}. Setting existingReview to null.`);
+                    setExistingReview(null);
+                }
             } else {
                 Alert.alert('Lỗi', 'Không tìm thấy thông tin lịch hẹn.');
                 navigation.goBack();
@@ -80,14 +137,14 @@ const AdminAppointmentDetailScreen: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [appointmentId, navigation]);
+    }, [appointmentId, navigation, fetchExistingReview]);
 
     useEffect(() => {
         fetchAppointmentDetails();
     }, [fetchAppointmentDetails]);
 
     const handleUpdateStatus = async (newStatus: Appointment['status']) => {
-        if (!appointment) {return;}
+        if (!appointment) { return; }
         setUpdating(true);
         Alert.alert(
             'Xác nhận thay đổi',
@@ -98,28 +155,35 @@ const AdminAppointmentDetailScreen: React.FC = () => {
                     text: 'Đồng ý',
                     onPress: async () => {
                         try {
-                            await firestore().collection('appointments').doc(appointment.id).update({
+                            const updateData: any = {
                                 status: newStatus,
-                                ...(newStatus === 'confirmed' && { confirmedAt: firestore.FieldValue.serverTimestamp() }),
-                                ...(newStatus === 'rejected' && { rejectedAt: firestore.FieldValue.serverTimestamp() }),
-                                ...(newStatus === 'cancelled_by_admin' && { cancelledAt: firestore.FieldValue.serverTimestamp() }),
-                                ...(newStatus === 'completed' && { completedAt: firestore.FieldValue.serverTimestamp() }),
-                            });
+                            };
+                            if (newStatus === 'confirmed') {updateData.confirmedAt = firestore.FieldValue.serverTimestamp();}
+                            else if (newStatus === 'rejected') {updateData.rejectedAt = firestore.FieldValue.serverTimestamp();}
+                            else if (newStatus === 'cancelled_by_admin') {updateData.cancelledAt = firestore.FieldValue.serverTimestamp();}
+                            else if (newStatus === 'completed') {updateData.completedAt = firestore.FieldValue.serverTimestamp();}
+
+                            await firestore().collection('appointments').doc(appointment.id).update(updateData);
                             Alert.alert('Thành công', 'Trạng thái lịch hẹn đã được cập nhật.');
-                            setAppointment(prev => prev ? { ...prev, status: newStatus } : null);
-                            // navigation.goBack(); // Hoặc cập nhật lại màn hình
+                            setAppointment(prev => {
+                                if (!prev) {return null;}
+                                const updatedAppointment = { ...prev, status: newStatus };
+                                if (newStatus === 'completed' && !prev.reviewId && !prev.hasReview) {
+                                    // fetchExistingReview(prev.id); // Cân nhắc nếu cần fetch review ngay
+                                }
+                                return updatedAppointment;
+                            });
                         } catch (error) {
                             console.error('Error updating appointment status: ', error);
                             Alert.alert('Lỗi', 'Không thể cập nhật trạng thái lịch hẹn.');
                         } finally {
                             setUpdating(false);
                         }
-                    } }]
+                    }}]
         );
     };
 
     const getStatusStyle = (status?: Appointment['status']) => {
-        // Copy hàm getStatusStyle từ AdminAppointmentListScreen hoặc định nghĩa lại
         switch (status?.toLowerCase()) {
             case 'pending': return { backgroundColor: COLORS.warningLight, color: COLORS.warningDark, text: 'Chờ xác nhận' };
             case 'confirmed': return { backgroundColor: COLORS.successLight, color: COLORS.successDark, text: 'Đã xác nhận' };
@@ -131,6 +195,21 @@ const AdminAppointmentDetailScreen: React.FC = () => {
         }
     };
 
+    const renderStars = (currentRating: number) => {
+        const stars = [];
+        for (let i = 1; i <= 5; i++) {
+            stars.push(
+                <Icon
+                    key={i}
+                    name={i <= currentRating ? 'star' : 'star-o'}
+                    size={20}
+                    color={COLORS.warning}
+                    style={styles.starIcon}
+                />
+            );
+        }
+        return <View style={styles.starsContainer}>{stars}</View>;
+    };
 
     if (loading) {
         return <View style={styles.centered}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
@@ -156,32 +235,54 @@ const AdminAppointmentDetailScreen: React.FC = () => {
 
                 <InfoRow icon="user" label="Khách hàng:" value={appointment.customerName} />
                 {appointment.customerEmail && <InfoRow icon="envelope" label="Email KH:" value={appointment.customerEmail} onPress={() => Linking.openURL(`mailto:${appointment.customerEmail}`)} />}
-                {/* {appointment.customerDetails?.phone && <InfoRow icon="phone" label="SĐT KH:" value={appointment.customerDetails.phone} onPress={() => Linking.openURL(`tel:${appointment.customerDetails.phone}`)} />} */}
 
                 <InfoRow icon="calendar" label="Ngày hẹn:" value={appointmentDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })} />
                 <InfoRow icon="clock-o" label="Giờ hẹn:" value={appointmentDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} />
                 {requestDate && <InfoRow icon="calendar-plus-o" label="Ngày đặt:" value={requestDate.toLocaleString('vi-VN')} />}
                 {appointment.servicePrice !== undefined && (
-                    <InfoRow icon="money" label="Giá dịch vụ:" value={`${appointment.servicePrice.toLocaleString('vi-VN')}K`} />
+                    <InfoRow icon="money" label="Giá dịch vụ:" value={`${appointment.servicePrice.toLocaleString('vi-VN')} VNĐ`} />
                 )}
-
-                {/* Thêm thông tin chi tiết dịch vụ nếu có */}
-                {/* {appointment.serviceDetails && (
-                    <>
-                        <Text style={styles.sectionTitle}>Chi tiết dịch vụ</Text>
-                        <InfoRow icon="info-circle" label="Tên DV:" value={appointment.serviceDetails.name} />
-                        <InfoRow icon="align-left" label="Mô tả:" value={appointment.serviceDetails.description} isLongText />
-                        <InfoRow icon="hourglass-half" label="Thời gian:" value={appointment.serviceDetails.duration} />
-                    </>
-                )} */}
-
-                {appointment.notes && <InfoRow icon="sticky-note" label="Ghi chú:" value={appointment.notes} isLongText />}
-
+                {appointment.notes && <InfoRow icon="sticky-note" label="Ghi chú KH:" value={appointment.notes} isLongText />}
             </View>
+
+            {appointment.status === 'completed' && (
+                <View style={[styles.card, styles.reviewCard]}>
+                    <Text style={styles.sectionTitle}>Đánh giá của khách hàng</Text>
+                    {loadingReview ? (
+                        <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 20 }} />
+                    ) : existingReview ? (
+                        <View>
+                            <View style={styles.reviewItem}>
+                                <Text style={styles.reviewLabel}>Đánh giá:</Text>
+                                {renderStars(existingReview.rating)}
+                            </View>
+                            <View style={styles.reviewItem}>
+                                <Text style={styles.reviewLabel}>Bình luận:</Text>
+                                <Text style={styles.reviewTextValue}>{existingReview.comment}</Text>
+                            </View>
+                            {existingReview.imageBase64 && (
+                                <View style={styles.reviewItem}>
+                                    <Text style={styles.reviewLabel}>Hình ảnh đính kèm:</Text>
+                                    <Image
+                                        source={{ uri: `data:image/jpeg;base64,${existingReview.imageBase64}` }}
+                                        style={styles.reviewImage}
+                                        resizeMode="contain"
+                                    />
+                                </View>
+                            )}
+                            <Text style={styles.reviewDate}>
+                                Ngày đánh giá: {existingReview.createdAt instanceof Date ? existingReview.createdAt.toLocaleDateString('vi-VN') : new Date(existingReview.createdAt.seconds * 1000).toLocaleDateString('vi-VN')}
+                            </Text>
+                        </View>
+                    ) : (
+                        <Text style={styles.noReviewText}>Chưa có đánh giá từ khách hàng cho lịch hẹn này.</Text>
+                    )}
+                </View>
+            )}
 
             <View style={styles.actionsCard}>
                 <Text style={styles.sectionTitle}>Hành động</Text>
-                {updating && <ActivityIndicator style={{marginBottom: 10}} color={COLORS.primary} />}
+                {updating && <ActivityIndicator style={{ marginBottom: 10 }} color={COLORS.primary} />}
                 {!updating && (
                     <>
                         {appointment.status === 'pending' && (
@@ -191,12 +292,11 @@ const AdminAppointmentDetailScreen: React.FC = () => {
                             </View>
                         )}
                         {appointment.status === 'confirmed' && (
-                             <ActionButton title="Đánh dấu Hoàn thành" icon="check-square-o" color={COLORS.info} onPress={() => handleUpdateStatus('completed')} />
+                            <ActionButton title="Đánh dấu Hoàn thành" icon="check-square-o" color={COLORS.info} onPress={() => handleUpdateStatus('completed')} />
                         )}
                         {(appointment.status === 'confirmed' || appointment.status === 'pending') && (
-                             <ActionButton title="Hủy (Admin)" icon="ban" color={COLORS.warningDark} onPress={() => handleUpdateStatus('cancelled_by_admin')} />
+                            <ActionButton title="Hủy (Admin)" icon="ban" color={COLORS.warningDark} onPress={() => handleUpdateStatus('cancelled_by_admin')} />
                         )}
-                        {/* Nút gọi điện hoặc nhắn tin cho khách hàng */}
                     </>
                 )}
             </View>
@@ -228,6 +328,7 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         padding: 15,
+        paddingBottom: 30,
     },
     centered: {
         flex: 1,
@@ -268,7 +369,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         color: COLORS.textDark,
-        flex: 1, // Allow text to wrap
+        flex: 1,
         marginRight: 10,
     },
     statusBadge: {
@@ -282,30 +383,30 @@ const styles = StyleSheet.create({
     },
     infoRowContainer: {
         flexDirection: 'row',
-        alignItems: 'flex-start', // Align items to start for long text
+        alignItems: 'flex-start',
         paddingVertical: 8,
     },
     infoIcon: {
         marginRight: 12,
-        marginTop: 2, // Adjust icon position
+        marginTop: 2,
     },
     infoLabel: {
         fontSize: 15,
         color: COLORS.textDark,
         fontWeight: '500',
-        width: 120, // Fixed width for labels
+        width: 120,
     },
     infoValue: {
         fontSize: 15,
         color: COLORS.textMedium,
-        flex: 1, // Allow value to take remaining space
+        flex: 1,
     },
     linkValue: {
         color: COLORS.primary,
         textDecorationLine: 'underline',
     },
     longText: {
-        lineHeight: 22, // Improve readability for long text
+        lineHeight: 22,
     },
     sectionTitle: {
         fontSize: 18,
@@ -328,9 +429,9 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 15,
         borderRadius: 8,
-        marginVertical: 5, // Add vertical margin for single buttons
-        flex: 1, // Make buttons in a row share space
-        marginHorizontal: 5, // Add horizontal margin for buttons in a row
+        marginVertical: 5,
+        flex: 1,
+        marginHorizontal: 5,
     },
     actionButtonText: {
         color: COLORS.white,
@@ -338,6 +439,51 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginLeft: 8,
     },
-});
+    reviewCard: {},
+    reviewItem: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        marginBottom: 10,
+    },
+    reviewLabel: {
+        fontSize: 15,
+        color: COLORS.textDark,
+        fontWeight: '500',
+        width: 100,
+        marginRight: 10,
+    },
+    reviewTextValue: {
+        fontSize: 15,
+        color: COLORS.textMedium,
+        flex: 1,
+        lineHeight: 22,
+    },
+    starsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    starIcon: {
+        marginHorizontal: 1,
+    },
+    reviewImage: {
+        width: '80%',
+        height: 200,
+        borderRadius: 5,
+        marginTop: 5,
+        alignSelf: 'center',
+    },
+    reviewDate: {
+        fontSize: 12,
+        color: COLORS.textLight,
+        textAlign: 'right',
+        marginTop: 10,
+    },
+    noReviewText: {
+        fontSize: 15,
+        color: COLORS.textMedium,
+        textAlign: 'center',
+        paddingVertical: 20,
+        fontStyle: 'italic',
+    }});
 
 export default AdminAppointmentDetailScreen;
