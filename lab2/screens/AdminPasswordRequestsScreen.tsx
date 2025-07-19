@@ -42,15 +42,11 @@ const AdminPasswordRequestsScreen = ({ navigation }: { navigation: any }) => {
     const handleApproveRequest = async (request: any) => {
         setActionLoading(request.id);
         try {
-            // Send Firebase password reset email
             await auth().sendPasswordResetEmail(request.userEmail);
 
-            // Update request status in Firestore
             await firestore().collection('passwordResetRequests').doc(request.id).update({
                 status: 'approved',
                 approvedTimestamp: firestore.FieldValue.serverTimestamp(),
-                // You might want to store which admin approved it if you have multiple admins
-                // approvedBy: auth().currentUser?.uid,
             });
 
             Alert.alert('Thành công', `Email đặt lại mật khẩu đã được gửi đến ${request.userEmail}.`);

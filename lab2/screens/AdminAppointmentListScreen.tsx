@@ -2,6 +2,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert } from 'react-native';
+import { getApp } from '@react-native-firebase/app';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import { useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -15,7 +16,7 @@ interface Appointment {
     status: 'pending' | 'confirmed' | 'cancelled_by_customer' | 'cancelled_by_admin' | 'rejected' | 'completed';
     servicePrice?: number;
     customerId: string;
-    customerName?: string; // Thêm tên khách hàng
+    customerName?: string;
     customerEmail?: string;
     requestTimestamp?: FirebaseFirestoreTypes.Timestamp;
 }
@@ -33,14 +34,12 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
     // const currentUser = auth().currentUser; // Admin user
 
     const fetchAppointmentsForAdmin = useCallback(async () => {
-        // Admin có thể cần kiểm tra vai trò trước khi fetch, nhưng hiện tại giả sử admin đã đăng nhập
-        // và có quyền đọc collection 'appointments' (đã cấu hình trong security rules)
         try {
-            const querySnapshot = await firestore()
+            const app = getApp();
+            const db = firestore(app);
+            const querySnapshot = await db
                 .collection('appointments')
-                // Sắp xếp theo thời gian yêu cầu, hoặc thời gian hẹn, hoặc trạng thái
-                .orderBy('requestTimestamp', 'desc') // Hiển thị yêu cầu mới nhất trước
-                // .where('status', 'in', ['pending', 'confirmed']) // Chỉ lấy các lịch hẹn cần xử lý
+                .orderBy('requestTimestamp', 'desc')
                 .get();
 
             const fetchedAppointments: Appointment[] = querySnapshot.docs.map(doc => {
@@ -89,7 +88,9 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
                     text: 'Đồng ý',
                     onPress: async () => {
                         try {
-                            await firestore().collection('appointments').doc(appointmentId).update({
+                            const app = getApp();
+                            const db = firestore(app);
+                            await db.collection('appointments').doc(appointmentId).update({
                                 status: newStatus,
                                 ...(newStatus === 'confirmed' && { confirmedAt: firestore.FieldValue.serverTimestamp() }),
                                 ...(newStatus === 'rejected' && { rejectedAt: firestore.FieldValue.serverTimestamp() }),
@@ -97,7 +98,6 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
                                 ...(newStatus === 'completed' && { completedAt: firestore.FieldValue.serverTimestamp() }),
                             });
                             Alert.alert('Thành công', 'Trạng thái lịch hẹn đã được cập nhật.');
-                            // Cập nhật lại danh sách local
                             setAppointments(prevAppointments =>
                                 prevAppointments.map(apt =>
                                     apt.id === appointmentId ? { ...apt, status: newStatus } : apt

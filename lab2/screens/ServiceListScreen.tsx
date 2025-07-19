@@ -33,6 +33,13 @@ const fetchServicesForCustomer = async () => {
 };
 
 const CustomerServiceListScreen = ({ navigation }: { navigation: any }) => {
+    // Căn giữa tiêu đề ở header
+    React.useLayoutEffect(() => {
+        navigation.setOptions({
+            headerTitle: 'Dịch vụ',
+            headerTitleAlign: 'center',
+        });
+    }, [navigation]);
     const [services, setServices] = useState<any[]>([]);
     const [filteredServices, setFilteredServices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);

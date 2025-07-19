@@ -114,7 +114,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
         style={styles.logo}
         resizeMode="contain"
       />
-      <Text style={styles.title}>KAMI xin chào!</Text>
+      <Text style={styles.title}>Loocj Xin Chào</Text>
       <View style={styles.inputContainer}>
         <Icon name="envelope" size={20} color={COLORS.textMedium} style={styles.icon} />
         <TextInput

@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
-import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
+import { getFirestore, collection, query, where, orderBy, getDocs, FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import { getApp } from '@react-native-firebase/app';
+import { getAuth } from '@react-native-firebase/auth';
 import { useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { COLORS } from '../theme/colors';
@@ -28,7 +29,7 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const currentUser = auth().currentUser;
+    const currentUser = getAuth(getApp()).currentUser;
 
     const fetchAppointments = useCallback(async () => {
         if (!currentUser) {
@@ -39,12 +40,14 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
         }
 
         try {
-            const querySnapshot = await firestore()
-                .collection('appointments')
-                .where('customerId', '==', currentUser.uid)
-                .orderBy('appointmentDateTime', 'desc') // Show newest appointments first
-                .get();
-
+            const db = getFirestore(getApp());
+            const appointmentsRef = collection(db, 'appointments');
+            const appointmentsQuery = query(
+                appointmentsRef,
+                where('customerId', '==', currentUser.uid),
+                orderBy('appointmentDateTime', 'desc')
+            );
+            const querySnapshot = await getDocs(appointmentsQuery);
             const fetchedAppointments: Appointment[] = querySnapshot.docs.map(doc => {
                 const data = doc.data();
                 return {
@@ -57,7 +60,7 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
             });
             setAppointments(fetchedAppointments);
         } catch (error) {
-            console.error("Error fetching appointments: ", error);
+            console.error('Error fetching appointments: ', error);
             // Handle error (e.g., show a message to the user)
         } finally {
             setLoading(false);

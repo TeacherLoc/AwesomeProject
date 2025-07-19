@@ -1,13 +1,15 @@
 // filepath: screens/Common/LoadingScreen.tsx
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import { COLORS } from '../theme/colors';
 
 const LoadingScreen = () => {
     return (
         <View style={styles.container}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-            <Text style={styles.loadingText}>Loading...</Text>
+            <Image
+                source={require('../assets/logolab3.png')}
+                style={styles.logo}
+            />
         </View>
     );
 };
@@ -19,10 +21,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: COLORS.white, // Nền trắng
     },
-    loadingText: {
-        marginTop: 10,
-        fontSize: 16,
-        color: COLORS.textMedium,
+    logo: {
+        width: 200,
+        height: 200,
+        resizeMode: 'contain',
     },
 });
 
