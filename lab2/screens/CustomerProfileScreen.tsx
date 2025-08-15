@@ -54,8 +54,6 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
 
         if (currentUser) {
             setEmail(currentUser.email || '');
-            // Nếu user đã có avatar (photoURL), dùng nó, nếu chưa thì dùng ảnh mặc định lo.png
-            setAvatar(currentUser.photoURL || require('../assets/lo.png'));
             try {
                 const firestoreInstance = getFirestore();
                 const userDocumentRef = doc(firestoreInstance, 'users', currentUser.uid);
@@ -66,14 +64,24 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
                     setProfile(userData);
                     setName(userData?.name || currentUser.displayName || '');
                     setPhone(userData?.phone || '');
+                    // Ưu tiên hiển thị avatar từ base64 nếu có
+                    if (userData?.avatarBase64) {
+                        setAvatar('data:image/jpeg;base64,' + userData.avatarBase64);
+                    } else if (currentUser.photoURL) {
+                        setAvatar(currentUser.photoURL);
+                    } else {
+                        setAvatar(require('../assets/lo.png'));
+                    }
                 } else {
                     setName(currentUser.displayName || '');
                     setPhone('');
                     setProfile({ email: currentUser.email, name: currentUser.displayName });
+                    setAvatar(require('../assets/lo.png'));
                     Alert.alert('Thông báo', 'Không tìm thấy thông tin chi tiết hồ sơ. Một số thông tin có thể chưa đầy đủ.');
                 }
             } catch (error) {
                 console.error('Error fetching customer profile: ', error);
+                setAvatar(require('../assets/lo.png'));
                 Alert.alert('Lỗi', 'Không thể tải thông tin hồ sơ.');
             }
         } else {
@@ -82,37 +90,48 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
         setLoading(false);
     }, [contextSignOut]);
     // Hàm chọn avatar
+    // State cho modal xem ảnh đại diện
+    const [viewAvatarModalVisible, setViewAvatarModalVisible] = useState(false);
     // Hàm xem ảnh đại diện
     const handleViewAvatar = () => {
         if (!avatar) {
             Alert.alert('Thông báo', 'Chưa có ảnh đại diện.');
             return;
         }
-        Alert.alert('Ảnh đại diện', '', [
-            {
-                text: 'Đóng',
-                style: 'cancel',
-            },
-        ], {
-            cancelable: true,
-        });
-        // Nếu muốn hiển thị modal ảnh đẹp hơn, có thể dùng Modal hoặc thư viện như react-native-image-viewer
+        setViewAvatarModalVisible(true);
     };
 
     // Hàm chọn avatar từ thư viện
     const handleChangeAvatar = () => {
-        launchImageLibrary({ mediaType: 'photo', quality: 1 }, async (response) => {
-            if (response.didCancel) { return; }
-            if (response.errorCode) {
-                Alert.alert('Lỗi', 'Không thể chọn ảnh: ' + response.errorMessage);
-                return;
+    launchImageLibrary({ mediaType: 'photo', quality: 1, includeBase64: true }, async (response) => {
+        if (response.didCancel) { return; }
+        if (response.errorCode) {
+            Alert.alert('Lỗi', 'Không thể chọn ảnh: ' + response.errorMessage);
+            return;
+        }
+        const asset = response.assets && response.assets[0];
+        if (asset?.base64) {
+            // Hiển thị ảnh đại diện từ base64
+            setAvatar('data:image/jpeg;base64,' + asset.base64);
+            // Lưu base64 vào profile Firestore
+            try {
+                const authInstance = getAuth();
+                const currentUser = authInstance.currentUser;
+                if (!currentUser) {
+                    Alert.alert('Lỗi', 'Phiên đăng nhập không hợp lệ.');
+                    return;
+                }
+                const firestoreInstance = getFirestore();
+                const userDocumentRef = doc(firestoreInstance, 'users', currentUser.uid);
+                await updateDoc(userDocumentRef, { avatarBase64: asset.base64 });
+                // KHÔNG cập nhật photoURL trong Auth vì vượt giới hạn độ dài
+                Alert.alert('Thành công', 'Ảnh đại diện đã được cập nhật!');
+            } catch (error) {
+                console.error('Lỗi lưu ảnh đại diện base64:', error);
+                Alert.alert('Lỗi', 'Không thể lưu ảnh đại diện.');
             }
-            const asset = response.assets && response.assets[0];
-            if (asset?.uri) {
-                setAvatar(asset.uri);
-                // TODO: Upload to Firebase Storage và cập nhật photoURL cho user
-            }
-        });
+        }
+    });
     };
 
     // State cho modal chọn chức năng avatar
@@ -221,6 +240,29 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
                         </TouchableOpacity>
                         <TouchableOpacity style={[styles.modalButton, { borderBottomWidth: 0 }]} onPress={() => setAvatarModalVisible(false)}>
                             <Text style={[styles.modalButtonText, { color: COLORS.error || 'red' }]}>Huỷ</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Modal xem ảnh đại diện */}
+            <Modal
+                visible={viewAvatarModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setViewAvatarModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { alignItems: 'center', padding: 0 }]}> 
+                        {avatar && (
+                            typeof avatar === 'string' ? (
+                                <Image source={{ uri: avatar }} style={{ width: 250, height: 250, borderRadius: 16, marginBottom: 18 }} resizeMode="contain" />
+                            ) : (
+                                <Image source={avatar} style={{ width: 250, height: 250, borderRadius: 16, marginBottom: 18 }} resizeMode="contain" />
+                            )
+                        )}
+                        <TouchableOpacity style={[styles.modalButton, { borderBottomWidth: 0, width: '100%' }]} onPress={() => setViewAvatarModalVisible(false)}>
+                            <Text style={[styles.modalButtonText, { color: COLORS.error || 'red' }]}>Đóng</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

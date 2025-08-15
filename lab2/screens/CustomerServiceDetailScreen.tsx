@@ -57,7 +57,7 @@ const CustomerServiceDetailScreen = ({ route, navigation }: { route: any, naviga
             <View style={styles.detailCard}>
                 <View style={styles.detailItem}>
                     <Text style={styles.detailLabel}>Giá dịch vụ:</Text>
-                    <Text style={styles.detailValue}>{service.price ? `${service.price.toLocaleString('vi-VN')} $` : 'Liên hệ'}</Text>
+                    <Text style={styles.detailValue}>{service.price ? `${service.price.toLocaleString('vi-VN')} VNĐ` : 'Liên hệ'}</Text>
                 </View>
                 <View style={styles.detailItem}>
                     <Text style={styles.detailLabel}>Thời gian thực hiện:</Text>

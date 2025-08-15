@@ -42,7 +42,7 @@ const AdminServiceListScreen = ({ navigation }: { navigation: any }) => {
 
     useLayoutEffect(() => {
         navigation.setOptions({
-            title: 'Quản lý Dịch vụ',
+            title: 'Dịch vụ phòng khám',
             headerRight: () => (
                 <TouchableOpacity
                     onPress={() => navigation.navigate('AdminAddService')}
@@ -96,13 +96,13 @@ const AdminServiceListScreen = ({ navigation }: { navigation: any }) => {
             <View style={styles.itemContent}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 {item.price !== undefined && (
-                    <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')}K</Text>
+                    <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')}VNĐ</Text>
                 )}
                 {item.duration && (
-                     <Text style={styles.itemDuration}>Thời gian: {item.duration}</Text>
+                     <Text style={styles.itemDuration}>Thời gian khám: {item.duration}</Text>
                 )}
                 <Text style={styles.itemDescription} numberOfLines={2}>
-                    {item.description || 'Chưa có mô tả.'}
+                    {item.description || 'Chưa có mô tả dịch vụ phòng khám.'}
                 </Text>
             </View>
             <View style={styles.chevronContainer}>
@@ -119,7 +119,7 @@ const AdminServiceListScreen = ({ navigation }: { navigation: any }) => {
         <View style={styles.container}>
             <TextInput
                 style={styles.searchBar}
-                placeholder="Tìm kiếm dịch vụ..."
+                placeholder="Tìm kiếm dịch vụ phòng khám..."
                 placeholderTextColor={COLORS.textLight}
                 value={searchQuery}
                 onChangeText={handleSearch}
@@ -128,7 +128,7 @@ const AdminServiceListScreen = ({ navigation }: { navigation: any }) => {
                 data={filteredServices}
                 renderItem={renderServiceItem}
                 keyExtractor={item => item.id}
-                ListEmptyComponent={<View style={styles.centered}><Text style={styles.emptyText}>Chưa có dịch vụ nào. Hãy thêm mới!</Text></View>}
+                ListEmptyComponent={<View style={styles.centered}><Text style={styles.emptyText}>Chưa có dịch vụ phòng khám nào. Hãy thêm mới!</Text></View>}
                 contentContainerStyle={styles.listContentContainer}
             />
         </View>

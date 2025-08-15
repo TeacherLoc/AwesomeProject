@@ -118,7 +118,7 @@ const ServiceDetailScreen = ({ route, navigation }: { route: any, navigation: an
         <ScrollView style={styles.container}>
             {editing ? (
                 <>
-                    <Text style={styles.label}>Service Name:</Text>
+                    <Text style={styles.label}>Tên dịch vụ:</Text>
                     <TextInput
                         style={styles.input}
                         value={name}
@@ -127,7 +127,7 @@ const ServiceDetailScreen = ({ route, navigation }: { route: any, navigation: an
                         placeholderTextColor={COLORS.textLight}
                     />
 
-                    <Text style={styles.label}>Price ($):</Text>
+                    <Text style={styles.label}>Giá (VNĐ):</Text>
                     <TextInput
                         style={styles.input}
                         value={price}
@@ -137,7 +137,7 @@ const ServiceDetailScreen = ({ route, navigation }: { route: any, navigation: an
                         placeholderTextColor={COLORS.textLight}
                     />
 
-                    <Text style={styles.label}>Duration:</Text>
+                    <Text style={styles.label}>Thời gian:</Text>
                     <TextInput
                         style={styles.input}
                         value={duration}
@@ -146,7 +146,7 @@ const ServiceDetailScreen = ({ route, navigation }: { route: any, navigation: an
                         placeholderTextColor={COLORS.textLight}
                     />
 
-                    <Text style={styles.label}>Description:</Text>
+                    <Text style={styles.label}>Miêu tả:</Text>
                     <TextInput
                         style={[styles.input, styles.textArea]}
                         value={description}
@@ -172,15 +172,15 @@ const ServiceDetailScreen = ({ route, navigation }: { route: any, navigation: an
                 <>
                     <Text style={styles.title}>{service.name}</Text>
                     <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Price:</Text>
-                        <Text style={styles.detailValue}>${service.price}</Text>
+                        <Text style={styles.detailLabel}>Giá:</Text>
+                        <Text style={styles.detailValue}>{service.price?.toLocaleString('vi-VN')} VNĐ</Text>
                     </View>
                     <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Duration:</Text>
+                        <Text style={styles.detailLabel}>Thời gian:</Text>
                         <Text style={styles.detailValue}>{service.duration}</Text>
                     </View>
                     <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Description:</Text>
+                        <Text style={styles.detailLabel}>Miêu tả:</Text>
                         <Text style={styles.detailValue}>{service.description || 'Không có mô tả.'}</Text>
                     </View>
 

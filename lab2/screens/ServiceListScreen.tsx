@@ -88,7 +88,7 @@ const CustomerServiceListScreen = ({ navigation }: { navigation: any }) => {
             <View style={styles.itemContent}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 {item.price && (
-                    <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')}K</Text>
+                    <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')}VNĐ</Text>
                 )}
                 {item.duration && (
                      <Text style={styles.itemDuration}>Thời gian: {item.duration}</Text>
