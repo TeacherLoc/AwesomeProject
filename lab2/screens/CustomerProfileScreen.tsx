@@ -253,7 +253,7 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
                 onRequestClose={() => setViewAvatarModalVisible(false)}
             >
                 <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { alignItems: 'center', padding: 0 }]}> 
+                    <View style={[styles.modalContent, { alignItems: 'center', padding: 0 }]}>
                         {avatar && (
                             typeof avatar === 'string' ? (
                                 <Image source={{ uri: avatar }} style={{ width: 250, height: 250, borderRadius: 16, marginBottom: 18 }} resizeMode="contain" />
@@ -268,87 +268,90 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
                 </View>
             </Modal>
 
-            <TouchableOpacity style={styles.avatarContainer} onPress={handleAvatarPress}>
-                {avatar ? (
-                    typeof avatar === 'string' ? (
-                        <Image source={{ uri: avatar }} style={styles.avatar} />
+            {/* Khung viền profile */}
+            <View style={styles.profileBox}>
+                <TouchableOpacity style={styles.avatarContainer} onPress={handleAvatarPress}>
+                    {avatar ? (
+                        typeof avatar === 'string' ? (
+                            <Image source={{ uri: avatar }} style={styles.avatar} />
+                        ) : (
+                            <Image source={avatar} style={styles.avatar} />
+                        )
                     ) : (
-                        <Image source={avatar} style={styles.avatar} />
-                    )
+                        <View style={styles.avatarPlaceholder}>
+                            <Text style={styles.avatarPlaceholderText}>Chọn ảnh</Text>
+                        </View>
+                    )}
+                </TouchableOpacity>
+
+                {/* ...existing code... */}
+                <View style={styles.fieldContainer}>
+                    <Text style={styles.label}>Email:</Text>
+                    <Text style={styles.value}>{email}</Text>
+                </View>
+
+                <View style={styles.fieldContainer}>
+                    <Text style={styles.label}>Họ và Tên:</Text>
+                    {editing ? (
+                        <TextInput
+                            style={styles.input}
+                            value={name}
+                            onChangeText={setName}
+                            editable={!isSaving}
+                            placeholder="Nhập tên của bạn"
+                        />
+                    ) : (
+                        <Text style={styles.value}>{name || 'Chưa cập nhật'}</Text>
+                    )}
+                </View>
+
+                <View style={styles.fieldContainer}>
+                    <Text style={styles.label}>Số điện thoại:</Text>
+                    {editing ? (
+                        <TextInput
+                            style={styles.input}
+                            value={phone}
+                            onChangeText={setPhone}
+                            keyboardType="phone-pad"
+                            placeholder="Nhập số điện thoại"
+                            editable={!isSaving}
+                        />
+                    ) : (
+                        <Text style={styles.value}>{phone || 'Chưa cập nhật'}</Text>
+                    )}
+                </View>
+
+                {/* TÍNH NĂNG QUÉT CCCD */}
+                <View style={styles.fieldContainer}>
+                    <Text style={styles.label}>Ảnh CCCD & Nhận diện thông tin:</Text>
+                    <Button title="Chọn ảnh CCCD" onPress={handlePickCccdImage} color={COLORS.primary || '#007bff'} />
+                    {cccdImage && (
+                        <Image source={{ uri: cccdImage }} style={{ width: '100%', height: 200, marginTop: 10, borderRadius: 8 }} resizeMode="contain" />
+                    )}
+                    {ocrResult ? (
+                        <View style={{ marginTop: 10, backgroundColor: COLORS.white || '#fff', padding: 10, borderRadius: 8 }}>
+                            <Text style={{ color: COLORS.textDark || '#333', fontWeight: 'bold' }}>Kết quả nhận diện:</Text>
+                            <Text style={{ color: COLORS.textMedium || '#555', marginTop: 5 }}>{ocrResult}</Text>
+                        </View>
+                    ) : null}
+                </View>
+
+                {editing ? (
+                    <View style={styles.buttonGroup}>
+                        <Button title={isSaving ? 'Đang lưu...' : 'Lưu thay đổi'} onPress={handleUpdateProfile} disabled={isSaving} color={COLORS.primary || '#007bff'}/>
+                        <View style={{ height: 10 }} />
+                        <Button title="Huỷ" color={COLORS.textLight || 'gray'} onPress={() => {
+                            setName(profile.name || '');
+                            setPhone(profile.phone || '');
+                            setEditing(false);
+                        }} disabled={isSaving} />
+                    </View>
                 ) : (
-                    <View style={styles.avatarPlaceholder}>
-                        <Text style={styles.avatarPlaceholderText}>Chọn ảnh</Text>
+                    <View style={styles.buttonGroup}>
+                        <Button title="Chỉnh sửa hồ sơ" onPress={() => setEditing(true)} color={COLORS.primary || '#007bff'} />
                     </View>
                 )}
-            </TouchableOpacity>
-
-            {/* ...existing code... */}
-            <View style={styles.fieldContainer}>
-                <Text style={styles.label}>Email:</Text>
-                <Text style={styles.value}>{email}</Text>
             </View>
-
-            <View style={styles.fieldContainer}>
-                <Text style={styles.label}>Tên:</Text>
-                {editing ? (
-                    <TextInput
-                        style={styles.input}
-                        value={name}
-                        onChangeText={setName}
-                        editable={!isSaving}
-                        placeholder="Nhập tên của bạn"
-                    />
-                ) : (
-                    <Text style={styles.value}>{name || 'Chưa cập nhật'}</Text>
-                )}
-            </View>
-
-            <View style={styles.fieldContainer}>
-                <Text style={styles.label}>Số điện thoại:</Text>
-                {editing ? (
-                    <TextInput
-                        style={styles.input}
-                        value={phone}
-                        onChangeText={setPhone}
-                        keyboardType="phone-pad"
-                        placeholder="Nhập số điện thoại"
-                        editable={!isSaving}
-                    />
-                ) : (
-                    <Text style={styles.value}>{phone || 'Chưa cập nhật'}</Text>
-                )}
-            </View>
-
-            {/* TÍNH NĂNG QUÉT CCCD */}
-            <View style={styles.fieldContainer}>
-                <Text style={styles.label}>Ảnh CCCD & Nhận diện thông tin:</Text>
-                <Button title="Chọn ảnh CCCD" onPress={handlePickCccdImage} color={COLORS.primary || '#007bff'} />
-                {cccdImage && (
-                    <Image source={{ uri: cccdImage }} style={{ width: '100%', height: 200, marginTop: 10, borderRadius: 8 }} resizeMode="contain" />
-                )}
-                {ocrResult ? (
-                    <View style={{ marginTop: 10, backgroundColor: COLORS.white || '#fff', padding: 10, borderRadius: 8 }}>
-                        <Text style={{ color: COLORS.textDark || '#333', fontWeight: 'bold' }}>Kết quả nhận diện:</Text>
-                        <Text style={{ color: COLORS.textMedium || '#555', marginTop: 5 }}>{ocrResult}</Text>
-                    </View>
-                ) : null}
-            </View>
-
-            {editing ? (
-                <View style={styles.buttonGroup}>
-                    <Button title={isSaving ? 'Đang lưu...' : 'Lưu thay đổi'} onPress={handleUpdateProfile} disabled={isSaving} color={COLORS.primary || '#007bff'}/>
-                    <View style={{ height: 10 }} />
-                    <Button title="Huỷ" color={COLORS.textLight || 'gray'} onPress={() => {
-                        setName(profile.name || '');
-                        setPhone(profile.phone || '');
-                        setEditing(false);
-                    }} disabled={isSaving} />
-                </View>
-            ) : (
-                <View style={styles.buttonGroup}>
-                    <Button title="Chỉnh sửa hồ sơ" onPress={() => setEditing(true)} color={COLORS.primary || '#007bff'} />
-                </View>
-            )}
 
             <View style={styles.buttonGroup}>
                 <Button title="Đổi mật khẩu" onPress={() => navigation.navigate('CustomerChangePassword')} color={COLORS.primary || '#007bff'} />
@@ -363,6 +366,20 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
 
 import { Modal } from 'react-native';
 const styles = StyleSheet.create({
+    profileBox: {
+        backgroundColor: COLORS.white || '#fff',
+        borderRadius: 18,
+        padding: 20,
+        marginVertical: 18,
+        marginHorizontal: 2,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: COLORS.border || '#eee',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.12,
+        shadowRadius: 6,
+    },
     container: {
         flex: 1,
         padding: 20,

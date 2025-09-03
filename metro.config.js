@@ -8,6 +8,14 @@ const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
  */
 const config = {
     resetCache: true,
+    resolver: {
+      // Suppress warnings from specific packages
+      blacklistRE: /(node_modules\/.*\/package\.json$)/,
+    },
+    server: {
+      // Suppress server warnings
+      verbose: false,
+    },
   };
 
 module.exports = mergeConfig(getDefaultConfig(__dirname), config);
