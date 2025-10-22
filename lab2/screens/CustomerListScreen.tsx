@@ -8,17 +8,37 @@ import { getFirestore, collection, getDocs, query, where, doc, deleteDoc } from 
 const fetchAdminCustomers = async () => {
     const firestoreInstance = getFirestore();
     const usersCollectionRef = collection(firestoreInstance, 'users');
-    const q = query(usersCollectionRef, where('role', '==', 'customer'));
+    const appointmentsCollectionRef = collection(firestoreInstance, 'appointments');
+
     try {
-        const querySnapshot = await getDocs(q);
-        const customersList = querySnapshot.docs.map(documentSnapshot => ({
-            id: documentSnapshot.id,
-            ...documentSnapshot.data(),
-            totalAppointments: documentSnapshot.data().totalAppointments || 0,
+        // 1. Get all customers
+        const usersQuery = query(usersCollectionRef, where('role', '==', 'customer'));
+        const usersSnapshot = await getDocs(usersQuery);
+        const customersList = usersSnapshot.docs.map((userDoc: { id: any; data: () => any; }) => ({
+            id: userDoc.id,
+            ...userDoc.data(),
         }));
-        return customersList;
+
+        // 2. Get all approved/completed appointments
+        const appointmentsQuery = query(appointmentsCollectionRef, where('status', '==', 'confirmed'));
+        const appointmentsSnapshot = await getDocs(appointmentsQuery);
+
+        // 3. Create a count map
+        const appointmentCounts: { [key: string]: number } = {};
+        appointmentsSnapshot.forEach((appointmentDoc: { data: () => { (): any; new(): any; customerId: any; }; }) => {
+            const customerId = appointmentDoc.data().customerId;
+            appointmentCounts[customerId] = (appointmentCounts[customerId] || 0) + 1;
+        });
+
+        // 4. Combine customer data with appointment counts
+        const customersWithCounts = customersList.map((customer: { id: string | number; }) => ({
+            ...customer,
+            totalAppointments: appointmentCounts[customer.id] || 0,
+        }));
+
+        return customersWithCounts;
     } catch (error) {
-        console.error('Error fetching customers: ', error);
+        console.error('Error fetching customers and counts: ', error);
         return []; // Return empty array on error
     }
 };
@@ -103,7 +123,9 @@ const CustomerListScreen = ({ navigation }: { navigation: any }) => {
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemEmail}>{item.email}</Text>
                 <Text style={styles.itemPhone}>{item.phone || 'Chưa có SĐT'}</Text>
-                <Text style={styles.itemAppointments}>Lịch hẹn: {item.totalAppointments}</Text>
+                <Text style={[styles.itemAppointments, item.totalAppointments > 0 ? styles.hasAppointments : {}]}>
+                    Lịch hẹn đã có: {item.totalAppointments}
+                </Text>
             </View>
             <View style={styles.actionsContainer}>
                 <TouchableOpacity onPress={() => handleEditCustomer(item)} style={[styles.actionButton, styles.editButton]}>
@@ -206,6 +228,9 @@ const styles = StyleSheet.create({
         color: COLORS.primary,
         marginTop: 6,
         fontWeight: 'bold',
+    },
+    hasAppointments: {
+        color: 'green', // Or any other color to indicate presence of appointments
     },
     actionsContainer: {
         flexDirection: 'column',

@@ -31,7 +31,6 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    // const currentUser = auth().currentUser; // Admin user
 
     const fetchAppointmentsForAdmin = useCallback(async () => {
         try {
@@ -56,6 +55,7 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
                     requestTimestamp: data.requestTimestamp,
                 } as Appointment;
             });
+
             setAppointments(fetchedAppointments);
         } catch (error) {
             console.error('Error fetching appointments for admin: ', error);

@@ -67,12 +67,12 @@ const ServiceDetailScreen = ({ route, navigation }: { route: any, navigation: an
                 description: description.trim(),
             };
             await updateDoc(serviceDocRef, updatedData);
-            Alert.alert('Success', 'Cập nhật dịch vụ thành công!');
+            Alert.alert('Thành công', 'Cập nhật dịch vụ thành công!');
             setService((prev: any) => ({ ...prev, ...updatedData }));
             setEditing(false);
         } catch (error) {
             console.error('Lỗi cập nhật dịch vụ: ', error);
-            Alert.alert('Error', 'Cập nhật dịch vụ thất bại.');
+            Alert.alert('Lỗi', 'Cập nhật dịch vụ thất bại.');
         } finally {
             setLoading(false);
         }
@@ -111,7 +111,7 @@ const ServiceDetailScreen = ({ route, navigation }: { route: any, navigation: an
     }
 
     if (!service) {
-        return <View style={styles.centered}><Text style={{color: COLORS.textMedium}}>Service data is unavailable.</Text></View>;
+        return <View style={styles.centered}><Text style={{color: COLORS.textMedium}}>Lỗi dữ liệu</Text></View>;
     }
 
     return (

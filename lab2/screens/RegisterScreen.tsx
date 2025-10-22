@@ -118,10 +118,7 @@ const RegisterScreen = ({ navigation }: { navigation: any }) => {
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.container}>
-          <View style={styles.header}>
-
-          </View>
-
+          <View style={styles.header} />
           <View style={styles.formContainer}>
             <Image
                           source={require('../assets/logo.png')}
