@@ -15,6 +15,7 @@ import CustomerProfileScreen from '../screens/CustomerProfileScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import CustomerAppointmentDetailScreen from '../screens/CustomerAppointmentDetailScreen';
 import HealthNewsScreen from '../screens/HealthNewsScreen'; // Import màn hình mới
+import ChatbotScreen from '../screens/ChatbotScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -61,6 +62,13 @@ const ProfileStackNavigator = () => (
     </Stack.Navigator>
 );
 
+// Stack Navigator for Chatbot
+const ChatbotStackNavigator = () => (
+    <Stack.Navigator screenOptions={defaultStackScreenOptions}>
+        <Stack.Screen name="Chatbot" component={ChatbotScreen} options={{ title: 'Hỗ trợ' }}/>
+    </Stack.Navigator>
+);
+
 const CustomerTabNavigator = () => {
     return (
         <Tab.Navigator
@@ -75,6 +83,8 @@ const CustomerTabNavigator = () => {
                         iconName = focused ? 'user-circle' : 'user-circle-o';
                     } else if (route.name === 'HealthNewsTab') {
                         iconName = focused ? 'heartbeat' : 'heartbeat';
+                    } else if (route.name === 'ChatbotTab') {
+                        iconName = focused ? 'comments' : 'comment';
                     }
                     return <Icon name={iconName} size={size * 0.9} color={color} />;
                 },
@@ -97,17 +107,9 @@ const CustomerTabNavigator = () => {
         >
             <Tab.Screen name="ServicesTab" component={ServiceStackNavigator} options={{ title: 'Dịch vụ' }} />
             <Tab.Screen name="AppointmentsTab" component={AppointmentStackNavigator} options={{ title: 'Lịch hẹn' }} />
+            <Tab.Screen name="ChatbotTab" component={ChatbotStackNavigator} options={{ title: 'Hỗ trợ' }} />
             <Tab.Screen name="ProfileTab" component={ProfileStackNavigator} options={{ title: 'Cá nhân' }} />
-            <Tab.Screen
-                name="HealthNewsTab"
-                component={HealthNewsScreen}
-                options={{
-                    title: 'Sức Khỏe',
-                    tabBarIcon: ({ color, size }) => (
-                        <Icon name="heartbeat" color={color} size={size} />
-                    ),
-                }}
-            />
+            <Tab.Screen name="HealthNewsTab" component={HealthNewsScreen} options={{ title: 'Tin tức' }} />
         </Tab.Navigator>
     );
 };

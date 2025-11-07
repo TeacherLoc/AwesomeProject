@@ -7,7 +7,7 @@ const LoadingScreen = () => {
     return (
         <View style={styles.container}>
             <Image
-                source={require('../assets/logolab3.png')}
+                source={require('../assets/logo.png')}
                 style={styles.logo}
             />
         </View>
