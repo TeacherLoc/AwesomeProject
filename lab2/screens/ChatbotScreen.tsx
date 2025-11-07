@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { GiftedChat, IMessage, Reply } from 'react-native-gifted-chat';
+import { GiftedChat, IMessage, Reply, Bubble, Send, InputToolbar } from 'react-native-gifted-chat';
+import { View, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import uuid from 'react-native-uuid';
+import { COLORS } from '../theme/colors';
 
 import {
   detectIntent,
@@ -39,7 +42,7 @@ type UserProfile = {
 const BOT_USER = {
   _id: 'care_assistant_bot',
   name: 'Trợ lý ảo',
-  avatar: 'https://placehold.co/140x140?text=BOT',
+  avatar: 'https://ui-avatars.com/api/?name=Tro+Ly+Ao&background=E91E63&color=fff&size=128&rounded=true',
 };
 
 const QUICK_REPLY_ORDER: QuickReplyKey[] = [
@@ -133,7 +136,19 @@ const formatAppointmentLine = (serviceName: string, date: Date, status?: string)
   return `• ${serviceName} vào ${dateText} lúc ${timeText}${statusText ? ` (${statusText})` : ''}`;
 };
 
-const ChatbotScreen = () => {
+const ChatbotScreen = ({ navigation }: { navigation: any }) => {
+  // Căn giữa tiêu đề ở header
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: 'Hỗ trợ',
+      headerTitleAlign: 'center',
+      headerTitleStyle: {
+        fontWeight: '600',
+        fontSize: 18,
+      },
+    });
+  }, [navigation]);
+
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<FirebaseAuthTypes.User | null>(auth().currentUser);
@@ -482,6 +497,161 @@ const ChatbotScreen = () => {
       placeholder="Nhập câu hỏi cho trợ lý..."
       showUserAvatar
       renderUsernameOnMessage
+      renderBubble={renderBubble}
+      renderSend={renderSend}
+      renderInputToolbar={renderInputToolbar}
+      messagesContainerStyle={styles.listView}
+      timeFormat="HH:mm"
+      dateFormat="DD/MM/YYYY"
+      renderAvatarOnTop
+      maxComposerHeight={100}
+      minComposerHeight={40}
+    />
+  );
+};
+
+const styles = StyleSheet.create({
+  listView: {
+    backgroundColor: '#F5F5F5',
+  },
+  textInput: {
+    color: '#333',
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 8,
+    marginRight: 8,
+    fontSize: 16,
+  },
+  sendContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+    marginBottom: 5,
+  },
+  sendButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  inputToolbar: {
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  bubbleLeft: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 4,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  bubbleRight: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 16,
+    padding: 4,
+  },
+  textLeft: {
+    color: '#333',
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  textRight: {
+    color: '#FFF',
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  timeTextLeft: {
+    color: '#999',
+    fontSize: 11,
+  },
+  timeTextRight: {
+    color: '#FFF',
+    fontSize: 11,
+    opacity: 0.8,
+  },
+  usernameStyle: {
+    color: COLORS.primary,
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  quickReplyStyle: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    backgroundColor: '#FFF',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  quickReplyTextStyle: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  inputPrimaryStyle: {
+    alignItems: 'center',
+  },
+});
+
+// Render custom bubble
+const renderBubble = (props: any) => {
+  return (
+    <Bubble
+      {...props}
+      wrapperStyle={{
+        left: styles.bubbleLeft,
+        right: styles.bubbleRight,
+      }}
+      textStyle={{
+        left: styles.textLeft,
+        right: styles.textRight,
+      }}
+      timeTextStyle={{
+        left: styles.timeTextLeft,
+        right: styles.timeTextRight,
+      }}
+      usernameStyle={styles.usernameStyle}
+      quickReplyStyle={styles.quickReplyStyle}
+      quickReplyTextStyle={styles.quickReplyTextStyle}
+    />
+  );
+};
+
+// Render custom send button
+const renderSend = (props: any) => {
+  return (
+    <Send {...props} containerStyle={styles.sendContainer}>
+      <View style={styles.sendButton}>
+        <Icon name="send" size={20} color="#FFF" />
+      </View>
+    </Send>
+  );
+};
+
+// Render custom input toolbar
+const renderInputToolbar = (props: any) => {
+  return (
+    <InputToolbar
+      {...props}
+      containerStyle={styles.inputToolbar}
+      primaryStyle={styles.inputPrimaryStyle}
+      textInputStyle={styles.textInput}
     />
   );
 };

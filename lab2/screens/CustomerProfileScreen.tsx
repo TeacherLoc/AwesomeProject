@@ -125,6 +125,18 @@ const parseCccdOcrResult = (text: string) => {
 
 
 const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
+    // Căn giữa tiêu đề ở header
+    React.useLayoutEffect(() => {
+        navigation.setOptions({
+            headerTitle: 'Hồ sơ của tôi',
+            headerTitleAlign: 'center',
+            headerTitleStyle: {
+                fontWeight: '600',
+                fontSize: 18,
+            },
+        });
+    }, [navigation]);
+
     const { signOut: contextSignOut } = useAuth();
     const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);

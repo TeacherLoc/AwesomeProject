@@ -20,7 +20,7 @@ const fetchServicesForCustomer = async () => {
     const q = query(servicesCollectionRef, orderBy('name')); // Sắp xếp theo tên dịch vụ
     try {
         const querySnapshot = await getDocs(q);
-        const servicesList = querySnapshot.docs.map(documentSnapshot => ({
+        const servicesList = querySnapshot.docs.map((documentSnapshot: { id: any; data: () => { name?: string; price?: number; duration?: string; description?: string; imageUrl?: string; }; }) => ({
             id: documentSnapshot.id,
             ...(documentSnapshot.data() as { name?: string; price?: number; duration?: string; description?: string; imageUrl?: string }),
         }));
@@ -38,6 +38,10 @@ const CustomerServiceListScreen = ({ navigation }: { navigation: any }) => {
         navigation.setOptions({
             headerTitle: 'Dịch vụ',
             headerTitleAlign: 'center',
+            headerTitleStyle: {
+                fontWeight: '600',
+                fontSize: 18,
+            },
         });
     }, [navigation]);
     const [services, setServices] = useState<any[]>([]);

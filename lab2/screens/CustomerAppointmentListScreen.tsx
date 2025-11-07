@@ -26,6 +26,18 @@ type Props = {
 };
 
 const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
+    // Căn giữa tiêu đề ở header
+    React.useLayoutEffect(() => {
+        navigation.setOptions({
+            headerTitle: 'Lịch hẹn của tôi',
+            headerTitleAlign: 'center',
+            headerTitleStyle: {
+                fontWeight: '600',
+                fontSize: 18,
+            },
+        });
+    }, [navigation]);
+
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -48,7 +60,7 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
                 orderBy('appointmentDateTime', 'desc')
             );
             const querySnapshot = await getDocs(appointmentsQuery);
-            const fetchedAppointments: Appointment[] = querySnapshot.docs.map(doc => {
+            const fetchedAppointments: Appointment[] = querySnapshot.docs.map((doc: { data: () => any; id: any; }) => {
                 const data = doc.data();
                 return {
                     id: doc.id,
