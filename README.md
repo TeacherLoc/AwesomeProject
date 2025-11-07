@@ -3,25 +3,7 @@ This is a new [**React Native**](https://reactnative.dev) project, bootstrapped 
 # Getting Started
 
 # Video
-https://github.com/user-attachments/assets/aee0baea-b21a-4c65-b99f-c319d288a996
 
-https://github.com/user-attachments/assets/407863e7-9e89-4dc3-917b-e18b7b656b56
-
-https://github.com/user-attachments/assets/6254bacc-6d2d-4696-92d0-840b365541f2
-
-https://github.com/user-attachments/assets/be787f5c-4ec8-476b-bab7-a5a913e6b8a3
-
-https://github.com/user-attachments/assets/a40a5b95-6308-4e05-ae2f-b8645fe95a45
-
-https://github.com/user-attachments/assets/907b1404-95ab-4758-b0ea-9a989e9cc438
-
-https://github.com/user-attachments/assets/cf72a7b0-d4a8-4782-92ea-80c7633cbf61
-
-https://github.com/user-attachments/assets/38e303b3-0415-4e21-8c69-ec1f13749f89
-
-https://github.com/user-attachments/assets/d33bcd18-a552-4c91-96df-0423438bf1f1
-
-https://github.com/user-attachments/assets/dd983cd4-1806-49df-8753-867839f65971
 # Image
 
 
