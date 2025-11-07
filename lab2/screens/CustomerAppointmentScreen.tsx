@@ -1,12 +1,12 @@
-/* eslint-disable react-native/no-inline-styles */
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Alert, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
-import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore'; // Import Timestamp type
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth'; // Import User type
+import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import DatePicker from 'react-native-date-picker';
 import { COLORS } from '../theme/colors';
-import { RouteProp } from '@react-navigation/native'; // For route prop type
-import { StackNavigationProp } from '@react-navigation/stack'; // For navigation prop type
+import { RouteProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 
 // Định nghĩa kiểu cho params của route
@@ -52,6 +52,14 @@ const CustomerAppointmentScreen: React.FC<CustomerAppointmentScreenProps> = ({ r
         }
         setAuthChecked(true);
     }, []);
+
+    useEffect(() => {
+        navigation.setOptions({
+            headerTitle: 'Đặt lịch hẹn',
+            headerTitleAlign: 'center',
+            headerTitleStyle: { fontSize: 20, fontWeight: 'bold' },
+        });
+    }, [navigation]);
 
     useEffect(() => {
         if (authChecked && !currentUser) {
@@ -119,7 +127,7 @@ const CustomerAppointmentScreen: React.FC<CustomerAppointmentScreenProps> = ({ r
 
     if (!authChecked) {
         return (
-            <View style={styles.centered}>
+            <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
         );
@@ -127,24 +135,39 @@ const CustomerAppointmentScreen: React.FC<CustomerAppointmentScreenProps> = ({ r
 
     if (!currentUser) {
         return (
-            <View style={styles.centered}>
-                <Text style={{color: COLORS.textDark}}>Bạn cần đăng nhập để thực hiện chức năng này.</Text>
+            <View style={styles.loadingContainer}>
+                <Text style={styles.errorText}>Bạn cần đăng nhập để thực hiện chức năng này.</Text>
             </View>
         );
     }
 
     return (
-        <ScrollView style={styles.container}>
-            <Text style={styles.title}>Đặt lịch cho dịch vụ</Text>
-            <View style={styles.serviceInfoContainer}>
-                <Text style={styles.serviceName}>{serviceName}</Text>
-                {servicePrice !== undefined && <Text style={styles.servicePrice}>Giá: {servicePrice.toLocaleString('vi-VN')}K</Text>}
+        <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+            {/* Service Info Card */}
+            <View style={styles.headerCard}>
+                <Text style={styles.headerTitle}>Đặt lịch cho dịch vụ</Text>
+                <View style={styles.serviceCard}>
+                    <Icon name="medical-services" size={24} color={COLORS.primary} />
+                    <View style={styles.serviceInfo}>
+                        <Text style={styles.serviceName}>{serviceName}</Text>
+                        {servicePrice !== undefined && (
+                            <Text style={styles.servicePrice}>Giá: {servicePrice.toLocaleString('vi-VN')} VNĐ</Text>
+                        )}
+                    </View>
+                </View>
             </View>
 
-            <Text style={styles.label}>Chọn ngày:</Text>
-            <TouchableOpacity onPress={() => setDatePickerVisibility(true)} style={styles.dateInput}>
-                <Text style={styles.dateText}>{appointmentDate.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</Text>
-            </TouchableOpacity>
+            {/* Date Selection Card */}
+            <View style={styles.sectionCard}>
+                <Text style={styles.sectionLabel}>Chọn ngày:</Text>
+                <TouchableOpacity onPress={() => setDatePickerVisibility(true)} style={styles.dateButton}>
+                    <Icon name="event" size={20} color={COLORS.primary} />
+                    <Text style={styles.dateText}>
+                        {appointmentDate.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    </Text>
+                    <Icon name="arrow-drop-down" size={24} color={COLORS.textMedium} />
+                </TouchableOpacity>
+            </View>
 
             <DatePicker
                 modal
@@ -155,7 +178,7 @@ const CustomerAppointmentScreen: React.FC<CustomerAppointmentScreenProps> = ({ r
                 onConfirm={(date) => {
                     setDatePickerVisibility(false);
                     setAppointmentDate(date);
-                    setSelectedTimeSlot(null); // Gán null là hợp lệ vì kiểu là string | null
+                    setSelectedTimeSlot(null);
                 }}
                 onCancel={() => {
                     setDatePickerVisibility(false);
@@ -166,31 +189,42 @@ const CustomerAppointmentScreen: React.FC<CustomerAppointmentScreenProps> = ({ r
                 locale="vi_VN"
             />
 
-            <Text style={styles.label}>Chọn giờ:</Text>
-            <View style={styles.timeSlotsContainer}>
-                {availableTimeSlots.map(slot => (
-                    <TouchableOpacity
-                        key={slot}
-                        style={[
-                            styles.timeSlotButton,
-                            selectedTimeSlot === slot && styles.selectedTimeSlotButton]}
-                        onPress={() => setSelectedTimeSlot(slot)}
-                    >
-                        <Text
+            {/* Time Slots Card */}
+            <View style={styles.sectionCard}>
+                <Text style={styles.sectionLabel}>Chọn giờ:</Text>
+                <View style={styles.timeSlotGrid}>
+                    {availableTimeSlots.map(slot => (
+                        <TouchableOpacity
+                            key={slot}
                             style={[
-                                styles.timeSlotText,
-                                selectedTimeSlot === slot && styles.selectedTimeSlotText]}
+                                styles.timeSlotButton,
+                                selectedTimeSlot === slot && styles.timeSlotButtonSelected]}
+                            onPress={() => setSelectedTimeSlot(slot)}
                         >
-                            {slot}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
+                            <Text
+                                style={[
+                                    styles.timeSlotText,
+                                    selectedTimeSlot === slot && styles.timeSlotTextSelected]}
+                            >
+                                {slot}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
             </View>
 
+            {/* Confirm Button */}
             {loading ? (
-                <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 20 }} />
+                <View style={styles.loadingButtonContainer}>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
             ) : (
-                <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmBooking} disabled={!selectedTimeSlot}>
+                <TouchableOpacity
+                    style={[styles.confirmButton, !selectedTimeSlot && styles.confirmButtonDisabled]}
+                    onPress={handleConfirmBooking}
+                    disabled={!selectedTimeSlot}
+                >
+                    <Icon name="check-circle" size={20} color={COLORS.white} />
                     <Text style={styles.confirmButtonText}>Xác nhận đặt lịch</Text>
                 </TouchableOpacity>
             )}
@@ -198,103 +232,155 @@ const CustomerAppointmentScreen: React.FC<CustomerAppointmentScreenProps> = ({ r
     );
 };
 
-// ... (styles giữ nguyên)
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
-        backgroundColor: COLORS.backgroundMain || '#f8f9fa',
+        backgroundColor: '#f5f5f5',
     },
-    centered: {
+    scrollContent: {
+        padding: 16,
+        paddingBottom: 24,
+    },
+    loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#f5f5f5',
     },
-    title: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: COLORS.textDark,
-        marginBottom: 10,
+    errorText: {
+        fontSize: 16,
+        color: COLORS.textMedium,
         textAlign: 'center',
     },
-    serviceInfoContainer: {
-        marginBottom: 20,
-        padding: 15,
+    headerCard: {
         backgroundColor: COLORS.white,
-        borderRadius: 8,
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 16,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: COLORS.textDark,
+        textAlign: 'center',
+        marginBottom: 16,
+    },
+    serviceCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 12,
         borderWidth: 1,
-        borderColor: COLORS.border,
+        borderColor: COLORS.primary,
+    },
+    serviceInfo: {
+        marginLeft: 12,
+        flex: 1,
     },
     serviceName: {
         fontSize: 18,
-        fontWeight: '600',
+        fontWeight: 'bold',
         color: COLORS.primary,
-        marginBottom: 5,
+        marginBottom: 4,
     },
     servicePrice: {
-        fontSize: 16,
+        fontSize: 14,
         color: COLORS.textMedium,
-    },
-    label: {
-        fontSize: 16,
         fontWeight: '500',
-        color: COLORS.textDark,
-        marginTop: 15,
-        marginBottom: 8,
     },
-    dateInput: {
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        borderRadius: 8,
-        padding: 15,
+    sectionCard: {
         backgroundColor: COLORS.white,
-        marginBottom: 10,
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 16,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+    },
+    sectionLabel: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: COLORS.textDark,
+        marginBottom: 12,
+    },
+    dateButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
     },
     dateText: {
-        fontSize: 16,
+        flex: 1,
+        fontSize: 15,
         color: COLORS.textDark,
+        fontWeight: '500',
+        marginLeft: 12,
     },
-    timeSlotsContainer: {
+    timeSlotGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        marginBottom: 20,
+        gap: 12,
     },
     timeSlotButton: {
+        width: '30%',
+        paddingVertical: 14,
         backgroundColor: COLORS.white,
-        paddingVertical: 12,
-        paddingHorizontal: 10,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: COLORS.border,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#e0e0e0',
         alignItems: 'center',
-        minWidth: '30%',
-        marginBottom: 10,
-        marginRight: '3%',
+        justifyContent: 'center',
     },
-    selectedTimeSlotButton: {
+    timeSlotButtonSelected: {
         backgroundColor: COLORS.primary,
-        borderColor: COLORS.primaryDark,
+        borderColor: COLORS.primary,
     },
     timeSlotText: {
-        fontSize: 15,
+        fontSize: 16,
+        fontWeight: '600',
         color: COLORS.primary,
-        fontWeight: '500',
     },
-    selectedTimeSlotText: {
+    timeSlotTextSelected: {
         color: COLORS.white,
+    },
+    loadingButtonContainer: {
+        alignItems: 'center',
+        paddingVertical: 20,
     },
     confirmButton: {
-        backgroundColor: COLORS.success,
-        padding: 15,
-        borderRadius: 8,
+        flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 20,
+        justifyContent: 'center',
+        backgroundColor: '#27ae60',
+        paddingVertical: 16,
+        borderRadius: 12,
+        marginTop: 8,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    confirmButtonDisabled: {
+        opacity: 0.5,
+        backgroundColor: '#95a5a6',
     },
     confirmButtonText: {
-        color: COLORS.white,
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 'bold',
+        color: COLORS.white,
+        marginLeft: 8,
     },
 });
 export default CustomerAppointmentScreen;

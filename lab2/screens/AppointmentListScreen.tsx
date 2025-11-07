@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 // filepath: screens/Customer/AppointmentListScreen.tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Button, Alert, ActivityIndicator } from 'react-native';
@@ -35,16 +36,16 @@ const AppointmentListScreen = ({ navigation }: { navigation: any }) => {
             'Cancel Appointment',
             'Are you sure you want to cancel this appointment?',
             [
-                { text: "No", style: "cancel" },
+                { text: 'No', style: 'cancel' },
                 {
-                    text: "Yes", onPress: () => {
+                    text: 'Yes', onPress: () => {
                         // --- Add API call to delete ---
                         console.log('Deleting appointment:', id);
                         setAppointments(prev => prev.filter(apt => apt.id !== id));
                         Alert.alert('Success', 'Appointment cancelled.');
                         // --- End API call ---
-                    }
-                }
+                    },
+                },
             ]
         );
     };
@@ -53,7 +54,7 @@ const AppointmentListScreen = ({ navigation }: { navigation: any }) => {
         // Navigate to an update screen, potentially reusing AppointmentScreen
         // Pass existing appointment data
         // navigation.navigate('CustomerUpdateAppointment', { appointmentData: item });
-        Alert.alert("Info", "Update functionality not implemented yet.");
+        Alert.alert('Info', 'Update functionality not implemented yet.');
     };
 
     const renderItem = ({ item }: { item: any }) => (
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        shadowColor: "#000",
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
@@ -154,7 +155,7 @@ const styles = StyleSheet.create({
         marginTop: 50,
         fontSize: 16,
         color: '#666',
-    }
+    },
 });
 
 export default AppointmentListScreen;
