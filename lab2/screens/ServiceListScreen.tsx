@@ -10,7 +10,8 @@ import {
     Alert,
     Image} from 'react-native';
 import { COLORS } from '../theme/colors';
-import { getFirestore, collection, getDocs, query, orderBy } from '@react-native-firebase/firestore'; // Import Firestore functions
+import { getFirestore, collection, getDocs, query, orderBy } from '@react-native-firebase/firestore';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 // Function to get services from Firestore
 const fetchServicesForCustomer = async () => {
@@ -86,24 +87,32 @@ const CustomerServiceListScreen = ({ navigation }: { navigation: any }) => {
 
     const renderServiceItem = ({ item }: { item: any }) => (
         <TouchableOpacity onPress={() => handleSelectService(item)} style={styles.itemContainer}>
-            {item.imageUrl && (
+            {item.imageUrl ? (
                 <Image source={{ uri: item.imageUrl }} style={styles.itemImage} resizeMode="cover" />
+            ) : (
+                <View style={[styles.itemImage, styles.placeholderImage]}>
+                    <Icon name="medical-services" size={32} color={COLORS.primary} />
+                </View>
             )}
             <View style={styles.itemContent}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 {item.price && (
-                    <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')}VNĐ</Text>
+                    <View style={styles.priceRow}>
+                        <Icon name="payments" size={16} color={COLORS.primary} />
+                        <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')} VNĐ</Text>
+                    </View>
                 )}
                 {item.duration && (
-                     <Text style={styles.itemDuration}>Thời gian: {item.duration}</Text>
+                    <View style={styles.durationRow}>
+                        <Icon name="schedule" size={16} color={COLORS.textMedium} />
+                        <Text style={styles.itemDuration}>{item.duration}</Text>
+                    </View>
                 )}
                 <Text style={styles.itemDescription} numberOfLines={2}>
                     {item.description || 'Xem chi tiết để biết thêm...'}
                 </Text>
             </View>
-            <View style={styles.chevronContainer}>
-                 <Text style={styles.chevron}>›</Text>
-            </View>
+            <Icon name="chevron-right" size={24} color={COLORS.textLight} />
         </TouchableOpacity>
     );
 
@@ -113,18 +122,26 @@ const CustomerServiceListScreen = ({ navigation }: { navigation: any }) => {
 
     return (
         <View style={styles.container}>
-            <TextInput
-                style={styles.searchBar}
-                placeholder="Tìm kiếm dịch vụ..."
-                placeholderTextColor={COLORS.textLight}
-                value={searchQuery}
-                onChangeText={handleSearch}
-            />
+            <View style={styles.searchContainer}>
+                <Icon name="search" size={20} color={COLORS.textMedium} style={styles.searchIcon} />
+                <TextInput
+                    style={styles.searchBar}
+                    placeholder="Tìm kiếm dịch vụ..."
+                    placeholderTextColor={COLORS.textLight}
+                    value={searchQuery}
+                    onChangeText={handleSearch}
+                />
+            </View>
             <FlatList
                 data={filteredServices}
                 renderItem={renderServiceItem}
                 keyExtractor={item => item.id}
-                ListEmptyComponent={<View style={styles.centered}><Text style={styles.emptyText}>Không có dịch vụ nào.</Text></View>}
+                ListEmptyComponent={
+                    <View style={styles.centered}>
+                        <Icon name="search-off" size={60} color={COLORS.textLight} />
+                        <Text style={styles.emptyText}>Không tìm thấy dịch vụ nào</Text>
+                    </View>
+                }
                 contentContainerStyle={styles.listContentContainer}
             />
         </View>
@@ -134,20 +151,32 @@ const CustomerServiceListScreen = ({ navigation }: { navigation: any }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundLight || '#f4f6f8',
+        backgroundColor: '#F5F7FA',
     },
     listContentContainer: {
-        paddingHorizontal: 10,
+        paddingHorizontal: 16,
         paddingBottom: 20,
     },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF',
+        marginHorizontal: 16,
+        marginVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    searchIcon: {
+        marginRight: 8,
+    },
     searchBar: {
-        height: 45,
-        borderColor: COLORS.border,
-        borderWidth: 1,
-        borderRadius: 25, // Bo tròn hơn
-        paddingHorizontal: 20,
-        margin: 10,
-        backgroundColor: COLORS.white,
+        flex: 1,
+        height: 48,
         fontSize: 15,
         color: COLORS.textDark,
     },
@@ -155,65 +184,80 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 20,
+        padding: 40,
+        marginTop: 60,
     },
     itemContainer: {
-        backgroundColor: COLORS.white,
-        borderRadius: 12,
-        padding: 15,
+        backgroundColor: '#FFF',
+        borderRadius: 16,
+        padding: 16,
         marginVertical: 8,
         flexDirection: 'row',
-        alignItems: 'center', // Căn giữa các item theo chiều dọc
-        shadowColor: COLORS.black,
+        alignItems: 'center',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
-        shadowRadius: 5,
+        shadowRadius: 8,
         elevation: 3,
+        borderWidth: 1,
+        borderColor: '#F0F0F0',
     },
     itemImage: {
-        width: 70,
-        height: 70,
-        borderRadius: 10,
-        marginRight: 15,
+        width: 80,
+        height: 80,
+        borderRadius: 12,
+        marginRight: 16,
+        backgroundColor: '#F8F9FA',
+    },
+    placeholderImage: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F0F4F8',
     },
     itemContent: {
-        flex: 1, // Cho phép nội dung text co giãn
+        flex: 1,
     },
     itemName: {
         fontSize: 17,
-        fontWeight: 'bold',
-        color: COLORS.textDark,
-        marginBottom: 4,
+        fontWeight: '700',
+        color: '#1F2937',
+        marginBottom: 8,
+        lineHeight: 22,
+    },
+    priceRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 6,
     },
     itemPrice: {
-        fontSize: 15,
+        fontSize: 16,
         color: COLORS.primary,
         fontWeight: '600',
-        marginBottom: 4,
+        marginLeft: 6,
+    },
+    durationRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 6,
     },
     itemDuration: {
-        fontSize: 13,
-        color: COLORS.textMedium,
-        marginBottom: 4,
+        fontSize: 14,
+        color: '#6B7280',
+        marginLeft: 6,
     },
     itemDescription: {
-        fontSize: 13,
-        color: COLORS.textLight,
-        lineHeight: 18,
-    },
-    chevronContainer: {
-        paddingLeft: 10,
-        justifyContent: 'center',
-    },
-    chevron: {
-        fontSize: 24,
-        color: COLORS.textLight,
+        fontSize: 14,
+        color: '#9CA3AF',
+        lineHeight: 20,
+        marginTop: 4,
     },
     emptyText: {
+        marginTop: 16,
         textAlign: 'center',
         fontSize: 16,
         color: COLORS.textMedium,
-    }});
+    },
+});
 
 export default CustomerServiceListScreen;
 

@@ -3,12 +3,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Image, Modal } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
-import { View, Text, StyleSheet, TextInput, Button, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { getAuth, updateProfile as updateUserProfileAuth, signOut as firebaseSignOut } from '@react-native-firebase/auth';
 import { getFirestore, doc, getDoc, updateDoc } from '@react-native-firebase/firestore';
 import { COLORS } from '../theme/colors';
 import { useAuth } from '../navigation/AuthContext';
 import { TouchableOpacity } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 // --- IMPROVED: CCCD Data Parsing Function ---
 const parseCccdOcrResult = (text: string) => {
@@ -405,200 +406,537 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
             <View style={styles.profileBox}>
                 <TouchableOpacity style={styles.avatarContainer} onPress={handleAvatarPress}>
                     <Image source={avatar ? (typeof avatar === 'string' ? { uri: avatar } : avatar) : require('../assets/lo.png')} style={styles.avatar} />
+                    <View style={styles.avatarEditBadge}>
+                        <Icon name="camera-alt" size={18} color="#FFF" />
+                    </View>
                 </TouchableOpacity>
 
-                <View style={styles.fieldContainer}>
-                    <Text style={styles.label}>Email:</Text>
-                    <Text style={styles.value}>{email}</Text>
-                </View>
-
-                {/* --- UPDATED: All fields are now editable --- */}
-                <View style={styles.fieldContainer}>
-                    <Text style={styles.label}>Họ và Tên:</Text>
-                    {editing ? <TextInput style={styles.input} value={name} onChangeText={setName} editable={!isSaving} /> : <Text style={styles.value}>{name || 'Chưa cập nhật'}</Text>}
-                </View>
-
-                <View style={styles.fieldContainer}>
-                    <Text style={styles.label}>Số điện thoại:</Text>
-                    {editing ? <TextInput style={styles.input} value={phone} onChangeText={setPhone} keyboardType="phone-pad" editable={!isSaving} /> : <Text style={styles.value}>{phone || 'Chưa cập nhật'}</Text>}
-                </View>
-
-                <View style={styles.fieldContainer}>
-                    <Text style={styles.label}>Số CCCD:</Text>
-                    {editing ? <TextInput style={styles.input} value={cccdNumber} onChangeText={setCccdNumber} keyboardType="number-pad" editable={!isSaving} /> : <Text style={styles.value}>{cccdNumber || 'Chưa cập nhật'}</Text>}
-                </View>
-
-                <View style={styles.fieldContainer}>
-                    <Text style={styles.label}>Ngày sinh (DD/MM/YYYY):</Text>
-                    {editing ? <TextInput style={styles.input} value={dob} onChangeText={setDob} editable={!isSaving} /> : <Text style={styles.value}>{dob || 'Chưa cập nhật'}</Text>}
-                </View>
-
-                <View style={styles.fieldContainer}>
-                    <Text style={styles.label}>Giới tính:</Text>
-                    {editing ? <TextInput style={styles.input} value={gender} onChangeText={setGender} editable={!isSaving} /> : <Text style={styles.value}>{gender || 'Chưa cập nhật'}</Text>}
-                </View>
-
-                <View style={styles.fieldContainer}>
-                    <Text style={styles.label}>Quê quán:</Text>
-                    {editing ? <TextInput style={styles.input} value={placeOfOrigin} onChangeText={setPlaceOfOrigin} multiline editable={!isSaving} /> : <Text style={styles.value}>{placeOfOrigin || 'Chưa cập nhật'}</Text>}
-                </View>
-
-                <View style={styles.fieldContainer}>
-                    <Text style={styles.label}>Địa chỉ thường trú:</Text>
-                    {editing ? <TextInput style={styles.input} value={address} onChangeText={setAddress} multiline editable={!isSaving} /> : <Text style={styles.value}>{address || 'Chưa cập nhật'}</Text>}
-                </View>
-
-                <View style={styles.fieldContainer}>
-                    <Text style={styles.label}>Ngày hết hạn (DD/MM/YYYY):</Text>
-                    {editing ? <TextInput style={styles.input} value={expiryDate} onChangeText={setExpiryDate} editable={!isSaving} /> : <Text style={styles.value}>{expiryDate || 'Chưa cập nhật'}</Text>}
-                </View>
-
-                <View style={styles.fieldContainer}>
-                    <Text style={styles.label}>Quét thông tin từ ảnh CCCD:</Text>
-                    <Button title="Chọn & Quét ảnh CCCD" onPress={handlePickCccdImage} color={COLORS.primary} disabled={isSaving} />
-                    {cccdImage && (
-                        <View>
-                            <Image source={{ uri: cccdImage }} style={{ width: '100%', height: 200, marginTop: 10, borderRadius: 8 }} resizeMode="contain" />
-                            {ocrResult ? (
-                                <View style={{ marginTop: 10, backgroundColor: '#f0f0f0', padding: 10, borderRadius: 8 }}>
-                                    <Text style={{ fontWeight: 'bold' }}>Văn bản gốc từ ảnh:</Text>
-                                    <Text style={{ color: '#555', marginTop: 5, fontStyle: 'italic' }}>{ocrResult}</Text>
-                                </View>
-                            ) : null}
+                {/* Email Field */}
+                <View style={styles.infoCard}>
+                    <View style={styles.infoRow}>
+                        <Icon name="email" size={20} color={COLORS.primary} style={styles.infoIcon} />
+                        <View style={styles.infoContent}>
+                            <Text style={styles.infoLabel}>Email</Text>
+                            <Text style={styles.infoValue}>{email}</Text>
                         </View>
-                    )}
+                    </View>
                 </View>
 
+                {/* Name Field */}
+                <View style={styles.infoCard}>
+                    <View style={styles.infoRow}>
+                        <Icon name="person" size={20} color={COLORS.primary} style={styles.infoIcon} />
+                        <View style={styles.infoContent}>
+                            <Text style={styles.infoLabel}>Họ và Tên</Text>
+                            {editing ? (
+                                <TextInput
+                                    style={styles.infoInput}
+                                    value={name}
+                                    onChangeText={setName}
+                                    placeholder="Nhập họ và tên"
+                                    editable={!isSaving}
+                                />
+                            ) : (
+                                <Text style={styles.infoValue}>{name || 'Chưa cập nhật'}</Text>
+                            )}
+                        </View>
+                    </View>
+                </View>
+
+                {/* Phone Field */}
+                <View style={styles.infoCard}>
+                    <View style={styles.infoRow}>
+                        <Icon name="phone" size={20} color={COLORS.primary} style={styles.infoIcon} />
+                        <View style={styles.infoContent}>
+                            <Text style={styles.infoLabel}>Số điện thoại</Text>
+                            {editing ? (
+                                <TextInput
+                                    style={styles.infoInput}
+                                    value={phone}
+                                    onChangeText={setPhone}
+                                    placeholder="Nhập số điện thoại"
+                                    keyboardType="phone-pad"
+                                    editable={!isSaving}
+                                />
+                            ) : (
+                                <Text style={styles.infoValue}>{phone || 'Chưa cập nhật'}</Text>
+                            )}
+                        </View>
+                    </View>
+                </View>
+
+                {/* CCCD Number Field */}
+                <View style={styles.infoCard}>
+                    <View style={styles.infoRow}>
+                        <Icon name="badge" size={20} color={COLORS.primary} style={styles.infoIcon} />
+                        <View style={styles.infoContent}>
+                            <Text style={styles.infoLabel}>Số CCCD</Text>
+                            {editing ? (
+                                <TextInput
+                                    style={styles.infoInput}
+                                    value={cccdNumber}
+                                    onChangeText={setCccdNumber}
+                                    placeholder="Nhập số CCCD"
+                                    keyboardType="number-pad"
+                                    editable={!isSaving}
+                                />
+                            ) : (
+                                <Text style={styles.infoValue}>{cccdNumber || 'Chưa cập nhật'}</Text>
+                            )}
+                        </View>
+                    </View>
+                </View>
+
+                {/* Date of Birth Field */}
+                <View style={styles.infoCard}>
+                    <View style={styles.infoRow}>
+                        <Icon name="cake" size={20} color={COLORS.primary} style={styles.infoIcon} />
+                        <View style={styles.infoContent}>
+                            <Text style={styles.infoLabel}>Ngày sinh</Text>
+                            {editing ? (
+                                <TextInput
+                                    style={styles.infoInput}
+                                    value={dob}
+                                    onChangeText={setDob}
+                                    placeholder="DD/MM/YYYY"
+                                    editable={!isSaving}
+                                />
+                            ) : (
+                                <Text style={styles.infoValue}>{dob || 'Chưa cập nhật'}</Text>
+                            )}
+                        </View>
+                    </View>
+                </View>
+
+                {/* Gender Field */}
+                <View style={styles.infoCard}>
+                    <View style={styles.infoRow}>
+                        <Icon name="wc" size={20} color={COLORS.primary} style={styles.infoIcon} />
+                        <View style={styles.infoContent}>
+                            <Text style={styles.infoLabel}>Giới tính</Text>
+                            {editing ? (
+                                <TextInput
+                                    style={styles.infoInput}
+                                    value={gender}
+                                    onChangeText={setGender}
+                                    placeholder="Nam/Nữ"
+                                    editable={!isSaving}
+                                />
+                            ) : (
+                                <Text style={styles.infoValue}>{gender || 'Chưa cập nhật'}</Text>
+                            )}
+                        </View>
+                    </View>
+                </View>
+
+                {/* Place of Origin Field */}
+                <View style={styles.infoCard}>
+                    <View style={styles.infoRow}>
+                        <Icon name="home" size={20} color={COLORS.primary} style={styles.infoIcon} />
+                        <View style={styles.infoContent}>
+                            <Text style={styles.infoLabel}>Quê quán</Text>
+                            {editing ? (
+                                <TextInput
+                                    style={[styles.infoInput, styles.multilineInput]}
+                                    value={placeOfOrigin}
+                                    onChangeText={setPlaceOfOrigin}
+                                    placeholder="Nhập quê quán"
+                                    multiline
+                                    editable={!isSaving}
+                                />
+                            ) : (
+                                <Text style={styles.infoValue}>{placeOfOrigin || 'Chưa cập nhật'}</Text>
+                            )}
+                        </View>
+                    </View>
+                </View>
+
+                {/* Address Field */}
+                <View style={styles.infoCard}>
+                    <View style={styles.infoRow}>
+                        <Icon name="location-on" size={20} color={COLORS.primary} style={styles.infoIcon} />
+                        <View style={styles.infoContent}>
+                            <Text style={styles.infoLabel}>Địa chỉ thường trú</Text>
+                            {editing ? (
+                                <TextInput
+                                    style={[styles.infoInput, styles.multilineInput]}
+                                    value={address}
+                                    onChangeText={setAddress}
+                                    placeholder="Nhập địa chỉ"
+                                    multiline
+                                    editable={!isSaving}
+                                />
+                            ) : (
+                                <Text style={styles.infoValue}>{address || 'Chưa cập nhật'}</Text>
+                            )}
+                        </View>
+                    </View>
+                </View>
+
+                {/* Expiry Date Field */}
+                <View style={styles.infoCard}>
+                    <View style={styles.infoRow}>
+                        <Icon name="event" size={20} color={COLORS.primary} style={styles.infoIcon} />
+                        <View style={styles.infoContent}>
+                            <Text style={styles.infoLabel}>Ngày hết hạn CCCD</Text>
+                            {editing ? (
+                                <TextInput
+                                    style={styles.infoInput}
+                                    value={expiryDate}
+                                    onChangeText={setExpiryDate}
+                                    placeholder="DD/MM/YYYY"
+                                    editable={!isSaving}
+                                />
+                            ) : (
+                                <Text style={styles.infoValue}>{expiryDate || 'Chưa cập nhật'}</Text>
+                            )}
+                        </View>
+                    </View>
+                </View>
+
+                {/* CCCD Scanner Section */}
+                {editing && (
+                    <View style={styles.scannerSection}>
+                        <View style={styles.scannerHeader}>
+                            <Icon name="document-scanner" size={24} color={COLORS.primary} />
+                            <Text style={styles.scannerTitle}>Quét thông tin từ CCCD</Text>
+                        </View>
+                        <TouchableOpacity
+                            style={styles.scanButton}
+                            onPress={handlePickCccdImage}
+                            disabled={isSaving}
+                        >
+                            <Icon name="add-a-photo" size={20} color="#FFF" />
+                            <Text style={styles.scanButtonText}>Chọn & Quét ảnh CCCD</Text>
+                        </TouchableOpacity>
+                        {cccdImage && (
+                            <View style={styles.cccdImageContainer}>
+                                <Image source={{ uri: cccdImage }} style={styles.cccdImage} resizeMode="contain" />
+                                {ocrResult ? (
+                                    <View style={styles.ocrResultContainer}>
+                                        <Text style={styles.ocrResultTitle}>Văn bản nhận diện được:</Text>
+                                        <Text style={styles.ocrResultText}>{ocrResult}</Text>
+                                    </View>
+                                ) : null}
+                            </View>
+                        )}
+                    </View>
+                )}
+
+                {/* Action Buttons */}
                 {editing ? (
-                    <View style={styles.buttonGroup}>
-                        <Button title={isSaving ? 'Đang lưu...' : 'Lưu thay đổi'} onPress={handleUpdateProfile} disabled={isSaving} color={COLORS.primary} />
-                        <View style={{ height: 10 }} />
-                        <Button title="Huỷ" color={'gray'} onPress={() => {
-                            loadUserProfile(); // Reload original data
-                            setEditing(false);
-                            setCccdImage(null); // Also clear image on cancel
-                            setOcrResult('');
-                        }} disabled={isSaving} />
+                    <View style={styles.actionButtons}>
+                        <TouchableOpacity
+                            style={[styles.actionButton, styles.saveButton]}
+                            onPress={handleUpdateProfile}
+                            disabled={isSaving}
+                        >
+                            <Icon name={isSaving ? 'hourglass-empty' : 'save'} size={20} color="#FFF" />
+                            <Text style={styles.actionButtonText}>
+                                {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.actionButton, styles.cancelButton]}
+                            onPress={() => {
+                                loadUserProfile();
+                                setEditing(false);
+                                setCccdImage(null);
+                                setOcrResult('');
+                            }}
+                            disabled={isSaving}
+                        >
+                            <Icon name="close" size={20} color="#666" />
+                            <Text style={[styles.actionButtonText, { color: '#666' }]}>Hủy</Text>
+                        </TouchableOpacity>
                     </View>
                 ) : (
-                    <View style={styles.buttonGroup}>
-                        <Button title="Chỉnh sửa hồ sơ" onPress={() => setEditing(true)} color={COLORS.primary} />
-                    </View>
+                    <TouchableOpacity
+                        style={[styles.actionButton, styles.editButton]}
+                        onPress={() => setEditing(true)}
+                    >
+                        <Icon name="edit" size={20} color="#FFF" />
+                        <Text style={styles.actionButtonText}>Chỉnh sửa hồ sơ</Text>
+                    </TouchableOpacity>
                 )}
             </View>
 
-            <View style={styles.buttonGroup}>
-                <Button title="Đổi mật khẩu" onPress={() => navigation.navigate('CustomerChangePassword')} color={COLORS.primary} />
-            </View>
+            {/* Change Password Button */}
+            <TouchableOpacity
+                style={styles.secondaryActionButton}
+                onPress={() => navigation.navigate('CustomerChangePassword')}
+            >
+                <Icon name="lock" size={20} color={COLORS.primary} />
+                <Text style={styles.secondaryActionButtonText}>Đổi mật khẩu</Text>
+            </TouchableOpacity>
 
-            <View style={[styles.buttonGroup, styles.logoutButtonContainer]}>
-                <Button title="Đăng xuất" color={'red'} onPress={handleLogout} />
-            </View>
+            {/* Logout Button */}
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                <Icon name="logout" size={20} color="#FFF" />
+                <Text style={styles.logoutButtonText}>Đăng xuất</Text>
+            </TouchableOpacity>
+            <View style={{ height: 20 }} />
         </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
-    profileBox: {
-        backgroundColor: COLORS.white,
-        borderRadius: 18,
-        padding: 20,
-        marginVertical: 18,
-        marginHorizontal: 2,
-        elevation: 3,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.12,
-        shadowRadius: 6,
-    },
     container: {
         flex: 1,
-        padding: 20,
-        backgroundColor: COLORS.backgroundMain,
+        backgroundColor: '#F5F7FA',
     },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.backgroundMain,
+        backgroundColor: '#F5F7FA',
+    },
+    profileBox: {
+        backgroundColor: '#FFF',
+        borderRadius: 20,
+        padding: 20,
+        marginHorizontal: 16,
+        marginTop: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 3,
     },
     avatarContainer: {
         alignSelf: 'center',
-        marginBottom: 25,
-        borderWidth: 3,
+        marginBottom: 24,
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        borderWidth: 4,
         borderColor: COLORS.primary,
-        borderRadius: 75,
-        width: 150,
-        height: 150,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-        elevation: 5,
+        position: 'relative',
+        overflow: 'visible',
     },
     avatar: {
         width: '100%',
         height: '100%',
-        borderRadius: 75,
+        borderRadius: 56,
     },
-    fieldContainer: {
-        marginBottom: 18,
+    avatarEditBadge: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        backgroundColor: COLORS.primary,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 3,
+        borderColor: '#FFF',
     },
-    label: {
-        fontSize: 14,
-        color: COLORS.textMedium,
+    infoCard: {
+        backgroundColor: '#F8F9FA',
+        borderRadius: 12,
+        padding: 14,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#E8EAED',
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+    },
+    infoIcon: {
+        marginTop: 2,
+        marginRight: 12,
+    },
+    infoContent: {
+        flex: 1,
+    },
+    infoLabel: {
+        fontSize: 12,
+        color: '#6B7280',
+        marginBottom: 4,
+        fontWeight: '500',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    infoValue: {
+        fontSize: 16,
+        color: '#1F2937',
+        fontWeight: '400',
+    },
+    infoInput: {
+        fontSize: 16,
+        color: '#1F2937',
+        padding: 8,
+        backgroundColor: '#FFF',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+        marginTop: 4,
+    },
+    multilineInput: {
+        minHeight: 60,
+        textAlignVertical: 'top',
+    },
+    scannerSection: {
+        marginTop: 20,
+        padding: 16,
+        backgroundColor: '#F0F9FF',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#BAE6FD',
+    },
+    scannerHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    scannerTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1F2937',
+        marginLeft: 8,
+    },
+    scanButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: COLORS.primary,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+        gap: 8,
+    },
+    scanButtonText: {
+        color: '#FFF',
+        fontSize: 15,
+        fontWeight: '600',
+        marginLeft: 8,
+    },
+    cccdImageContainer: {
+        marginTop: 16,
+    },
+    cccdImage: {
+        width: '100%',
+        height: 200,
+        borderRadius: 12,
+        backgroundColor: '#F3F4F6',
+    },
+    ocrResultContainer: {
+        marginTop: 12,
+        padding: 12,
+        backgroundColor: '#FFF',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+    },
+    ocrResultTitle: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#374151',
         marginBottom: 6,
     },
-    value: {
-        fontSize: 17,
-        color: COLORS.textDark,
-        paddingVertical: 10,
-        paddingHorizontal: 5,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
+    ocrResultText: {
+        fontSize: 12,
+        color: '#6B7280',
+        lineHeight: 18,
+        fontStyle: 'italic',
     },
-    input: {
+    actionButtons: {
+        marginTop: 24,
+        gap: 12,
+    },
+    actionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+        gap: 8,
+    },
+    saveButton: {
+        backgroundColor: COLORS.primary,
+    },
+    editButton: {
+        backgroundColor: COLORS.primary,
+    },
+    cancelButton: {
+        backgroundColor: '#F3F4F6',
         borderWidth: 1,
-        borderColor: COLORS.border,
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
+        borderColor: '#D1D5DB',
+    },
+    actionButtonText: {
         fontSize: 16,
-        backgroundColor: COLORS.white,
-        color: COLORS.textDark,
+        fontWeight: '600',
+        color: '#FFF',
+        marginLeft: 8,
     },
-    buttonGroup: {
-        marginTop: 20,
+    secondaryActionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#FFF',
+        paddingVertical: 14,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+        marginHorizontal: 16,
+        marginTop: 12,
+        borderWidth: 2,
+        borderColor: COLORS.primary,
     },
-    logoutButtonContainer: {
-        marginTop: 30,
-        marginBottom: 20,
+    secondaryActionButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: COLORS.primary,
+        marginLeft: 8,
+    },
+    logoutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#EF4444',
+        paddingVertical: 14,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+        marginHorizontal: 16,
+        marginTop: 24,
+    },
+    logoutButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#FFF',
+        marginLeft: 8,
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     modalContent: {
-        backgroundColor: COLORS.white,
-        borderRadius: 16,
-        paddingVertical: 18,
-        paddingHorizontal: 24,
-        minWidth: 260,
+        backgroundColor: '#FFF',
+        borderRadius: 20,
+        paddingVertical: 8,
+        minWidth: 280,
+        maxWidth: 320,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
         elevation: 8,
-        alignItems: 'stretch',
     },
     modalButton: {
-        paddingVertical: 14,
+        paddingVertical: 16,
+        paddingHorizontal: 24,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
+        borderBottomColor: '#E5E7EB',
     },
     modalButtonText: {
         fontSize: 16,
         color: COLORS.primary,
         textAlign: 'center',
+        fontWeight: '500',
     },
 });
 

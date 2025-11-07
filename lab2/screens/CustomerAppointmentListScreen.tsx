@@ -118,35 +118,42 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
                 style={styles.appointmentItem}
                 onPress={() => navigation.navigate('CustomerAppointmentDetail', {
                     appointmentId: item.id,
-                    // Pass the full appointment data if you want to avoid re-fetching in detail screen for initial load
-                    // appointmentData: { ...item, appointmentDateTime: item.appointmentDateTime.toDate().toISOString() } // Convert Timestamp to serializable format
                 })}
             >
                 <View style={styles.itemHeader}>
-                    <Text style={styles.serviceName}>{item.serviceName}</Text>
+                    <View style={styles.serviceNameContainer}>
+                        <Icon name="event-note" size={20} color={COLORS.primary} />
+                        <Text style={styles.serviceName}>{item.serviceName}</Text>
+                    </View>
                     <View style={[styles.statusBadge, { backgroundColor: statusInfo.backgroundColor }]}>
                         <Text style={[styles.statusText, { color: statusInfo.color }]}>{statusInfo.text}</Text>
                     </View>
                 </View>
-                <View style={styles.itemRow}>
-                    <Icon name="calendar" size={16} color={COLORS.textMedium} />
-                    <Text style={styles.appointmentDate}>
-                        {appointmentDate.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                    </Text>
-                </View>
-                <View style={styles.itemRow}>
-                    <Icon name="clock-o" size={16} color={COLORS.textMedium} />
-                    <Text style={styles.appointmentTime}>
-                        {appointmentDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                    </Text>
-                </View>
-                {item.servicePrice !== undefined && (
+
+                <View style={styles.detailsContainer}>
                     <View style={styles.itemRow}>
-                        <Icon name="money" size={16} color={COLORS.textMedium} />
-                        <Text style={styles.servicePrice}>Giá: {item.servicePrice.toLocaleString('vi-VN')}K</Text>
+                        <Icon name="calendar" size={18} color={COLORS.textMedium} />
+                        <Text style={styles.appointmentDate}>
+                            {appointmentDate.toLocaleDateString('vi-VN', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}
+                        </Text>
                     </View>
-                )}
-                <Icon name="chevron-right" size={16} color={COLORS.textLight} style={styles.chevronIcon} />
+                    <View style={styles.itemRow}>
+                        <Icon name="clock-o" size={18} color={COLORS.textMedium} />
+                        <Text style={styles.appointmentTime}>
+                            {appointmentDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                        </Text>
+                    </View>
+                    {item.servicePrice !== undefined && (
+                        <View style={styles.itemRow}>
+                            <Icon name="money" size={18} color={COLORS.primary} />
+                            <Text style={styles.servicePrice}>{item.servicePrice.toLocaleString('vi-VN')} VNĐ</Text>
+                        </View>
+                    )}
+                </View>
+
+                <View style={styles.chevronContainer}>
+                    <Icon name="chevron-right" size={20} color={COLORS.textLight} />
+                </View>
             </TouchableOpacity>
         );
     };
@@ -170,12 +177,16 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
     if (appointments.length === 0) {
         return (
             <View style={styles.centered}>
-                <Icon name="calendar-times-o" size={50} color={COLORS.textLight} />
-                <Text style={styles.emptyText}>Bạn chưa có lịch hẹn nào.</Text>
+                <View style={styles.emptyIconContainer}>
+                    <Icon name="calendar-times-o" size={64} color={COLORS.primary} />
+                </View>
+                <Text style={styles.emptyTitle}>Chưa có lịch hẹn</Text>
+                <Text style={styles.emptyText}>Bạn chưa đặt lịch khám nào. Hãy chọn dịch vụ và đặt lịch ngay!</Text>
                 <TouchableOpacity
                     style={styles.bookButton}
                     onPress={() => navigation.navigate('ServicesTab', { screen: 'CustomerServiceList' })}
                 >
+                    <Icon name="add-circle-outline" size={20} color="#FFF" />
                     <Text style={styles.bookButtonText}>Đặt dịch vụ ngay</Text>
                 </TouchableOpacity>
             </View>
@@ -199,98 +210,142 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundMain || '#f8f9fa',
+        backgroundColor: '#F5F7FA',
     },
     listContentContainer: {
-        paddingVertical: 10,
-        paddingHorizontal: 15,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
     },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 20,
-        backgroundColor: COLORS.backgroundMain || '#f8f9fa',
+        padding: 32,
+        backgroundColor: '#F5F7FA',
     },
-    emptyText: {
-        marginTop: 15,
-        fontSize: 16,
-        color: COLORS.textMedium,
+    emptyIconContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: '#FFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 24,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 4,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1F2937',
+        marginBottom: 12,
         textAlign: 'center',
     },
+    emptyText: {
+        fontSize: 15,
+        color: '#6B7280',
+        textAlign: 'center',
+        lineHeight: 22,
+        marginBottom: 24,
+        paddingHorizontal: 20,
+    },
     bookButton: {
-        marginTop: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
         backgroundColor: COLORS.primary,
-        paddingVertical: 12,
-        paddingHorizontal: 25,
-        borderRadius: 8,
+        paddingVertical: 14,
+        paddingHorizontal: 28,
+        borderRadius: 12,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
     },
     bookButtonText: {
-        color: COLORS.white,
+        color: '#FFF',
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: '700',
+        marginLeft: 8,
     },
     appointmentItem: {
-        backgroundColor: COLORS.white,
-        padding: 15,
-        borderRadius: 8,
+        backgroundColor: '#FFF',
+        padding: 16,
+        borderRadius: 16,
         marginBottom: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 3,
         borderWidth: 1,
-        borderColor: COLORS.border,
-        shadowColor: COLORS.black,
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1,
+        borderColor: '#F0F0F0',
+        position: 'relative',
     },
     itemHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: 10,
+        marginBottom: 16,
+        paddingBottom: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
+    },
+    serviceNameContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        marginRight: 12,
     },
     serviceName: {
         fontSize: 17,
-        fontWeight: 'bold',
-        color: COLORS.textDark,
-        flexShrink: 1,
-        marginRight: 10,
+        fontWeight: '700',
+        color: '#1F2937',
+        marginLeft: 8,
+        flex: 1,
     },
     statusBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 12,
-        marginLeft: 'auto', // Push to the right
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
     },
     statusText: {
         fontSize: 12,
         fontWeight: '600',
     },
+    detailsContainer: {
+        gap: 10,
+    },
     itemRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 6,
     },
     appointmentDate: {
-        fontSize: 14,
-        color: COLORS.textMedium,
-        marginLeft: 8,
+        fontSize: 15,
+        color: '#4B5563',
+        marginLeft: 10,
+        flex: 1,
     },
     appointmentTime: {
-        fontSize: 14,
-        color: COLORS.textMedium,
-        marginLeft: 8,
+        fontSize: 15,
+        color: '#4B5563',
+        marginLeft: 10,
+        fontWeight: '600',
     },
     servicePrice: {
-        fontSize: 14,
-        color: COLORS.textMedium,
-        marginLeft: 8,
+        fontSize: 16,
+        color: COLORS.primary,
+        marginLeft: 10,
+        fontWeight: '700',
     },
-    chevronIcon: {
+    chevronContainer: {
         position: 'absolute',
-        right: 15,
-        top: '50%', // Center vertically
-        transform: [{ translateY: -8 }], // Adjust based on icon size
+        right: 16,
+        top: '50%',
+        marginTop: -10,
     },
 });
 
