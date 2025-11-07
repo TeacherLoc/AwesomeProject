@@ -1,5 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
-/* eslint-disable react/no-unstable-nested-components */
 import React, { useState, useEffect, useCallback, useLayoutEffect } from 'react';
 import {
     View,
@@ -13,7 +11,7 @@ import {
     Image} from 'react-native';
 import { COLORS } from '../theme/colors';
 import { getFirestore, collection, getDocs, query, orderBy } from '@react-native-firebase/firestore';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 // Function to get services from Firestore
 const fetchAdminServices = async () => {
@@ -22,7 +20,7 @@ const fetchAdminServices = async () => {
     const q = query(servicesCollectionRef, orderBy('name'));
     try {
         const querySnapshot = await getDocs(q);
-        const servicesList = querySnapshot.docs.map(documentSnapshot => ({
+        const servicesList = querySnapshot.docs.map((documentSnapshot: any) => ({
             id: documentSnapshot.id,
             ...(documentSnapshot.data() as { name?: string; price?: number; duration?: string; description?: string; imageUrl?: string }),
         }));
@@ -43,14 +41,8 @@ const AdminServiceListScreen = ({ navigation }: { navigation: any }) => {
     useLayoutEffect(() => {
         navigation.setOptions({
             title: 'Dịch vụ phòng khám',
-            headerRight: () => (
-                <TouchableOpacity
-                    onPress={() => navigation.navigate('AdminAddService')}
-                    style={{ marginRight: 15 }}
-                >
-                    <Icon name="plus-circle" size={28} color={COLORS.primary} />
-                </TouchableOpacity>
-            ),
+            headerTitleAlign: 'center',
+            headerTitleStyle: { fontSize: 20, fontWeight: 'bold' },
         });
     }, [navigation]);
 
@@ -89,25 +81,40 @@ const AdminServiceListScreen = ({ navigation }: { navigation: any }) => {
     };
 
     const renderServiceItem = ({ item }: { item: any }) => (
-        <TouchableOpacity onPress={() => handleSelectServiceForAdmin(item)} style={styles.itemContainer}>
-            {item.imageUrl && (
-                <Image source={{ uri: item.imageUrl }} style={styles.itemImage} resizeMode="cover" />
-            )}
-            <View style={styles.itemContent}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                {item.price !== undefined && (
-                    <Text style={styles.itemPrice}>{item.price.toLocaleString('vi-VN')}VNĐ</Text>
+        <TouchableOpacity onPress={() => handleSelectServiceForAdmin(item)} style={styles.serviceCard}>
+            <View style={styles.cardContent}>
+                {item.imageUrl ? (
+                    <Image source={{ uri: item.imageUrl }} style={styles.serviceImage} resizeMode="cover" />
+                ) : (
+                    <View style={styles.placeholderImage}>
+                        <Icon name="medical-services" size={32} color={COLORS.primary} />
+                    </View>
                 )}
-                {item.duration && (
-                     <Text style={styles.itemDuration}>Thời gian khám: {item.duration}</Text>
-                )}
-                <Text style={styles.itemDescription} numberOfLines={2}>
-                    {item.description || 'Chưa có mô tả dịch vụ phòng khám.'}
-                </Text>
+
+                <View style={styles.serviceInfo}>
+                    <Text style={styles.serviceName}>{item.name}</Text>
+
+                    <View style={styles.priceRow}>
+                        <Icon name="payments" size={16} color={COLORS.primary} />
+                        <Text style={styles.servicePrice}>
+                            {item.price !== undefined ? `${item.price.toLocaleString('vi-VN')} VNĐ` : 'Chưa có giá'}
+                        </Text>
+                    </View>
+
+                    {item.duration && (
+                        <View style={styles.durationRow}>
+                            <Icon name="schedule" size={16} color="#666" />
+                            <Text style={styles.serviceDuration}>{item.duration}</Text>
+                        </View>
+                    )}
+
+                    <Text style={styles.serviceDescription} numberOfLines={2}>
+                        {item.description || 'Chưa có mô tả dịch vụ phòng khám.'}
+                    </Text>
+                </View>
             </View>
-            <View style={styles.chevronContainer}>
-                 <Text style={styles.chevron}>›</Text>
-            </View>
+
+            <Icon name="chevron-right" size={24} color="#ccc" style={styles.chevronIcon} />
         </TouchableOpacity>
     );
 
@@ -117,20 +124,35 @@ const AdminServiceListScreen = ({ navigation }: { navigation: any }) => {
 
     return (
         <View style={styles.container}>
-            <TextInput
-                style={styles.searchBar}
-                placeholder="Tìm kiếm dịch vụ phòng khám..."
-                placeholderTextColor={COLORS.textLight}
-                value={searchQuery}
-                onChangeText={handleSearch}
-            />
+            <View style={styles.searchContainer}>
+                <Icon name="search" size={20} color="#999" style={styles.searchIcon} />
+                <TextInput
+                    style={styles.searchInput}
+                    placeholder="Tìm kiếm dịch vụ phòng khám..."
+                    placeholderTextColor="#999"
+                    value={searchQuery}
+                    onChangeText={handleSearch}
+                />
+            </View>
             <FlatList
                 data={filteredServices}
                 renderItem={renderServiceItem}
                 keyExtractor={item => item.id}
-                ListEmptyComponent={<View style={styles.centered}><Text style={styles.emptyText}>Chưa có dịch vụ phòng khám nào. Hãy thêm mới!</Text></View>}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Icon name="medical-services" size={64} color="#ccc" />
+                        <Text style={styles.emptyText}>Chưa có dịch vụ phòng khám nào</Text>
+                        <Text style={styles.emptySubtext}>Nhấn nút + để thêm mới</Text>
+                    </View>
+                }
                 contentContainerStyle={styles.listContentContainer}
             />
+            <TouchableOpacity
+                style={styles.fab}
+                onPress={() => navigation.navigate('AdminAddService')}
+            >
+                <Icon name="add" size={28} color="#fff" />
+            </TouchableOpacity>
         </View>
     );
 };
@@ -138,22 +160,37 @@ const AdminServiceListScreen = ({ navigation }: { navigation: any }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundLight || '#f4f6f8',
+        backgroundColor: '#f5f5f5',
+    },
+    addButton: {
+        marginRight: 15,
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        marginHorizontal: 16,
+        marginTop: 16,
+        marginBottom: 8,
+        paddingHorizontal: 12,
+        borderRadius: 12,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+    },
+    searchIcon: {
+        marginRight: 8,
+    },
+    searchInput: {
+        flex: 1,
+        height: 48,
+        fontSize: 15,
+        color: '#333',
     },
     listContentContainer: {
-        paddingHorizontal: 10,
-        paddingBottom: 20,
-    },
-    searchBar: {
-        height: 45,
-        borderColor: COLORS.border,
-        borderWidth: 1,
-        borderRadius: 25,
-        paddingHorizontal: 20,
-        margin: 10,
-        backgroundColor: COLORS.white,
-        fontSize: 15,
-        color: COLORS.textDark,
+        padding: 16,
     },
     centered: {
         flex: 1,
@@ -161,63 +198,111 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
     },
-    itemContainer: {
-        backgroundColor: COLORS.white,
-        borderRadius: 12,
-        padding: 15,
-        marginVertical: 8,
+    serviceCard: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
         flexDirection: 'row',
         alignItems: 'center',
-        shadowColor: COLORS.black,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 5,
         elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
-    itemImage: {
-        width: 70,
-        height: 70,
-        borderRadius: 10,
-        marginRight: 15,
-    },
-    itemContent: {
+    cardContent: {
         flex: 1,
+        flexDirection: 'row',
     },
-    itemName: {
-        fontSize: 17,
-        fontWeight: 'bold',
-        color: COLORS.textDark,
-        marginBottom: 4,
+    serviceImage: {
+        width: 80,
+        height: 80,
+        borderRadius: 12,
+        marginRight: 12,
     },
-    itemPrice: {
-        fontSize: 15,
-        color: COLORS.primary,
-        fontWeight: '600',
-        marginBottom: 4,
+    placeholderImage: {
+        width: 80,
+        height: 80,
+        borderRadius: 12,
+        backgroundColor: '#ffe0ed',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
     },
-    itemDuration: {
-        fontSize: 13,
-        color: COLORS.textMedium,
-        marginBottom: 4,
-    },
-    itemDescription: {
-        fontSize: 13,
-        color: COLORS.textLight,
-        lineHeight: 18,
-    },
-    chevronContainer: {
-        paddingLeft: 10,
+    serviceInfo: {
+        flex: 1,
         justifyContent: 'center',
     },
-    chevron: {
-        fontSize: 24,
-        color: COLORS.textLight,
+    serviceName: {
+        fontSize: 17,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 6,
+    },
+    priceRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    servicePrice: {
+        fontSize: 16,
+        color: COLORS.primary,
+        fontWeight: '600',
+        marginLeft: 6,
+    },
+    durationRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 6,
+    },
+    serviceDuration: {
+        fontSize: 14,
+        color: '#666',
+        marginLeft: 6,
+    },
+    serviceDescription: {
+        fontSize: 13,
+        color: '#999',
+        lineHeight: 18,
+    },
+    chevronIcon: {
+        marginLeft: 8,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingTop: 60,
     },
     emptyText: {
-        textAlign: 'center',
         fontSize: 16,
-        color: COLORS.textMedium,
-    }});
+        color: '#999',
+        marginTop: 16,
+        fontWeight: '500',
+    },
+    emptySubtext: {
+        fontSize: 14,
+        color: '#bbb',
+        marginTop: 8,
+    },
+    fab: {
+        position: 'absolute',
+        right: 20,
+        bottom: 20,
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: COLORS.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+    },
+});
 
 export default AdminServiceListScreen;
 

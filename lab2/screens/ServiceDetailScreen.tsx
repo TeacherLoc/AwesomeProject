@@ -1,9 +1,8 @@
-/* eslint-disable react-native/no-inline-styles */
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, Alert, ScrollView, ActivityIndicator } from 'react-native';
-// Import Firestore modular API
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { getFirestore, doc, getDoc, updateDoc, deleteDoc } from '@react-native-firebase/firestore';
-import { COLORS } from '../theme/colors'; // Import COLORS
+import { COLORS } from '../theme/colors';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const ServiceDetailScreen = ({ route, navigation }: { route: any, navigation: any }) => {
     const { serviceId } = route.params;
@@ -15,6 +14,14 @@ const ServiceDetailScreen = ({ route, navigation }: { route: any, navigation: an
     const [price, setPrice] = useState('');
     const [duration, setDuration] = useState('');
     const [description, setDescription] = useState('');
+
+    useEffect(() => {
+        navigation.setOptions({
+            headerTitle: 'Chi tiết dịch vụ',
+            headerTitleAlign: 'center',
+            headerTitleStyle: { fontSize: 20, fontWeight: 'bold' },
+        });
+    }, [navigation]);
 
     const fetchServiceDetails = useCallback(async () => {
         setLoading(true);
@@ -111,87 +118,168 @@ const ServiceDetailScreen = ({ route, navigation }: { route: any, navigation: an
     }
 
     if (!service) {
-        return <View style={styles.centered}><Text style={{color: COLORS.textMedium}}>Lỗi dữ liệu</Text></View>;
+        return (
+            <View style={styles.centered}>
+                <Icon name="error-outline" size={64} color="#ccc" />
+                <Text style={styles.errorText}>Lỗi dữ liệu</Text>
+            </View>
+        );
     }
 
     return (
         <ScrollView style={styles.container}>
             {editing ? (
                 <>
-                    <Text style={styles.label}>Tên dịch vụ:</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={name}
-                        onChangeText={setName}
-                        editable={!loading}
-                        placeholderTextColor={COLORS.textLight}
-                    />
+                    <View style={styles.card}>
+                        <View style={styles.inputGroup}>
+                            <View style={styles.labelRow}>
+                                <Icon name="medical-services" size={20} color={COLORS.primary} />
+                                <Text style={styles.label}>Tên dịch vụ</Text>
+                            </View>
+                            <TextInput
+                                style={styles.input}
+                                value={name}
+                                onChangeText={setName}
+                                editable={!loading}
+                                placeholder="Nhập tên dịch vụ"
+                                placeholderTextColor="#999"
+                            />
+                        </View>
 
-                    <Text style={styles.label}>Giá (VNĐ):</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={price}
-                        onChangeText={setPrice}
-                        keyboardType="numeric"
-                        editable={!loading}
-                        placeholderTextColor={COLORS.textLight}
-                    />
+                        <View style={styles.inputGroup}>
+                            <View style={styles.labelRow}>
+                                <Icon name="payments" size={20} color={COLORS.primary} />
+                                <Text style={styles.label}>Giá (VNĐ)</Text>
+                            </View>
+                            <TextInput
+                                style={styles.input}
+                                value={price}
+                                onChangeText={setPrice}
+                                keyboardType="numeric"
+                                editable={!loading}
+                                placeholder="Nhập giá"
+                                placeholderTextColor="#999"
+                            />
+                        </View>
 
-                    <Text style={styles.label}>Thời gian:</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={duration}
-                        onChangeText={setDuration}
-                        editable={!loading}
-                        placeholderTextColor={COLORS.textLight}
-                    />
+                        <View style={styles.inputGroup}>
+                            <View style={styles.labelRow}>
+                                <Icon name="schedule" size={20} color={COLORS.primary} />
+                                <Text style={styles.label}>Thời gian</Text>
+                            </View>
+                            <TextInput
+                                style={styles.input}
+                                value={duration}
+                                onChangeText={setDuration}
+                                editable={!loading}
+                                placeholder="Nhập thời gian"
+                                placeholderTextColor="#999"
+                            />
+                        </View>
 
-                    <Text style={styles.label}>Miêu tả:</Text>
-                    <TextInput
-                        style={[styles.input, styles.textArea]}
-                        value={description}
-                        onChangeText={setDescription}
-                        multiline
-                        editable={!loading}
-                        placeholderTextColor={COLORS.textLight}
-                    />
+                        <View style={styles.inputGroup}>
+                            <View style={styles.labelRow}>
+                                <Icon name="description" size={20} color={COLORS.primary} />
+                                <Text style={styles.label}>Mô tả</Text>
+                            </View>
+                            <TextInput
+                                style={[styles.input, styles.textArea]}
+                                value={description}
+                                onChangeText={setDescription}
+                                multiline
+                                editable={!loading}
+                                placeholder="Nhập mô tả"
+                                placeholderTextColor="#999"
+                                textAlignVertical="top"
+                            />
+                        </View>
+                    </View>
 
-                    <View style={styles.buttonGroup}>
-                        <Button title="Đồng ý" onPress={handleUpdate} disabled={loading} color={COLORS.primary} />
-                        <View style={{height: 10}} />
-                        <Button title="Huỷ" color={COLORS.textLight} onPress={() => {
-                            setName(service.name);
-                            setPrice(service.price.toString());
-                            setDuration(service.duration);
-                            setDescription(service.description);
-                            setEditing(false);
-                        }} disabled={loading} />
+                    <View style={styles.actionButtons}>
+                        <TouchableOpacity
+                            style={[styles.button, styles.saveButton]}
+                            onPress={handleUpdate}
+                            disabled={loading}
+                        >
+                            <Icon name="check" size={20} color="#fff" />
+                            <Text style={styles.buttonText}>Lưu</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.button, styles.cancelButton]}
+                            onPress={() => {
+                                setName(service.name);
+                                setPrice(service.price.toString());
+                                setDuration(service.duration);
+                                setDescription(service.description);
+                                setEditing(false);
+                            }}
+                            disabled={loading}
+                        >
+                            <Icon name="close" size={20} color="#fff" />
+                            <Text style={styles.buttonText}>Hủy</Text>
+                        </TouchableOpacity>
                     </View>
                 </>
             ) : (
                 <>
-                    <Text style={styles.title}>{service.name}</Text>
-                    <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Giá:</Text>
-                        <Text style={styles.detailValue}>{service.price?.toLocaleString('vi-VN')} VNĐ</Text>
-                    </View>
-                    <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Thời gian:</Text>
-                        <Text style={styles.detailValue}>{service.duration}</Text>
-                    </View>
-                    <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Miêu tả:</Text>
-                        <Text style={styles.detailValue}>{service.description || 'Không có mô tả.'}</Text>
+                    <View style={styles.headerCard}>
+                        <View style={styles.iconContainer}>
+                            <Icon name="medical-services" size={48} color={COLORS.primary} />
+                        </View>
+                        <Text style={styles.title}>{service.name}</Text>
                     </View>
 
-                    <View style={styles.buttonGroup}>
-                        <Button title="Chỉnh sửa dịch vụ" onPress={() => setEditing(true)} color={COLORS.primary} />
-                        <View style={{height: 10}} />
-                        <Button title="Xoá dịch vụ" color={COLORS.error} onPress={handleDelete} disabled={loading} />
+                    <View style={styles.card}>
+                        <View style={styles.detailRow}>
+                            <View style={styles.detailIcon}>
+                                <Icon name="payments" size={22} color={COLORS.primary} />
+                            </View>
+                            <View style={styles.detailContent}>
+                                <Text style={styles.detailLabel}>Giá</Text>
+                                <Text style={styles.detailValue}>{service.price?.toLocaleString('vi-VN')} VNĐ</Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <View style={styles.detailIcon}>
+                                <Icon name="schedule" size={22} color={COLORS.primary} />
+                            </View>
+                            <View style={styles.detailContent}>
+                                <Text style={styles.detailLabel}>Thời gian</Text>
+                                <Text style={styles.detailValue}>{service.duration}</Text>
+                            </View>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <View style={styles.detailIcon}>
+                                <Icon name="description" size={22} color={COLORS.primary} />
+                            </View>
+                            <View style={styles.detailContent}>
+                                <Text style={styles.detailLabel}>Miêu tả</Text>
+                                <Text style={styles.detailValue}>{service.description || 'Không có mô tả.'}</Text>
+                            </View>
+                        </View>
                     </View>
+
+                    <TouchableOpacity
+                        style={[styles.button, styles.editButton]}
+                        onPress={() => setEditing(true)}
+                    >
+                        <Icon name="edit" size={20} color="#fff" />
+                        <Text style={styles.buttonText}>Chỉnh sửa dịch vụ</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.button, styles.deleteButton]}
+                        onPress={handleDelete}
+                        disabled={loading}
+                    >
+                        <Icon name="delete" size={20} color="#fff" />
+                        <Text style={styles.buttonText}>Xóa dịch vụ</Text>
+                    </TouchableOpacity>
                 </>
             )}
-            {loading && <ActivityIndicator size="small" color={COLORS.primary} style={{marginTop: 10}} />}
+            {loading && <ActivityIndicator size="small" color={COLORS.primary} style={styles.loader} />}
         </ScrollView>
     );
 };
@@ -199,65 +287,152 @@ const ServiceDetailScreen = ({ route, navigation }: { route: any, navigation: an
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
-        backgroundColor: COLORS.white, // Nền trắng
+        backgroundColor: '#f5f5f5',
     },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.white, // Nền trắng
+        backgroundColor: '#f5f5f5',
+    },
+    errorText: {
+        fontSize: 16,
+        color: '#999',
+        marginTop: 16,
+    },
+    headerCard: {
+        backgroundColor: '#fff',
+        alignItems: 'center',
+        paddingVertical: 32,
+        marginBottom: 16,
+    },
+    iconContainer: {
+        width: 96,
+        height: 96,
+        borderRadius: 48,
+        backgroundColor: '#ffe0ed',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 20,
-        color: COLORS.textDark, // Màu chữ tiêu đề
+        color: '#333',
         textAlign: 'center',
     },
-    detailItem: {
+    card: {
+        backgroundColor: '#fff',
+        marginHorizontal: 16,
+        marginBottom: 16,
+        borderRadius: 16,
+        padding: 16,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    detailRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingVertical: 10, // Tăng padding
+        alignItems: 'flex-start',
+        paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border, // Màu viền
-        marginBottom: 10, // Tăng margin
+        borderBottomColor: '#f0f0f0',
+    },
+    detailIcon: {
+        marginRight: 12,
+        marginTop: 2,
+    },
+    detailContent: {
+        flex: 1,
     },
     detailLabel: {
-        fontSize: 16,
-        color: COLORS.textMedium, // Màu label
-        fontWeight: '500',
+        fontSize: 13,
+        color: '#999',
+        marginBottom: 4,
     },
     detailValue: {
         fontSize: 16,
-        color: COLORS.textDark, // Màu giá trị
-        flexShrink: 1,
-        textAlign: 'right',
-    },
-    label: { // Dùng cho form chỉnh sửa
-        fontSize: 16,
-        marginBottom: 8, // Tăng margin
-        color: COLORS.textMedium, // Màu label
+        color: '#333',
         fontWeight: '500',
     },
-    input: { // Dùng cho form chỉnh sửa
-        borderWidth: 1,
-        borderColor: COLORS.border, // Màu viền input
-        borderRadius: 8, // Bo góc input
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        fontSize: 16,
-        marginBottom: 18, // Tăng margin
-        backgroundColor: COLORS.white, // Nền input
-        color: COLORS.textDark, // Màu chữ khi nhập
-    },
-    textArea: { // Dùng cho form chỉnh sửa
-        height: 100,
-        textAlignVertical: 'top',
-    },
-    buttonGroup: {
-        marginTop: 30,
+    inputGroup: {
         marginBottom: 20,
+    },
+    labelRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    label: {
+        fontSize: 16,
+        marginLeft: 8,
+        color: '#333',
+        fontWeight: '600',
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        fontSize: 16,
+        color: '#333',
+        backgroundColor: '#fafafa',
+    },
+    textArea: {
+        height: 120,
+        paddingTop: 12,
+    },
+    actionButtons: {
+        flexDirection: 'row',
+        marginHorizontal: 16,
+        marginBottom: 12,
+    },
+    button: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        borderRadius: 12,
+        marginHorizontal: 16,
+        marginBottom: 12,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+    },
+    saveButton: {
+        flex: 1,
+        backgroundColor: '#4CAF50',
+        marginRight: 8,
+    },
+    cancelButton: {
+        flex: 1,
+        backgroundColor: '#9e9e9e',
+        marginLeft: 8,
+    },
+    editButton: {
+        backgroundColor: COLORS.primary,
+    },
+    deleteButton: {
+        backgroundColor: '#f44336',
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+        marginLeft: 8,
+    },
+    loader: {
+        marginTop: 10,
     },
 });
 

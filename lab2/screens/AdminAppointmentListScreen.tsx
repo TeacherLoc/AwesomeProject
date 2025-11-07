@@ -1,4 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
 /* eslint-disable react/no-unstable-nested-components */
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert } from 'react-native';
@@ -7,7 +6,7 @@ import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firest
 import { useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { COLORS } from '../theme/colors';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 interface Appointment {
     id: string;
@@ -28,6 +27,18 @@ type Props = {
 };
 
 const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
+    // Căn giữa tiêu đề ở header
+    React.useLayoutEffect(() => {
+        navigation.setOptions({
+            headerTitle: 'Quản lý lịch hẹn',
+            headerTitleAlign: 'center',
+            headerTitleStyle: {
+                fontWeight: '600',
+                fontSize: 18,
+            },
+        });
+    }, [navigation]);
+
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -131,19 +142,24 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
         return (
             <View style={styles.appointmentItem}>
                 <View style={styles.itemHeader}>
-                    <Text style={styles.serviceName}>{item.serviceName}</Text>
+                    <View style={styles.serviceNameContainer}>
+                        <Icon name="event-note" size={20} color={COLORS.primary} />
+                        <Text style={styles.serviceName}>{item.serviceName}</Text>
+                    </View>
                     <View style={[styles.statusBadge, { backgroundColor: statusInfo.backgroundColor }]}>
                         <Text style={[styles.statusText, { color: statusInfo.color }]}>{statusInfo.text}</Text>
                     </View>
                 </View>
 
-                <InfoRow icon="user" label="Khách hàng:" value={item.customerName} />
-                <InfoRow icon="calendar" label="Ngày hẹn:" value={appointmentDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })} />
-                <InfoRow icon="clock-o" label="Giờ hẹn:" value={appointmentDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} />
-                {requestDate && <InfoRow icon="calendar-plus-o" label="Ngày đặt:" value={requestDate.toLocaleString('vi-VN')} />}
-                {item.servicePrice !== undefined && (
-                    <InfoRow icon="money" label="Giá:" value={`${item.servicePrice.toLocaleString('vi-VN')}K`} />
-                )}
+                <View style={styles.infoContainer}>
+                    <InfoRow icon="person" label="Khách hàng:" value={item.customerName} />
+                    <InfoRow icon="calendar-today" label="Ngày hẹn:" value={appointmentDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })} />
+                    <InfoRow icon="access-time" label="Giờ hẹn:" value={appointmentDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} />
+                    {requestDate && <InfoRow icon="date-range" label="Ngày đặt:" value={requestDate.toLocaleString('vi-VN')} />}
+                    {item.servicePrice !== undefined && (
+                        <InfoRow icon="payments" label="Giá:" value={`${item.servicePrice.toLocaleString('vi-VN')} VNĐ`} />
+                    )}
+                </View>
 
                 <View style={styles.actionsContainer}>
                     {item.status === 'pending' && (
@@ -152,15 +168,15 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
                                 style={[styles.actionButton, styles.confirmButton]}
                                 onPress={() => handleUpdateAppointmentStatus(item.id, 'confirmed')}
                             >
-                                <Icon name="check-circle" size={16} color={COLORS.white} />
-                                <Text style={styles.actionButtonText}> Xác nhận</Text>
+                                <Icon name="check-circle" size={18} color="#FFF" />
+                                <Text style={styles.actionButtonText}>Xác nhận</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.actionButton, styles.rejectButton]}
                                 onPress={() => handleUpdateAppointmentStatus(item.id, 'rejected')}
                             >
-                                <Icon name="times-circle" size={16} color={COLORS.white} />
-                                <Text style={styles.actionButtonText}> Từ chối</Text>
+                                <Icon name="cancel" size={18} color="#FFF" />
+                                <Text style={styles.actionButtonText}>Từ chối</Text>
                             </TouchableOpacity>
                         </>
                     )}
@@ -169,8 +185,8 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
                             style={[styles.actionButton, styles.completeButton]}
                             onPress={() => handleUpdateAppointmentStatus(item.id, 'completed')}
                         >
-                            <Icon name="check-square-o" size={16} color={COLORS.white} />
-                            <Text style={styles.actionButtonText}> Hoàn thành</Text>
+                            <Icon name="task-alt" size={18} color="#FFF" />
+                            <Text style={styles.actionButtonText}>Hoàn thành</Text>
                         </TouchableOpacity>
                     )}
                      {(item.status === 'confirmed' || item.status === 'pending') && (
@@ -178,15 +194,18 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
                             style={[styles.actionButton, styles.cancelAdminButton]}
                             onPress={() => handleUpdateAppointmentStatus(item.id, 'cancelled_by_admin')}
                         >
-                            <Icon name="ban" size={16} color={COLORS.white} />
-                            <Text style={styles.actionButtonText}> Hủy (Admin)</Text>
+                            <Icon name="block" size={18} color="#FFF" />
+                            <Text style={styles.actionButtonText}>Hủy</Text>
                         </TouchableOpacity>
                     )}
                 </View>
-                 {/* Admin có thể nhấn vào để xem chi tiết hơn nếu cần */}
-                <TouchableOpacity style={styles.detailTouch} onPress={() => navigation.navigate('AdminAppointmentDetail', { appointmentId: item.id })}>
+
+                <TouchableOpacity
+                    style={styles.detailTouch}
+                    onPress={() => navigation.navigate('AdminAppointmentDetail', { appointmentId: item.id })}
+                >
                     <Text style={styles.detailTouchText}>Xem chi tiết</Text>
-                    <Icon name="chevron-right" size={14} color={COLORS.primary} />
+                    <Icon name="chevron-right" size={18} color={COLORS.primary} />
                 </TouchableOpacity>
             </View>
         );
@@ -194,7 +213,7 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
 
     const InfoRow = ({ icon, label, value }: { icon: string, label: string, value?: string }) => (
         <View style={styles.itemRow}>
-            <Icon name={icon} size={15} color={COLORS.textMedium} style={{marginRight: 7}} />
+            <Icon name={icon} size={18} color={COLORS.primary} />
             <Text style={styles.infoLabel}>{label}</Text>
             <Text style={styles.infoValue}>{value || 'N/A'}</Text>
         </View>
@@ -208,8 +227,11 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
     if (appointments.length === 0 && !loading) {
         return (
             <View style={styles.centered}>
-                <Icon name="calendar-check-o" size={50} color={COLORS.textLight} />
-                <Text style={styles.emptyText}>Không có lịch hẹn nào cần xử lý.</Text>
+                <View style={styles.emptyIconContainer}>
+                    <Icon name="event-available" size={64} color={COLORS.primary} />
+                </View>
+                <Text style={styles.emptyTitle}>Không có lịch hẹn</Text>
+                <Text style={styles.emptyText}>Hiện tại không có lịch hẹn nào cần xử lý</Text>
             </View>
         );
     }
@@ -231,122 +253,160 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundMain || '#f8f9fa',
+        backgroundColor: '#F5F7FA',
     },
     listContentContainer: {
-        paddingVertical: 10,
-        paddingHorizontal: 15,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
     },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 20,
+        padding: 32,
+        backgroundColor: '#F5F7FA',
     },
-    emptyText: {
-        marginTop: 15,
-        fontSize: 16,
-        color: COLORS.textMedium,
+    emptyIconContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: '#FFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 24,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 4,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1F2937',
+        marginBottom: 12,
         textAlign: 'center',
     },
+    emptyText: {
+        fontSize: 15,
+        color: '#6B7280',
+        textAlign: 'center',
+        lineHeight: 22,
+    },
     appointmentItem: {
-        backgroundColor: COLORS.white,
-        padding: 15,
-        borderRadius: 8,
-        marginBottom: 12,
+        backgroundColor: '#FFF',
+        padding: 16,
+        borderRadius: 16,
+        marginBottom: 14,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 3,
         borderWidth: 1,
-        borderColor: COLORS.border,
-        shadowColor: COLORS.black,
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1,
+        borderColor: '#F0F0F0',
     },
     itemHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: 10,
+        marginBottom: 16,
+        paddingBottom: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
+    },
+    serviceNameContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        marginRight: 12,
     },
     serviceName: {
         fontSize: 17,
-        fontWeight: 'bold',
-        color: COLORS.textDark,
-        flexShrink: 1,
-        marginRight: 10,
+        fontWeight: '700',
+        color: '#1F2937',
+        marginLeft: 8,
+        flex: 1,
     },
     statusBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
     },
     statusText: {
         fontSize: 12,
         fontWeight: '600',
     },
+    infoContainer: {
+        gap: 10,
+        marginBottom: 16,
+    },
     itemRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 7,
+        gap: 8,
     },
     infoLabel: {
         fontSize: 14,
-        color: COLORS.textDark,
+        color: '#4B5563',
         fontWeight: '500',
+        minWidth: 90,
     },
     infoValue: {
         fontSize: 14,
-        color: COLORS.textMedium,
-        marginLeft: 5,
-        flexShrink: 1,
+        color: '#1F2937',
+        flex: 1,
+        fontWeight: '400',
     },
     actionsContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-around', // Hoặc 'flex-start' nếu muốn các nút gần nhau hơn
-        marginTop: 15,
-        paddingTop: 10,
+        flexWrap: 'wrap',
+        gap: 8,
+        paddingTop: 12,
         borderTopWidth: 1,
-        borderTopColor: COLORS.primary,
+        borderTopColor: '#E5E7EB',
     },
     actionButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 6,
-        minWidth: 100, // Đảm bảo nút có độ rộng tối thiểu
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 10,
+        gap: 6,
+        flex: 1,
+        minWidth: 110,
         justifyContent: 'center',
-        marginHorizontal: 5, // Khoảng cách giữa các nút
     },
     actionButtonText: {
-        color: COLORS.white,
-        fontSize: 13,
-        fontWeight: 'bold',
-        marginLeft: 5,
+        color: '#FFF',
+        fontSize: 14,
+        fontWeight: '600',
     },
     confirmButton: {
-        backgroundColor: COLORS.success,
+        backgroundColor: '#10B981',
     },
     rejectButton: {
-        backgroundColor: COLORS.error,
+        backgroundColor: '#EF4444',
     },
     completeButton: {
-        backgroundColor: COLORS.info,
+        backgroundColor: '#3B82F6',
     },
     cancelAdminButton: {
-        backgroundColor: COLORS.warningDark,
+        backgroundColor: '#F59E0B',
     },
     detailTouch: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'flex-end',
-        paddingTop: 10,
-        marginTop: 5,
+        paddingTop: 12,
+        marginTop: 8,
     },
     detailTouchText: {
         color: COLORS.primary,
-        fontSize: 13,
-        marginRight: 5,
-    }});
+        fontSize: 14,
+        fontWeight: '600',
+        marginRight: 4,
+    },
+});
 
 export default AdminAppointmentListScreen;

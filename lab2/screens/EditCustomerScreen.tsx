@@ -2,20 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { COLORS } from '../theme/colors';
 import { getFirestore, doc, updateDoc } from '@react-native-firebase/firestore';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const EditCustomerScreen = ({ route, navigation }: { route: any, navigation: any }) => {
     const { customerData } = route.params;
 
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
-    const [email, setEmail] = useState(''); // Email thường không cho sửa trực tiếp qua profile này
+    const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        navigation.setOptions({
+            headerTitle: 'Sửa thông tin KH',
+            headerTitleAlign: 'center',
+            headerTitleStyle: { fontSize: 20, fontWeight: 'bold' },
+        });
+    }, [navigation]);
 
     useEffect(() => {
         if (customerData) {
             setName(customerData.name || '');
             setPhone(customerData.phone || '');
-            setEmail(customerData.email || ''); // Hiển thị email
+            setEmail(customerData.email || '');
         }
     }, [customerData]);
 
@@ -24,7 +33,6 @@ const EditCustomerScreen = ({ route, navigation }: { route: any, navigation: any
             Alert.alert('Lỗi', 'Tên khách hàng không được để trống.');
             return;
         }
-        // Thêm các validation khác nếu cần (ví dụ: định dạng SĐT)
 
         setLoading(true);
         try {
@@ -34,12 +42,10 @@ const EditCustomerScreen = ({ route, navigation }: { route: any, navigation: any
             await updateDoc(customerDocRef, {
                 name: name.trim(),
                 phone: phone.trim(),
-                // Không cập nhật email ở đây trừ khi có yêu cầu cụ thể
-                // và xử lý cẩn thận vì email liên quan đến authentication
             });
 
             Alert.alert('Thành công', 'Thông tin khách hàng đã được cập nhật.');
-            navigation.goBack(); // Quay lại màn hình danh sách
+            navigation.goBack();
 
         } catch (error) {
             console.error('Error updating customer: ', error);
@@ -52,62 +58,82 @@ const EditCustomerScreen = ({ route, navigation }: { route: any, navigation: any
     if (!customerData) {
         return (
             <View style={styles.centered}>
-                <Text>Không tìm thấy dữ liệu khách hàng.</Text>
+                <Icon name="error-outline" size={64} color="#ccc" />
+                <Text style={styles.errorText}>Không tìm thấy dữ liệu khách hàng.</Text>
             </View>
         );
     }
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-            <Text style={styles.title}>Chỉnh sửa thông tin khách hàng</Text>
-
-            <View style={styles.inputContainer}>
-                <Text style={styles.label}>Email (Không thể sửa)</Text>
-                <TextInput
-                    style={[styles.input, styles.disabledInput]}
-                    value={email}
-                    editable={false} // Email không cho sửa
-                />
+        <ScrollView style={styles.container}>
+            <View style={styles.headerCard}>
+                <View style={styles.avatarCircle}>
+                    <Icon name="person" size={48} color={COLORS.primary} />
+                </View>
+                <Text style={styles.subtitle}>Chỉnh sửa thông tin khách hàng</Text>
             </View>
 
-            <View style={styles.inputContainer}>
-                <Text style={styles.label}>Họ và Tên</Text>
-                <TextInput
-                    style={styles.input}
-                    value={name}
-                    onChangeText={setName}
-                    placeholder="Nhập họ và tên"
-                    placeholderTextColor={COLORS.textLight}
-                />
-            </View>
+            <View style={styles.card}>
+                <View style={styles.inputGroup}>
+                    <View style={styles.labelRow}>
+                        <Icon name="email" size={20} color="#999" />
+                        <Text style={styles.label}>Email (Không thể sửa)</Text>
+                    </View>
+                    <TextInput
+                        style={[styles.input, styles.disabledInput]}
+                        value={email}
+                        editable={false}
+                    />
+                </View>
 
-            <View style={styles.inputContainer}>
-                <Text style={styles.label}>Số điện thoại</Text>
-                <TextInput
-                    style={styles.input}
-                    value={phone}
-                    onChangeText={setPhone}
-                    placeholder="Nhập số điện thoại"
-                    placeholderTextColor={COLORS.textLight}
-                    keyboardType="phone-pad"
-                />
+                <View style={styles.inputGroup}>
+                    <View style={styles.labelRow}>
+                        <Icon name="person" size={20} color={COLORS.primary} />
+                        <Text style={styles.label}>Họ và Tên</Text>
+                    </View>
+                    <TextInput
+                        style={styles.input}
+                        value={name}
+                        onChangeText={setName}
+                        placeholder="Nhập họ và tên"
+                        placeholderTextColor="#999"
+                    />
+                </View>
+
+                <View style={styles.inputGroup}>
+                    <View style={styles.labelRow}>
+                        <Icon name="phone" size={20} color={COLORS.primary} />
+                        <Text style={styles.label}>Số điện thoại</Text>
+                    </View>
+                    <TextInput
+                        style={styles.input}
+                        value={phone}
+                        onChangeText={setPhone}
+                        placeholder="Nhập số điện thoại"
+                        placeholderTextColor="#999"
+                        keyboardType="phone-pad"
+                    />
+                </View>
             </View>
 
             {loading ? (
                 <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
             ) : (
-                <TouchableOpacity style={styles.button} onPress={handleSaveChanges}>
-                    <Text style={styles.buttonText}>Lưu thay đổi</Text>
-                </TouchableOpacity>
-            )}
+                <>
+                    <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={handleSaveChanges}>
+                        <Icon name="check-circle" size={22} color="#fff" />
+                        <Text style={styles.buttonText}>Lưu thay đổi</Text>
+                    </TouchableOpacity>
 
-            <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={() => navigation.goBack()}
-                disabled={loading}
-            >
-                <Text style={styles.buttonText}>Huỷ</Text>
-            </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.button, styles.cancelButton]}
+                        onPress={() => navigation.goBack()}
+                    >
+                        <Icon name="cancel" size={22} color="#fff" />
+                        <Text style={styles.buttonText}>Hủy</Text>
+                    </TouchableOpacity>
+                </>
+            )}
         </ScrollView>
     );
 };
@@ -115,67 +141,115 @@ const EditCustomerScreen = ({ route, navigation }: { route: any, navigation: any
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundLight,
-    },
-    contentContainer: {
-        padding: 20,
+        backgroundColor: '#f5f5f5',
     },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.backgroundLight,
+        backgroundColor: '#f5f5f5',
     },
-    title: {
-        fontSize: 22,
+    errorText: {
+        fontSize: 16,
+        color: '#999',
+        marginTop: 16,
+    },
+    headerCard: {
+        backgroundColor: '#fff',
+        alignItems: 'center',
+        paddingVertical: 32,
+        marginBottom: 16,
+    },
+    avatarCircle: {
+        width: 96,
+        height: 96,
+        borderRadius: 48,
+        backgroundColor: '#ffe0ed',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    subtitle: {
+        fontSize: 18,
         fontWeight: 'bold',
-        color: COLORS.textDark,
-        marginBottom: 25,
+        color: '#333',
         textAlign: 'center',
     },
-    inputContainer: {
-        marginBottom: 15,
+    card: {
+        backgroundColor: '#fff',
+        marginHorizontal: 16,
+        marginBottom: 16,
+        borderRadius: 16,
+        padding: 20,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    inputGroup: {
+        marginBottom: 20,
+    },
+    labelRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
     },
     label: {
-        fontSize: 14,
-        color: COLORS.textMedium,
-        marginBottom: 6,
+        fontSize: 16,
+        marginLeft: 8,
+        color: '#333',
+        fontWeight: '600',
     },
     input: {
-        backgroundColor: COLORS.white,
         borderWidth: 1,
-        borderColor: COLORS.border,
-        borderRadius: 8,
-        paddingHorizontal: 15,
+        borderColor: '#e0e0e0',
+        borderRadius: 12,
+        paddingHorizontal: 16,
         paddingVertical: 12,
         fontSize: 16,
-        color: COLORS.textDark,
-        height: 50,
+        color: '#333',
+        backgroundColor: '#fafafa',
     },
     disabledInput: {
-        backgroundColor: COLORS.backgroundLight,
-        color: COLORS.textMedium,
+        backgroundColor: '#f0f0f0',
+        color: '#999',
     },
     button: {
-        backgroundColor: COLORS.primary,
-        paddingVertical: 15,
-        borderRadius: 8,
+        flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 20,
-        height: 50,
         justifyContent: 'center',
+        paddingVertical: 14,
+        borderRadius: 12,
+        marginHorizontal: 16,
+        marginBottom: 12,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+    },
+    saveButton: {
+        backgroundColor: COLORS.primary,
+        marginTop: 8,
     },
     cancelButton: {
-        backgroundColor: COLORS.primary, // Hoặc một màu khác cho nút huỷ
-        marginTop: 10,
+        backgroundColor: '#9e9e9e',
     },
     buttonText: {
-        color: COLORS.white,
+        color: '#fff',
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: '600',
+        marginLeft: 8,
     },
     loader: {
         marginTop: 20,
-    }});
+    },
+});
 
 export default EditCustomerScreen;

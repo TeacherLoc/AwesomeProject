@@ -1,8 +1,9 @@
 // filepath: screens/Admin/CustomerListScreen.tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { COLORS } from '../theme/colors'; // Import COLORS
-import { getFirestore, collection, getDocs, query, where, doc, deleteDoc } from '@react-native-firebase/firestore'; // Added doc, deleteDoc, updateDoc
+import { COLORS } from '../theme/colors';
+import { getFirestore, collection, getDocs, query, where, doc, deleteDoc } from '@react-native-firebase/firestore';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 // Function to get customers from Firestore
 const fetchAdminCustomers = async () => {
@@ -43,11 +44,19 @@ const fetchAdminCustomers = async () => {
     }
 };
 
-const CustomerListScreen = ({ navigation }: { navigation: any }) => {
+const CustomerListScreen = ({ navigation }: any) => {
     const [customers, setCustomers] = useState<any[]>([]);
     const [filteredCustomers, setFilteredCustomers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        navigation.setOptions({
+            headerTitle: 'Quản Lý Khách Hàng',
+            headerTitleAlign: 'center',
+            headerTitleStyle: { fontSize: 20, fontWeight: 'bold' },
+        });
+    }, [navigation]);
 
     const loadCustomers = async () => {
         setLoading(true);
@@ -118,21 +127,47 @@ const CustomerListScreen = ({ navigation }: { navigation: any }) => {
     };
 
     const renderItem = ({ item }: { item: any }) => (
-        <View style={styles.item}>
-            <View style={styles.itemDetails}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemEmail}>{item.email}</Text>
-                <Text style={styles.itemPhone}>{item.phone || 'Chưa có SĐT'}</Text>
-                <Text style={[styles.itemAppointments, item.totalAppointments > 0 ? styles.hasAppointments : {}]}>
-                    Lịch hẹn đã có: {item.totalAppointments}
-                </Text>
+        <View style={styles.customerCard}>
+            <View style={styles.cardHeader}>
+                <View style={styles.avatarContainer}>
+                    <Icon name="person" size={32} color={COLORS.primary} />
+                </View>
+                <View style={styles.headerInfo}>
+                    <Text style={styles.customerName}>{item.name}</Text>
+                    <View style={styles.appointmentBadge}>
+                        <Icon name="event" size={14} color={COLORS.primary} />
+                        <Text style={styles.appointmentCount}>
+                            {item.totalAppointments} lịch hẹn
+                        </Text>
+                    </View>
+                </View>
             </View>
-            <View style={styles.actionsContainer}>
-                <TouchableOpacity onPress={() => handleEditCustomer(item)} style={[styles.actionButton, styles.editButton]}>
-                    <Text style={styles.actionButtonText}>Sửa</Text>
+
+            <View style={styles.cardBody}>
+                <View style={styles.infoRow}>
+                    <Icon name="email" size={18} color="#666" />
+                    <Text style={styles.infoText}>{item.email}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <Icon name="phone" size={18} color="#666" />
+                    <Text style={styles.infoText}>{item.phone || 'Chưa có SĐT'}</Text>
+                </View>
+            </View>
+
+            <View style={styles.cardActions}>
+                <TouchableOpacity
+                    onPress={() => handleEditCustomer(item)}
+                    style={[styles.actionBtn, styles.editBtn]}
+                >
+                    <Icon name="edit" size={18} color="#fff" />
+                    <Text style={styles.actionBtnText}>Sửa</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDeleteCustomer(item.id)} style={[styles.actionButton, styles.deleteButton]}>
-                    <Text style={styles.actionButtonText}>Xoá</Text>
+                <TouchableOpacity
+                    onPress={() => handleDeleteCustomer(item.id)}
+                    style={[styles.actionBtn, styles.deleteBtn]}
+                >
+                    <Icon name="delete" size={18} color="#fff" />
+                    <Text style={styles.actionBtnText}>Xóa</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -144,18 +179,26 @@ const CustomerListScreen = ({ navigation }: { navigation: any }) => {
 
     return (
         <View style={styles.container}>
-            <TextInput
-                style={styles.searchBar}
-                placeholder="Tìm theo Tên, Email, hoặc SĐT..."
-                placeholderTextColor={COLORS.textLight}
-                value={searchQuery}
-                onChangeText={handleSearch}
-            />
+            <View style={styles.searchContainer}>
+                <Icon name="search" size={20} color="#999" style={styles.searchIcon} />
+                <TextInput
+                    style={styles.searchInput}
+                    placeholder="Tìm theo Tên, Email, hoặc SĐT..."
+                    placeholderTextColor="#999"
+                    value={searchQuery}
+                    onChangeText={handleSearch}
+                />
+            </View>
             <FlatList
                 data={filteredCustomers}
                 renderItem={renderItem}
                 keyExtractor={item => item.id}
-                ListEmptyComponent={<Text style={styles.emptyText}>Không tìm thấy khách hàng nào.</Text>}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Icon name="people-outline" size={64} color="#ccc" />
+                        <Text style={styles.emptyText}>Không tìm thấy khách hàng nào</Text>
+                    </View>
+                }
                 contentContainerStyle={styles.listContentContainer}
             />
         </View>
@@ -165,101 +208,143 @@ const CustomerListScreen = ({ navigation }: { navigation: any }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundLight,
+        backgroundColor: '#f5f5f5',
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        marginHorizontal: 16,
+        marginTop: 16,
+        marginBottom: 8,
+        paddingHorizontal: 12,
+        borderRadius: 12,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+    },
+    searchIcon: {
+        marginRight: 8,
+    },
+    searchInput: {
+        flex: 1,
+        height: 48,
+        fontSize: 15,
+        color: '#333',
     },
     listContentContainer: {
-        paddingBottom: 10,
-    },
-    searchBar: {
-        height: 45,
-        borderColor: COLORS.border,
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 15,
-        marginHorizontal: 10,
-        marginTop: 10,
-        marginBottom: 5,
-        backgroundColor: COLORS.white,
-        fontSize: 15,
-        color: COLORS.textDark,
+        padding: 16,
     },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.backgroundLight,
+        backgroundColor: '#f5f5f5',
     },
-    item: {
-        backgroundColor: COLORS.white,
-        padding: 15,
-        marginVertical: 6,
-        marginHorizontal: 10,
-        borderRadius: 8,
+    customerCard: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    avatarContainer: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#ffe0ed',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    headerInfo: {
+        flex: 1,
+    },
+    customerName: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 4,
+    },
+    appointmentBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#ffe0ed',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+        alignSelf: 'flex-start',
+    },
+    appointmentCount: {
+        fontSize: 12,
+        color: COLORS.primary,
+        fontWeight: '600',
+        marginLeft: 4,
+    },
+    cardBody: {
+        marginBottom: 12,
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    infoText: {
+        fontSize: 14,
+        color: '#666',
+        marginLeft: 10,
+        flex: 1,
+    },
+    cardActions: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        shadowColor: COLORS.black,
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2.5,
-        elevation: 3,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#f0f0f0',
     },
-    itemDetails: {
+    actionBtn: {
         flex: 1,
-        marginRight: 10,
-    },
-    itemName: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: COLORS.textDark,
-    },
-    itemEmail: {
-        fontSize: 14,
-        color: COLORS.textMedium,
-        marginTop: 4,
-    },
-    itemPhone: {
-        fontSize: 14,
-        color: COLORS.textMedium,
-        marginTop: 4,
-    },
-    itemAppointments: {
-        fontSize: 13,
-        color: COLORS.primary,
-        marginTop: 6,
-        fontWeight: 'bold',
-    },
-    hasAppointments: {
-        color: 'green', // Or any other color to indicate presence of appointments
-    },
-    actionsContainer: {
-        flexDirection: 'column',
-    },
-    actionButton: {
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 5,
-        marginLeft: 5,
-        marginVertical: 3,
-        minWidth: 60,
+        flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        borderRadius: 10,
+        marginHorizontal: 4,
     },
-    editButton: {
-        backgroundColor: COLORS.secondary,
+    editBtn: {
+        backgroundColor: '#6c5ce7',
     },
-    deleteButton: {
+    deleteBtn: {
         backgroundColor: COLORS.primary,
     },
-    actionButtonText: {
-        color: COLORS.white,
-        fontSize: 13,
-        fontWeight: '500',
+    actionBtnText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
+        marginLeft: 6,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingTop: 60,
     },
     emptyText: {
-        textAlign: 'center',
-        marginTop: 50,
         fontSize: 16,
-        color: COLORS.textMedium,
-    }});
+        color: '#999',
+        marginTop: 16,
+    },
+});
 
 export default CustomerListScreen;

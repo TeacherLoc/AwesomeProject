@@ -1,11 +1,10 @@
-/* eslint-disable react-native/no-inline-styles */
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, Alert, ActivityIndicator, ScrollView } from 'react-native';
-// Firebase v9 modular API imports
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { getAuth, updateProfile as updateUserProfileAuth, signOut as firebaseSignOut } from '@react-native-firebase/auth';
 import { getFirestore, doc, getDoc, updateDoc } from '@react-native-firebase/firestore';
 import { COLORS } from '../theme/colors';
 import { useAuth } from '../navigation/AuthContext';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
     const { signOut: contextSignOut } = useAuth();
@@ -15,6 +14,14 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        navigation.setOptions({
+            headerTitle: 'Hồ Sơ Admin',
+            headerTitleAlign: 'center',
+            headerTitleStyle: { fontSize: 20, fontWeight: 'bold' },
+        });
+    }, [navigation]);
 
     const loadUserProfile = useCallback(async () => {
         setLoading(true);
@@ -120,76 +127,126 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
 
     return (
         <ScrollView style={styles.container}>
-            <Text style={styles.pageTitle}>Hồ sơ máy chủ</Text>
-
-            <View style={styles.fieldContainer}>
-                <Text style={styles.label}>Email:</Text>
-                <Text style={styles.value}>{profile.email}</Text>
+            <View style={styles.avatarSection}>
+                <View style={styles.avatarCircle}>
+                    <Icon name="admin-panel-settings" size={60} color={COLORS.primary} />
+                </View>
+                <Text style={styles.roleText}>Quản trị viên</Text>
             </View>
 
-            <View style={styles.fieldContainer}>
-                <Text style={styles.label}>Chức vụ:</Text>
-                <Text style={styles.value}>{profile.role}</Text>
-            </View>
+            <View style={styles.card}>
+                <View style={styles.infoRow}>
+                    <Icon name="email" size={22} color="#666" />
+                    <View style={styles.infoContent}>
+                        <Text style={styles.infoLabel}>Email</Text>
+                        <Text style={styles.infoValue}>{profile.email}</Text>
+                    </View>
+                </View>
 
-            <View style={styles.fieldContainer}>
-                <Text style={styles.label}>Tên:</Text>
-                {editing ? (
-                    <TextInput
-                        style={styles.input}
-                        value={name}
-                        onChangeText={setName}
-                        editable={!isSaving}
-                    />
-                ) : (
-                    <Text style={styles.value}>{profile.name}</Text>
-                )}
-            </View>
+                <View style={styles.infoRow}>
+                    <Icon name="badge" size={22} color="#666" />
+                    <View style={styles.infoContent}>
+                        <Text style={styles.infoLabel}>Chức vụ</Text>
+                        <Text style={styles.infoValue}>{profile.role}</Text>
+                    </View>
+                </View>
 
-            <View style={styles.fieldContainer}>
-                <Text style={styles.label}>Phone:</Text>
-                {editing ? (
-                    <TextInput
-                        style={styles.input}
-                        value={phone}
-                        onChangeText={setPhone}
-                        keyboardType="phone-pad"
-                        placeholder="Nhập số điện thoại"
-                        editable={!isSaving}
-                    />
-                ) : (
-                    <Text style={styles.value}>{profile.phone || 'Chưa có số điện thoại'}</Text>
-                )}
+                <View style={styles.infoRow}>
+                    <Icon name="person" size={22} color="#666" />
+                    <View style={styles.infoContent}>
+                        <Text style={styles.infoLabel}>Tên</Text>
+                        {editing ? (
+                            <TextInput
+                                style={styles.input}
+                                value={name}
+                                onChangeText={setName}
+                                editable={!isSaving}
+                                placeholder="Nhập tên"
+                            />
+                        ) : (
+                            <Text style={styles.infoValue}>{profile.name}</Text>
+                        )}
+                    </View>
+                </View>
+
+                <View style={styles.infoRow}>
+                    <Icon name="phone" size={22} color="#666" />
+                    <View style={styles.infoContent}>
+                        <Text style={styles.infoLabel}>Số điện thoại</Text>
+                        {editing ? (
+                            <TextInput
+                                style={styles.input}
+                                value={phone}
+                                onChangeText={setPhone}
+                                keyboardType="phone-pad"
+                                placeholder="Nhập số điện thoại"
+                                editable={!isSaving}
+                            />
+                        ) : (
+                            <Text style={styles.infoValue}>{profile.phone || 'Chưa có số điện thoại'}</Text>
+                        )}
+                    </View>
+                </View>
             </View>
 
             {editing ? (
-                <View style={styles.buttonGroup}>
-                    <Button title={isSaving ? 'Đang cập nhật...' : 'Đồng ý'} onPress={handleUpdateProfile} disabled={isSaving} color={COLORS.primary}/>
-                    <View style={{ height: 10 }} />
-                    <Button title="Huỷ" color={COLORS.textLight} onPress={() => {
-                        setName(profile.name);
-                        setPhone(profile.phone || '');
-                        setEditing(false);
-                    }} disabled={isSaving} />
+                <View style={styles.actionButtons}>
+                    <TouchableOpacity
+                        style={[styles.button, styles.saveButton]}
+                        onPress={handleUpdateProfile}
+                        disabled={isSaving}
+                    >
+                        <Icon name="check" size={20} color="#fff" />
+                        <Text style={styles.buttonText}>
+                            {isSaving ? 'Đang lưu...' : 'Lưu'}
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.button, styles.cancelButton]}
+                        onPress={() => {
+                            setName(profile.name);
+                            setPhone(profile.phone || '');
+                            setEditing(false);
+                        }}
+                        disabled={isSaving}
+                    >
+                        <Icon name="close" size={20} color="#fff" />
+                        <Text style={styles.buttonText}>Hủy</Text>
+                    </TouchableOpacity>
                 </View>
             ) : (
-                <View style={styles.buttonGroup}>
-                    <Button title="Chỉnh sửa Profile" onPress={() => setEditing(true)} color={COLORS.primary} />
-                </View>
+                <TouchableOpacity
+                    style={[styles.button, styles.editButton]}
+                    onPress={() => setEditing(true)}
+                >
+                    <Icon name="edit" size={20} color="#fff" />
+                    <Text style={styles.buttonText}>Chỉnh sửa Profile</Text>
+                </TouchableOpacity>
             )}
 
-            <View style={styles.buttonGroup}>
-                <Button title="Đổi mật khẩu" onPress={() => navigation.navigate('AdminChangePassword')} color={COLORS.primary} />
-            </View>
+            <TouchableOpacity
+                style={[styles.button, styles.passwordButton]}
+                onPress={() => navigation.navigate('AdminChangePassword')}
+            >
+                <Icon name="lock" size={20} color="#fff" />
+                <Text style={styles.buttonText}>Đổi mật khẩu</Text>
+            </TouchableOpacity>
 
-            {/* Thêm nút điều hướng đến Yêu cầu mật khẩu */}
-            <View style={styles.buttonGroup}>
-                <Button title="Yêu cầu đặt lại mật khẩu" onPress={() => navigation.navigate('AdminPasswordRequests')} color={COLORS.primary} />
-            </View>
+            <TouchableOpacity
+                style={[styles.button, styles.requestButton]}
+                onPress={() => navigation.navigate('AdminPasswordRequests')}
+            >
+                <Icon name="security" size={20} color="#fff" />
+                <Text style={styles.buttonText}>Yêu cầu đặt lại mật khẩu</Text>
+            </TouchableOpacity>
 
-            <View style={[styles.buttonGroup, styles.logoutButtonContainer]}>
-                 <Button title="Đăng xuất" color={COLORS.error} onPress={handleLogout} />
-            </View>
+            <TouchableOpacity
+                style={[styles.button, styles.logoutButton]}
+                onPress={handleLogout}
+            >
+                <Icon name="logout" size={20} color="#fff" />
+                <Text style={styles.buttonText}>Đăng xuất</Text>
+            </TouchableOpacity>
         </ScrollView>
     );
 };
@@ -197,52 +254,130 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
-        backgroundColor: COLORS.backgroundMain,
+        backgroundColor: '#f5f5f5',
     },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.backgroundMain,
+        backgroundColor: '#f5f5f5',
     },
-    pageTitle: {
-        fontSize: 22,
+    avatarSection: {
+        alignItems: 'center',
+        paddingVertical: 32,
+        backgroundColor: '#fff',
+        marginBottom: 16,
+    },
+    avatarCircle: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: '#ffe0ed',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+    },
+    roleText: {
+        fontSize: 18,
         fontWeight: 'bold',
-        marginBottom: 25,
-        textAlign: 'center',
-        color: COLORS.textDark,
+        color: COLORS.primary,
     },
-    fieldContainer: {
-        marginBottom: 18,
+    card: {
+        backgroundColor: '#fff',
+        marginHorizontal: 16,
+        marginBottom: 16,
+        borderRadius: 16,
+        padding: 16,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
-    label: {
-        fontSize: 14,
-        color: COLORS.textMedium,
-        marginBottom: 6,
-    },
-    value: {
-        fontSize: 17,
-        color: COLORS.textDark,
-        paddingVertical: 8,
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
+        borderBottomColor: '#f0f0f0',
+    },
+    infoContent: {
+        flex: 1,
+        marginLeft: 12,
+    },
+    infoLabel: {
+        fontSize: 13,
+        color: '#999',
+        marginBottom: 4,
+    },
+    infoValue: {
+        fontSize: 16,
+        color: '#333',
+        fontWeight: '500',
     },
     input: {
         borderWidth: 1,
-        borderColor: COLORS.border,
-        borderRadius: 8,
+        borderColor: '#e0e0e0',
+        borderRadius: 10,
         paddingHorizontal: 12,
-        paddingVertical: 10,
+        paddingVertical: 8,
         fontSize: 16,
-        backgroundColor: COLORS.white,
-        color: COLORS.textDark,
+        backgroundColor: '#fafafa',
+        color: '#333',
     },
-    buttonGroup: {
-        marginTop: 20,
+    actionButtons: {
+        flexDirection: 'row',
+        marginHorizontal: 16,
+        marginBottom: 12,
     },
-    logoutButtonContainer: {
-        marginTop: 30,
+    button: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        borderRadius: 12,
+        marginHorizontal: 16,
+        marginBottom: 12,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+    },
+    saveButton: {
+        flex: 1,
+        backgroundColor: '#4CAF50',
+        marginRight: 8,
+    },
+    cancelButton: {
+        flex: 1,
+        backgroundColor: '#9e9e9e',
+        marginLeft: 8,
+    },
+    editButton: {
+        backgroundColor: '#6c5ce7',
+    },
+    passwordButton: {
+        backgroundColor: '#3498db',
+    },
+    requestButton: {
+        backgroundColor: '#f39c12',
+    },
+    logoutButton: {
+        backgroundColor: COLORS.primary,
+        marginTop: 8,
+        marginBottom: 32,
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+        marginLeft: 8,
     },
 });
 

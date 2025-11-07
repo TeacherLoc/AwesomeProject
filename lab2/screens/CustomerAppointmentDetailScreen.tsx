@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable quotes */
-/* eslint-disable react-native/no-inline-styles */
 import React, { useState, useEffect, useCallback, JSX } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Image, TextInput } from 'react-native';
 import { getFirestore, doc, getDoc, updateDoc, Timestamp, collection, addDoc, query, where, getDocs, serverTimestamp } from '@react-native-firebase/firestore';
@@ -8,7 +7,7 @@ import auth from '@react-native-firebase/auth';
 import { launchImageLibrary, ImagePickerResponse, Asset } from 'react-native-image-picker';
 
 import { COLORS } from '../theme/colors';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 interface Review {
     id: string;
@@ -114,6 +113,14 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
             setLoading(false);
         }
     }, [firestoreInstance, navigation, fetchExistingReview]);
+
+    useEffect(() => {
+        navigation.setOptions({
+            headerTitle: 'Chi tiết Lịch Hẹn',
+            headerTitleAlign: 'center',
+            headerTitleStyle: { fontSize: 20, fontWeight: 'bold' },
+        });
+    }, [navigation]);
 
     useEffect(() => {
         console.log(`[Effect] Screen focus/param change. appointmentId from params: ${appointmentId}. Current appointment state:`, appointment?.id);
@@ -283,11 +290,11 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
     };
 
     if (loading) {
-        return <View style={styles.centered}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
+        return <View style={styles.loadingContainer}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
     }
 
     if (!appointment) {
-        return <View style={styles.centered}><Text style={{ color: COLORS.textMedium }}>Không có dữ liệu lịch hẹn.</Text></View>;
+        return <View style={styles.loadingContainer}><Text style={styles.errorText}>Không có dữ liệu lịch hẹn.</Text></View>;
     }
 
     const statusInfo = getStatusStyle(appointment?.status);
@@ -311,38 +318,52 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
     };
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 20 }}>
-            <View style={styles.headerSection}>
+        <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+            {/* Header Card */}
+            <View style={styles.headerCard}>
+                <View style={styles.headerIconContainer}>
+                    <Icon name="event-note" size={40} color={COLORS.white} />
+                </View>
                 <Text style={styles.serviceName}>{appointment.serviceName || 'Dịch vụ không xác định'}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: statusInfo.backgroundColor }]}>
-                    <Text style={[styles.statusText, { color: statusInfo.color }]}>{statusInfo.text}</Text>
+                <View style={[styles.statusBadge, statusInfo.backgroundColor === '#f39c12' && styles.statusBadgePending,
+                    statusInfo.backgroundColor === '#27ae60' && styles.statusBadgeConfirmed,
+                    statusInfo.backgroundColor === '#3498db' && styles.statusBadgeCompleted,
+                    statusInfo.backgroundColor === '#e74c3c' && styles.statusBadgeCancelled]}>
+                    <Text style={[styles.statusText, statusInfo.color === '#fff' && styles.statusTextWhite]}>{statusInfo.text}</Text>
                 </View>
             </View>
 
+            {/* Appointment Details Card */}
             <View style={styles.detailCard}>
-                <InfoRow icon="calendar" label="Ngày hẹn:" value={appointment.appointmentDateTime ? new Date(appointment.appointmentDateTime).toLocaleDateString('vi-VN') : 'N/A'} />
-                <InfoRow icon="clock-o" label="Giờ hẹn:" value={appointment.appointmentDateTime ? new Date(appointment.appointmentDateTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'N/A'} />
+                <InfoRow icon="event" label="Ngày hẹn:" value={appointment.appointmentDateTime ? new Date(appointment.appointmentDateTime).toLocaleDateString('vi-VN') : 'N/A'} />
+                <InfoRow icon="schedule" label="Giờ hẹn:" value={appointment.appointmentDateTime ? new Date(appointment.appointmentDateTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'N/A'} />
                 {appointment.servicePrice !== undefined && (
-                    <InfoRow icon="money" label="Giá dịch vụ:" value={`${Number(appointment.servicePrice).toLocaleString('vi-VN')} VNĐ`} />
+                    <InfoRow icon="payments" label="Giá dịch vụ:" value={`${Number(appointment.servicePrice).toLocaleString('vi-VN')} VNĐ`} />
                 )}
-                <InfoRow icon="info-circle" label="Trạng thái:" valueComponent={
-                    <View style={[styles.statusBadgeInline, { backgroundColor: statusInfo.backgroundColor, alignSelf: 'flex-start' }]}>
-                        <Text style={[styles.statusTextInline, { color: statusInfo.color }]}>{statusInfo.text}</Text>
+                <InfoRow icon="info" label="Trạng thái:" valueComponent={
+                    <View style={[styles.statusBadgeInline, statusInfo.backgroundColor === '#f39c12' && styles.statusBadgePending,
+                        statusInfo.backgroundColor === '#27ae60' && styles.statusBadgeConfirmed,
+                        statusInfo.backgroundColor === '#3498db' && styles.statusBadgeCompleted,
+                        statusInfo.backgroundColor === '#e74c3c' && styles.statusBadgeCancelled]}>
+                        <Text style={[styles.statusTextInline, statusInfo.color === '#fff' && styles.statusTextWhite]}>{statusInfo.text}</Text>
                     </View>
                 } />
-                <InfoRow icon="bookmark-o" label="Mã lịch hẹn:" value={appointment.id?.substring(0, 10) + "..."} />
+                <InfoRow icon="bookmark-outline" label="Mã lịch hẹn:" value={appointment.id?.substring(0, 10) + "..."} />
                 {appointment.requestTimestamp && (
-                    <InfoRow icon="calendar-plus-o" label="Ngày đặt:" value={new Date(appointment.requestTimestamp).toLocaleString('vi-VN')} />
+                    <InfoRow icon="event-available" label="Ngày đặt:" value={new Date(appointment.requestTimestamp).toLocaleString('vi-VN')} />
                 )}
             </View>
 
             {loadingReview && appointment?.status === 'completed' && (
-                <View style={styles.centered}><ActivityIndicator color={COLORS.primary} /></View>
+                <View style={styles.loadingContainer}><ActivityIndicator color={COLORS.primary} size="large" /></View>
             )}
 
             {!loadingReview && appointment?.status === 'completed' && (
-                <View style={styles.reviewSection}>
-                    <Text style={styles.reviewTitle}>Đánh giá dịch vụ</Text>
+                <View style={styles.reviewCard}>
+                    <View style={styles.reviewHeader}>
+                        <Icon name="rate-review" size={24} color={COLORS.primary} />
+                        <Text style={styles.reviewTitle}>Đánh giá dịch vụ</Text>
+                    </View>
                     {existingReview ? (
                         <View style={styles.existingReviewContainer}>
                             <Text style={styles.reviewLabel}>Đánh giá của bạn:</Text>
@@ -374,8 +395,8 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
                             />
 
                             <TouchableOpacity style={styles.imagePickerButton} onPress={handleImagePick}>
-                                <Icon name="camera" size={16} color={COLORS.primary} />
-                                <Text style={styles.imagePickerButtonText}> {selectedImage ? "Thay đổi ảnh" : "Thêm hình ảnh (nếu có)"}</Text>
+                                <Icon name="camera-alt" size={20} color={COLORS.white} />
+                                <Text style={styles.imagePickerButtonText}>{selectedImage ? "Thay đổi ảnh" : "Thêm hình ảnh"}</Text>
                             </TouchableOpacity>
 
                             {selectedImage?.uri && (
@@ -384,14 +405,17 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
                             <Text style={styles.base64Warning}>Lưu ý: Ảnh chất lượng cao có thể làm tăng kích thước lưu trữ.</Text>
 
                             <TouchableOpacity
-                                style={[styles.actionButton, styles.submitReviewButton, isSubmittingReview && styles.disabledButton]}
+                                style={[styles.submitReviewButton, isSubmittingReview && styles.disabledButton]}
                                 onPress={handleSubmitReview}
                                 disabled={isSubmittingReview}
                             >
                                 {isSubmittingReview ? (
                                     <ActivityIndicator color={COLORS.white} size="small" />
                                 ) : (
-                                    <Text style={styles.actionButtonText}>Gửi đánh giá</Text>
+                                    <>
+                                        <Icon name="send" size={18} color={COLORS.white} />
+                                        <Text style={styles.buttonText}>Gửi đánh giá</Text>
+                                    </>
                                 )}
                             </TouchableOpacity>
                         </View>
@@ -401,14 +425,17 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
 
             {canCancel && (
                 <TouchableOpacity
-                    style={[styles.actionButton, styles.cancelButton, isCancelling && styles.disabledButton]}
+                    style={[styles.cancelButton, isCancelling && styles.disabledButton]}
                     onPress={handleCancelAppointment}
                     disabled={isCancelling}
                 >
                     {isCancelling ? (
                         <ActivityIndicator color={COLORS.white} size="small" />
                     ) : (
-                        <Text style={styles.actionButtonText}>Hủy lịch hẹn</Text>
+                        <>
+                            <Icon name="cancel" size={20} color={COLORS.white} />
+                            <Text style={styles.buttonText}>Hủy lịch hẹn</Text>
+                        </>
                     )}
                 </TouchableOpacity>
             )}
@@ -418,127 +445,162 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
 
 const InfoRow = ({ icon, label, value, valueComponent }: { icon: string, label: string, value?: string, valueComponent?: JSX.Element }) => (
     <View style={styles.infoRow}>
-        <Icon name={icon} size={18} color={COLORS.primary} style={styles.infoIcon} />
-        <Text style={styles.infoLabel}>{label}</Text>
-        {valueComponent ? valueComponent : <Text style={styles.infoValue}>{value}</Text>}
+        <View style={styles.iconWrapper}>
+            <Icon name={icon} size={22} color={COLORS.primary} />
+        </View>
+        <View style={styles.infoContent}>
+            <Text style={styles.infoLabel}>{label}</Text>
+            {valueComponent ? valueComponent : <Text style={styles.infoValue}>{value}</Text>}
+        </View>
     </View>
 );
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundLight || '#f4f6f8',
+        backgroundColor: '#f5f5f5',
     },
-    centered: {
+    scrollContent: {
+        paddingBottom: 20,
+    },
+    loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.backgroundLight || '#f4f6f8',
+        padding: 40,
     },
-    headerSection: {
-        paddingHorizontal: 20,
-        paddingVertical: 25,
-        backgroundColor: COLORS.white,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.border,
+    errorText: {
+        fontSize: 16,
+        color: COLORS.textMedium,
+        textAlign: 'center',
+    },
+    headerCard: {
+        backgroundColor: COLORS.primary,
+        margin: 16,
+        borderRadius: 16,
+        padding: 24,
         alignItems: 'center',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    headerIconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
     },
     serviceName: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: 'bold',
-        color: COLORS.textDark,
+        color: COLORS.white,
         textAlign: 'center',
-        marginBottom: 10,
+        marginBottom: 12,
     },
     statusBadge: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 15,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+    },
+    statusBadgePending: {
+        backgroundColor: '#f39c12',
+    },
+    statusBadgeConfirmed: {
+        backgroundColor: '#27ae60',
+    },
+    statusBadgeCompleted: {
+        backgroundColor: '#3498db',
+    },
+    statusBadgeCancelled: {
+        backgroundColor: '#e74c3c',
     },
     statusText: {
         fontSize: 14,
         fontWeight: '600',
     },
+    statusTextWhite: {
+        color: COLORS.white,
+    },
     statusBadgeInline: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        alignSelf: 'flex-start',
     },
     statusTextInline: {
-        fontSize: 14,
-        fontWeight: '500',
+        fontSize: 13,
+        fontWeight: '600',
     },
     detailCard: {
-        margin: 15,
+        marginHorizontal: 16,
+        marginBottom: 16,
         backgroundColor: COLORS.white,
-        borderRadius: 10,
+        borderRadius: 16,
         padding: 20,
-        shadowColor: COLORS.black,
+        elevation: 3,
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 2,
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
     },
     infoRow: {
         flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 15,
+        alignItems: 'flex-start',
+        marginBottom: 16,
     },
-    infoIcon: {
+    iconWrapper: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#f0f0f0',
+        justifyContent: 'center',
+        alignItems: 'center',
         marginRight: 12,
-        width: 20,
-        textAlign: 'center',
+    },
+    infoContent: {
+        flex: 1,
     },
     infoLabel: {
-        fontSize: 15,
-        color: COLORS.textMedium,
+        fontSize: 14,
+        color: '#666',
         fontWeight: '600',
-        marginRight: 8,
+        marginBottom: 4,
     },
     infoValue: {
         fontSize: 16,
         color: COLORS.textDark,
-        flexShrink: 1,
+        fontWeight: '500',
     },
-    actionButton: {
-        marginHorizontal: 20,
-        marginTop: 10,
-        paddingVertical: 15,
-        borderRadius: 8,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    cancelButton: {
-        backgroundColor: COLORS.error,
-        marginBottom: 20,
-    },
-    actionButtonText: {
-        color: COLORS.white,
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    disabledButton: {
-        opacity: 0.7,
-    },
-    reviewSection: {
-        marginTop: 20,
-        marginHorizontal: 15,
+    reviewCard: {
+        marginHorizontal: 16,
+        marginBottom: 16,
         backgroundColor: COLORS.white,
-        borderRadius: 10,
+        borderRadius: 16,
         padding: 20,
-        shadowColor: COLORS.black,
+        elevation: 3,
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 2,
-        marginBottom: 20,
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+    },
+    reviewHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+        paddingBottom: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
     },
     reviewTitle: {
         fontSize: 20,
         fontWeight: 'bold',
         color: COLORS.textDark,
-        marginBottom: 15,
-        textAlign: 'center',
+        marginLeft: 12,
     },
     existingReviewContainer: {},
     reviewForm: {},
@@ -546,80 +608,130 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: COLORS.textDark,
         fontWeight: '600',
-        marginTop: 10,
-        marginBottom: 5,
+        marginTop: 12,
+        marginBottom: 8,
     },
     starsContainer: {
         flexDirection: 'row',
-        marginBottom: 10,
+        marginBottom: 12,
         alignSelf: 'flex-start',
     },
     starIcon: {
-        marginHorizontal: 3,
+        marginHorizontal: 2,
     },
     commentInput: {
         borderWidth: 1,
-        borderColor: COLORS.border,
-        borderRadius: 5,
-        padding: 10,
+        borderColor: '#e0e0e0',
+        borderRadius: 12,
+        padding: 12,
         textAlignVertical: 'top',
-        minHeight: 80,
+        minHeight: 100,
         fontSize: 15,
         color: COLORS.textDark,
-        backgroundColor: COLORS.backgroundLight,
-        marginBottom: 10,
+        backgroundColor: '#f9f9f9',
+        marginBottom: 12,
     },
     imagePickerButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.greyLight,
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-        borderRadius: 5,
+        justifyContent: 'center',
+        backgroundColor: COLORS.primary,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 12,
         alignSelf: 'flex-start',
-        marginBottom: 10,
+        marginBottom: 12,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 1.5,
     },
     imagePickerButtonText: {
-        color: COLORS.primary,
+        color: COLORS.white,
         fontSize: 15,
-        marginLeft: 5,
+        fontWeight: '600',
+        marginLeft: 8,
     },
     selectedImagePreview: {
-        width: 100,
-        height: 100,
-        borderRadius: 5,
-        marginBottom: 10,
+        width: 150,
+        height: 150,
+        borderRadius: 12,
+        marginVertical: 12,
         alignSelf: 'center',
+        borderWidth: 2,
+        borderColor: COLORS.primary,
     },
     base64Warning: {
         fontSize: 12,
         color: COLORS.textLight,
         fontStyle: 'italic',
         textAlign: 'center',
-        marginBottom: 15,
+        marginBottom: 12,
     },
     submitReviewButton: {
-        backgroundColor: COLORS.success,
-        marginTop: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#27ae60',
+        paddingVertical: 14,
+        borderRadius: 12,
+        marginTop: 8,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 1.5,
+    },
+    cancelButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#e74c3c',
+        marginHorizontal: 16,
+        paddingVertical: 14,
+        borderRadius: 12,
+        marginBottom: 20,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 1.5,
+    },
+    buttonText: {
+        color: COLORS.white,
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginLeft: 8,
+    },
+    disabledButton: {
+        opacity: 0.6,
     },
     reviewText: {
         fontSize: 15,
         color: COLORS.textMedium,
         lineHeight: 22,
-        marginBottom: 5,
+        marginBottom: 8,
+        backgroundColor: '#f9f9f9',
+        padding: 12,
+        borderRadius: 8,
     },
     reviewImage: {
         width: '100%',
-        height: 200,
-        borderRadius: 5,
-        marginVertical: 10,
-        resizeMode: 'contain',
+        height: 220,
+        borderRadius: 12,
+        marginVertical: 12,
+        resizeMode: 'cover',
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
     },
     reviewDate: {
-        fontSize: 12,
+        fontSize: 13,
         color: COLORS.textLight,
         textAlign: 'right',
-        marginTop: 10,
-    }});
+        marginTop: 12,
+        fontStyle: 'italic',
+    },
+});
 
 export default CustomerAppointmentDetailScreen;
