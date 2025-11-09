@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
     View,
     Text,
@@ -33,11 +33,21 @@ interface Article {
     enclosure?: [{ $: { url: string, type?: string } }]; // Cũng có thể chứa ảnh
 }
 
-const HealthNewsScreen = () => {
+const HealthNewsScreen = ({ navigation }: { navigation: any }) => {
     const [articles, setArticles] = useState<Article[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        navigation.setOptions({
+            headerTitle: 'Tin tức',
+            headerTitleAlign: 'center',
+            headerTitleStyle: {
+                fontSize: 20,
+            },
+        });
+    }, [navigation]);
 
     const fetchHealthNews = useCallback(async () => {
         if (!HEALTH_RSS_URL) {

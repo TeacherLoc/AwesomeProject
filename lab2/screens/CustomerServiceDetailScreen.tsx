@@ -9,6 +9,17 @@ const CustomerServiceDetailScreen = ({ route, navigation }: { route: any, naviga
     const [service, setService] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
+    useEffect(() => {
+        navigation.setOptions({
+            headerTitle: 'Chi tiết dịch vụ',
+            headerTitleAlign: 'center',
+            headerTitleStyle: {
+                fontSize: 20,
+                fontWeight: 'bold',
+            },
+        });
+    }, [navigation]);
+
     const fetchServiceDetails = useCallback(async () => {
         setLoading(true);
         const firestoreInstance = getFirestore();

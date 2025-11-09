@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, ActivityIndicator, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import DatePicker from 'react-native-date-picker';
@@ -37,6 +37,8 @@ const CustomerAppointmentScreen: React.FC<CustomerAppointmentScreenProps> = ({ r
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const [loading, setLoading] = useState(false);
     const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null); // Kiểu string hoặc null
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [newAppointmentId, setNewAppointmentId] = useState<string>('');
 
     const availableTimeSlots: string[] = [ // Thêm kiểu cho mảng
         '09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
@@ -103,20 +105,9 @@ const CustomerAppointmentScreen: React.FC<CustomerAppointmentScreenProps> = ({ r
                 requestTimestamp: firestore.FieldValue.serverTimestamp() as FirebaseFirestoreTypes.FieldValue, // Cast cho rõ ràng
             });
 
-            Alert.alert(
-                'Đặt lịch thành công!',
-                `Yêu cầu đặt lịch cho dịch vụ "${serviceName}" vào ${selectedTimeSlot} ngày ${appointmentDate.toLocaleDateString('vi-VN')} đã được gửi. Vui lòng chờ xác nhận từ quản trị viên.`,
-                [
-                    {
-                        text: 'Xem chi tiết',
-                        onPress: () => navigation.navigate('AppointmentsTab', {
-                            screen: 'CustomerAppointmentDetail', // Tên màn hình đúng trong AppointmentStackNavigator
-                            params: { appointmentId: newAppointmentRef.id }})},
-                    {
-                        text: 'OK',
-                        onPress: () => navigation.navigate('AppointmentsTab', { screen: 'CustomerAppointmentList' })}                ],
-                { cancelable: false }
-            );
+            // Hiển thị modal thành công
+            setNewAppointmentId(newAppointmentRef.id);
+            setShowSuccessModal(true);
         } catch (error) {
             console.error('Error booking appointment: ', error);
             Alert.alert('Lỗi', 'Không thể đặt lịch. Vui lòng thử lại.');
@@ -143,6 +134,51 @@ const CustomerAppointmentScreen: React.FC<CustomerAppointmentScreenProps> = ({ r
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+            {/* Success Modal */}
+            <Modal
+                visible={showSuccessModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowSuccessModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalIconContainer}>
+                            <Icon name="check-circle" size={80} color="#27ae60" />
+                        </View>
+                        <Text style={styles.modalTitle}>Đặt lịch thành công!</Text>
+                        <Text style={styles.modalMessage}>
+                            Yêu cầu đặt lịch cho dịch vụ "{serviceName}" vào {selectedTimeSlot} ngày {appointmentDate.toLocaleDateString('vi-VN')} đã được gửi. Vui lòng chờ xác nhận từ quản trị viên.
+                        </Text>
+                        <View style={styles.modalButtonContainer}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalButtonSecondary]}
+                                onPress={() => {
+                                    setShowSuccessModal(false);
+                                    navigation.navigate('AppointmentsTab', {
+                                        screen: 'CustomerAppointmentDetail',
+                                        params: { appointmentId: newAppointmentId },
+                                    });
+                                }}
+                            >
+                                <Icon name="visibility" size={18} color={COLORS.primary} />
+                                <Text style={styles.modalButtonTextSecondary}>Xem chi tiết</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalButtonPrimary]}
+                                onPress={() => {
+                                    setShowSuccessModal(false);
+                                    navigation.navigate('AppointmentsTab', { screen: 'CustomerAppointmentList' });
+                                }}
+                            >
+                                <Icon name="check" size={18} color={COLORS.white} />
+                                <Text style={styles.modalButtonTextPrimary}>OK</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
             {/* Service Info Card */}
             <View style={styles.headerCard}>
                 <Text style={styles.headerTitle}>Đặt lịch cho dịch vụ</Text>
@@ -381,6 +417,76 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: COLORS.white,
         marginLeft: 8,
+    },
+    // Modal styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        backgroundColor: COLORS.white,
+        borderRadius: 20,
+        padding: 24,
+        width: '85%',
+        maxWidth: 400,
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+    },
+    modalIconContainer: {
+        marginBottom: 16,
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: COLORS.textDark,
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    modalMessage: {
+        fontSize: 15,
+        color: COLORS.textMedium,
+        textAlign: 'center',
+        lineHeight: 22,
+        marginBottom: 24,
+    },
+    modalButtonContainer: {
+        flexDirection: 'row',
+        gap: 12,
+        width: '100%',
+    },
+    modalButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        borderRadius: 12,
+        gap: 6,
+    },
+    modalButtonPrimary: {
+        backgroundColor: COLORS.primary,
+        elevation: 2,
+    },
+    modalButtonSecondary: {
+        backgroundColor: COLORS.white,
+        borderWidth: 2,
+        borderColor: COLORS.primary,
+    },
+    modalButtonTextPrimary: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: COLORS.white,
+    },
+    modalButtonTextSecondary: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: COLORS.primary,
     },
 });
 export default CustomerAppointmentScreen;

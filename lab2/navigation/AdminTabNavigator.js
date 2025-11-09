@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
+import { Image, StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Or your preferred icon set
 import { COLORS } from '../theme/colors'; // Import màu
 import AdminServiceListScreen from '../screens/AdminServiceListScreen'; // Import file mới
@@ -16,6 +17,20 @@ import AdminAppointmentDetailScreen from '../screens/AdminAppointmentDetailScree
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
+
+// Component Logo cho header
+const HeaderLogo = () => (
+    <View style={styles.logoContainer}>
+        <Image
+            source={require('../assets/logo3.png')}
+            style={styles.logo}
+            resizeMode="contain"
+        />
+    </View>
+);
+
+// Function để render logo (tránh warning về component creation)
+const renderHeaderLogo = () => <HeaderLogo />;
 
 const commonStackScreenOptions = {
     headerStyle: {
@@ -38,25 +53,54 @@ const ServiceStackNavigator = () => ( // Đây là Stack cho Admin
         <Stack.Screen
             name="AdminServiceList" // Đổi tên route nếu muốn, hoặc giữ ServiceList
             component={AdminServiceListScreen}
+            options={{ headerLeft: renderHeaderLogo }}
             // options={{ title: 'Quản lý dịch vụ' }} // Tiêu đề đã được set trong AdminServiceListScreen
         />
-        <Stack.Screen name="AdminAddService" component={AdminAddServiceScreen} options={{ title: 'Thêm dịch vụ' }}/>
-        <Stack.Screen name="AdminServiceDetail" component={AdminServiceDetailScreen} options={{ title: 'Chi tiết dịch vụ' }}/>
+        <Stack.Screen
+            name="AdminAddService"
+            component={AdminAddServiceScreen}
+            options={{ title: 'Thêm dịch vụ', headerLeft: undefined }}
+        />
+        <Stack.Screen
+            name="AdminServiceDetail"
+            component={AdminServiceDetailScreen}
+            options={{ title: 'Chi tiết dịch vụ', headerLeft: undefined }}
+        />
     </Stack.Navigator>
 );
 
 const ProfileStackNavigator = () => (
     <Stack.Navigator screenOptions={commonStackScreenOptions}>
-        <Stack.Screen name="AdminProfile" component={AdminProfileScreen} options={{ title: 'Profile' }}/>
-        <Stack.Screen name="AdminChangePassword" component={ChangePasswordScreen} options={{ title: 'Thay đổi mật khẩu' }}/>
-        <Stack.Screen name="AdminPasswordRequests" component={AdminPasswordRequestsScreen} options={{ title: 'Yêu cầu mật khẩu' }} />
+        <Stack.Screen
+            name="AdminProfile"
+            component={AdminProfileScreen}
+            options={{ title: 'Profile', headerLeft: renderHeaderLogo }}
+        />
+        <Stack.Screen
+            name="AdminChangePassword"
+            component={ChangePasswordScreen}
+            options={{ title: 'Thay đổi mật khẩu', headerLeft: undefined }}
+        />
+        <Stack.Screen
+            name="AdminPasswordRequests"
+            component={AdminPasswordRequestsScreen}
+            options={{ title: 'Yêu cầu mật khẩu', headerLeft: undefined }}
+        />
     </Stack.Navigator>
 );
 
 const CustomerStackNavigator = () => (
     <Stack.Navigator screenOptions={commonStackScreenOptions}>
-        <Stack.Screen name="AdminCustomerList" component={AdminCustomerListScreen} options={{ title: 'Quản lý khách hàng' }} />
-        <Stack.Screen name="EditCustomerScreen" component={EditCustomerScreen} options={{ title: 'Sửa thông tin KH' }} />
+        <Stack.Screen
+            name="AdminCustomerList"
+            component={AdminCustomerListScreen}
+            options={{ title: 'Quản lý khách hàng', headerLeft: renderHeaderLogo }}
+        />
+        <Stack.Screen
+            name="EditCustomerScreen"
+            component={EditCustomerScreen}
+            options={{ title: 'Sửa thông tin KH', headerLeft: undefined }}
+        />
     </Stack.Navigator>
 );
 
@@ -71,12 +115,12 @@ const AdminAppointmentStackNavigator = () => (
         <Stack.Screen
             name="AdminAppointmentList"
             component={AdminAppointmentListScreen}
-            options={{ title: 'Duyệt Lịch Hẹn' }}
+            options={{ title: 'Duyệt Lịch Hẹn', headerLeft: renderHeaderLogo }}
         />
         <Stack.Screen
             name="AdminAppointmentDetail" // Màn hình chi tiết lịch hẹn cho admin (nếu cần)
             component={AdminAppointmentDetailScreen} // Bạn cần tạo màn hình này
-            options={{ title: 'Chi tiết Lịch Hẹn' }}
+            options={{ title: 'Chi tiết Lịch Hẹn', headerLeft: undefined }}
         />
         {/* Các màn hình khác liên quan đến lịch hẹn của admin nếu có */}
     </Stack.Navigator>
@@ -135,5 +179,17 @@ const AdminTabNavigator = () => {
         </Tab.Navigator>
     );
 };
+
+const styles = StyleSheet.create({
+    logoContainer: {
+        marginLeft: 10,
+        width: 120,
+        height: 40,
+    },
+    logo: {
+        width: '100%',
+        height: '100%',
+    },
+});
 
 export default AdminTabNavigator;

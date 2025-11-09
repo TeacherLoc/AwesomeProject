@@ -22,6 +22,7 @@ import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { COLORS } from '../theme/colors';
 import { useAuth } from '../navigation/AuthContext';
+import Config from '../config/env.config';
 
 // Hàm kiểm tra định dạng email đơn giản
 const isValidEmail = (email: string): boolean => {
@@ -36,8 +37,19 @@ interface LoginScreenProps {
 
 const LoginScreen = ({ navigation }: LoginScreenProps) => {
   useEffect(() => {
+    navigation.setOptions({
+      headerTitle: 'Đăng nhập',
+      headerTitleAlign: 'center',
+      headerTitleStyle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+      },
+    });
+  }, [navigation]);
+
+  useEffect(() => {
     GoogleSignin.configure({
-      webClientId: '86886142020-76338tsu8usmk9aldlosfcadln37j547.apps.googleusercontent.com', // Web OAuth Client từ google-services.json
+      webClientId: Config.GOOGLE_WEB_CLIENT_ID, // Lấy từ file config
       offlineAccess: true, // Cho phép offline access
       hostedDomain: '', // Để trống nếu không giới hạn domain
       forceCodeForRefreshToken: true, // Bắt buộc code để refresh token
@@ -118,7 +130,9 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
       let errorMessage = 'Đăng nhập Google thất bại.';
 
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        errorMessage = 'Bạn đã hủy đăng nhập Google.';
+        Alert.alert('Hủy Đăng Nhập', 'Bạn đã hủy đăng nhập Google.');
+        setLoading(false);
+        return;
       } else if (error.code === statusCodes.IN_PROGRESS) {
         errorMessage = 'Đang xử lý đăng nhập Google. Vui lòng đợi.';
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
@@ -222,11 +236,11 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
 
           <View style={styles.formContainer}>
             <Image
-              source={require('../assets/logo.png')}
+              source={require('../assets/logo3.png')}
               style={styles.logo}
               resizeMode="contain"
             />
-            <Text style={styles.title}>Đăng Nhập Tài Khoản</Text>
+            <Text style={styles.title}>Đăng nhập</Text>
 
             <View style={styles.inputContainer}>
               <Icon name="envelope" size={20} color={COLORS.textMedium} style={styles.icon} />

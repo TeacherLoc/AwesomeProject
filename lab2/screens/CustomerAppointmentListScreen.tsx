@@ -32,8 +32,7 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
             headerTitle: 'Lịch hẹn của tôi',
             headerTitleAlign: 'center',
             headerTitleStyle: {
-                fontWeight: '600',
-                fontSize: 18,
+                fontSize: 20,
             },
         });
     }, [navigation]);

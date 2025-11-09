@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable quotes */
 import React, { useState, useEffect, useCallback, JSX } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Image, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Image, TextInput, Modal } from 'react-native';
 import { getFirestore, doc, getDoc, updateDoc, Timestamp, collection, addDoc, query, where, getDocs, serverTimestamp } from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { launchImageLibrary, ImagePickerResponse, Asset } from 'react-native-image-picker';
@@ -25,6 +25,7 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
     const [appointment, setAppointment] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isCancelling, setIsCancelling] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);
 
     const [existingReview, setExistingReview] = useState<Review | null>(null);
     const [loadingReview, setLoadingReview] = useState(true);
@@ -243,33 +244,28 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
 
     const handleCancelAppointment = async () => {
         if (!appointment || !appointment.id) { return; }
+        setShowCancelModal(true);
+    };
 
-        Alert.alert(
-            'Xác nhận hủy lịch',
-            'Bạn có chắc chắn muốn hủy lịch hẹn này không?',
-            [
-                { text: 'Không', style: 'cancel' },
-                {
-                    text: 'Có, hủy lịch',
-                    style: 'destructive',
-                    onPress: async () => {
-                        setIsCancelling(true);
-                        const appointmentDocRef = doc(firestoreInstance, 'appointments', appointment.id);
-                        try {
-                            await updateDoc(appointmentDocRef, {
-                                status: 'cancelled_by_customer',
-                                cancelledAt: Timestamp.now(),
-                            });
-                            Alert.alert('Thành công', 'Lịch hẹn của bạn đã được hủy.');
-                            setAppointment((prev: any) => ({ ...prev, status: 'cancelled_by_customer' }));
-                        } catch (error) {
-                            console.error('Lỗi khi hủy lịch hẹn: ', error);
-                            Alert.alert('Lỗi', 'Không thể hủy lịch hẹn. Vui lòng thử lại.');
-                        } finally {
-                            setIsCancelling(false);
-                        }
-                    }}]
-        );
+    const confirmCancelAppointment = async () => {
+        if (!appointment || !appointment.id) { return; }
+
+        setShowCancelModal(false);
+        setIsCancelling(true);
+        const appointmentDocRef = doc(firestoreInstance, 'appointments', appointment.id);
+        try {
+            await updateDoc(appointmentDocRef, {
+                status: 'cancelled_by_customer',
+                cancelledAt: Timestamp.now(),
+            });
+            Alert.alert('Thành công', 'Lịch hẹn của bạn đã được hủy.');
+            setAppointment((prev: any) => ({ ...prev, status: 'cancelled_by_customer' }));
+        } catch (error) {
+            console.error('Lỗi khi hủy lịch hẹn: ', error);
+            Alert.alert('Lỗi', 'Không thể hủy lịch hẹn. Vui lòng thử lại.');
+        } finally {
+            setIsCancelling(false);
+        }
     };
 
     const getStatusStyle = (status?: string) => {
@@ -319,6 +315,49 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+            {/* Cancel Confirmation Modal */}
+            <Modal
+                visible={showCancelModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowCancelModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalIconContainer}>
+                            <Icon name="warning" size={80} color="#e74c3c" />
+                        </View>
+                        <Text style={styles.modalTitle}>Xác nhận hủy lịch</Text>
+                        <Text style={styles.modalMessage}>
+                            Bạn có chắc chắn muốn hủy lịch hẹn này không?
+                        </Text>
+                        <View style={styles.modalButtonContainer}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalButtonSecondary]}
+                                onPress={() => setShowCancelModal(false)}
+                            >
+                                <Icon name="close" size={18} color={COLORS.textDark} />
+                                <Text style={styles.modalButtonTextSecondary}>Không</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalButtonDanger]}
+                                onPress={confirmCancelAppointment}
+                                disabled={isCancelling}
+                            >
+                                {isCancelling ? (
+                                    <ActivityIndicator size="small" color={COLORS.white} />
+                                ) : (
+                                    <>
+                                        <Icon name="event-busy" size={18} color={COLORS.white} />
+                                        <Text style={styles.modalButtonTextPrimary}>Có, hủy lịch</Text>
+                                    </>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
             {/* Header Card */}
             <View style={styles.headerCard}>
                 <View style={styles.headerIconContainer}>
@@ -731,6 +770,76 @@ const styles = StyleSheet.create({
         textAlign: 'right',
         marginTop: 12,
         fontStyle: 'italic',
+    },
+    // Modal styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        backgroundColor: COLORS.white,
+        borderRadius: 20,
+        padding: 24,
+        width: '85%',
+        maxWidth: 400,
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+    },
+    modalIconContainer: {
+        marginBottom: 16,
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: COLORS.textDark,
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    modalMessage: {
+        fontSize: 15,
+        color: COLORS.textMedium,
+        textAlign: 'center',
+        lineHeight: 22,
+        marginBottom: 24,
+    },
+    modalButtonContainer: {
+        flexDirection: 'row',
+        gap: 12,
+        width: '100%',
+    },
+    modalButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        borderRadius: 12,
+        gap: 6,
+    },
+    modalButtonDanger: {
+        backgroundColor: '#e74c3c',
+        elevation: 2,
+    },
+    modalButtonSecondary: {
+        backgroundColor: COLORS.white,
+        borderWidth: 2,
+        borderColor: '#95a5a6',
+    },
+    modalButtonTextPrimary: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: COLORS.white,
+    },
+    modalButtonTextSecondary: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: COLORS.textDark,
     },
 });
 

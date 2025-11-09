@@ -132,8 +132,7 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
             headerTitle: 'Hồ sơ của tôi',
             headerTitleAlign: 'center',
             headerTitleStyle: {
-                fontWeight: '600',
-                fontSize: 18,
+                fontSize: 20,
             },
         });
     }, [navigation]);
@@ -143,6 +142,7 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     // --- UPDATED: Add state for all profile fields ---
     const [name, setName] = useState('');
@@ -340,9 +340,9 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
                 });
             }
 
-            Alert.alert('Thành công', 'Hồ sơ đã được cập nhật!');
             setProfile((prev: any) => ({ ...prev, ...updatedFirestoreData }));
             setEditing(false);
+            setShowSuccessModal(true);
             // --- NEW: Clear image and OCR result after successful save ---
             setCccdImage(null);
             setOcrResult('');
@@ -398,6 +398,33 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
                         <Image source={avatar ? (typeof avatar === 'string' ? { uri: avatar } : avatar) : require('../assets/lo.png')} style={{ width: 250, height: 250, borderRadius: 16, marginBottom: 18 }} resizeMode="contain" />
                         <TouchableOpacity style={[styles.modalButton, { borderBottomWidth: 0, width: '100%' }]} onPress={() => setViewAvatarModalVisible(false)}>
                             <Text style={[styles.modalButtonText, { color: 'red' }]}>Đóng</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Success Modal - Profile Updated */}
+            <Modal
+                visible={showSuccessModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowSuccessModal(false)}
+            >
+                <View style={styles.successModalOverlay}>
+                    <View style={styles.successModalContainer}>
+                        <View style={styles.successIconContainer}>
+                            <Icon name="check-circle" size={80} color="#27ae60" />
+                        </View>
+                        <Text style={styles.successModalTitle}>Thành công</Text>
+                        <Text style={styles.successModalMessage}>
+                            Hồ sơ đã được cập nhật!
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.successModalButton}
+                            onPress={() => setShowSuccessModal(false)}
+                        >
+                            <Icon name="check" size={18} color={COLORS.white} />
+                            <Text style={styles.successModalButtonText}>OK</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -937,6 +964,59 @@ const styles = StyleSheet.create({
         color: COLORS.primary,
         textAlign: 'center',
         fontWeight: '500',
+    },
+    // Success Modal styles
+    successModalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    successModalContainer: {
+        backgroundColor: COLORS.white,
+        borderRadius: 20,
+        padding: 24,
+        width: '85%',
+        maxWidth: 400,
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+    },
+    successIconContainer: {
+        marginBottom: 16,
+    },
+    successModalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: COLORS.textDark,
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    successModalMessage: {
+        fontSize: 15,
+        color: COLORS.textMedium,
+        textAlign: 'center',
+        lineHeight: 22,
+        marginBottom: 24,
+    },
+    successModalButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: COLORS.primary,
+        paddingVertical: 14,
+        paddingHorizontal: 40,
+        borderRadius: 12,
+        gap: 6,
+        elevation: 2,
+    },
+    successModalButtonText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: COLORS.white,
     },
 });
 
