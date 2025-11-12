@@ -42,7 +42,7 @@ const AdminServiceListScreen = ({ navigation }: { navigation: any }) => {
         navigation.setOptions({
             title: 'Dịch vụ phòng khám',
             headerTitleAlign: 'center',
-            headerTitleStyle: { fontSize: 20, fontWeight: 'bold' },
+            headerTitleStyle: { fontSize: 20 },
         });
     }, [navigation]);
 

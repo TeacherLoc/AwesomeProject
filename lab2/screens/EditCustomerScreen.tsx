@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Modal } from 'react-native';
 import { COLORS } from '../theme/colors';
 import { getFirestore, doc, updateDoc } from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -11,6 +11,9 @@ const EditCustomerScreen = ({ route, navigation }: { route: any, navigation: any
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         navigation.setOptions({
@@ -30,7 +33,8 @@ const EditCustomerScreen = ({ route, navigation }: { route: any, navigation: any
 
     const handleSaveChanges = async () => {
         if (!name.trim()) {
-            Alert.alert('Lỗi', 'Tên khách hàng không được để trống.');
+            setErrorMessage('Tên khách hàng không được để trống.');
+            setShowErrorModal(true);
             return;
         }
 
@@ -44,12 +48,12 @@ const EditCustomerScreen = ({ route, navigation }: { route: any, navigation: any
                 phone: phone.trim(),
             });
 
-            Alert.alert('Thành công', 'Thông tin khách hàng đã được cập nhật.');
-            navigation.goBack();
+            setShowSuccessModal(true);
 
         } catch (error) {
             console.error('Error updating customer: ', error);
-            Alert.alert('Lỗi', 'Không thể cập nhật thông tin. Vui lòng thử lại.');
+            setErrorMessage('Không thể cập nhật thông tin. Vui lòng thử lại.');
+            setShowErrorModal(true);
         } finally {
             setLoading(false);
         }
@@ -134,6 +138,62 @@ const EditCustomerScreen = ({ route, navigation }: { route: any, navigation: any
                     </TouchableOpacity>
                 </>
             )}
+
+            {/* Error Modal */}
+            <Modal
+                visible={showErrorModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowErrorModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalIconContainer}>
+                            <Icon name="error-outline" size={80} color="#EF4444" />
+                        </View>
+                        <Text style={styles.modalTitle}>Lỗi</Text>
+                        <Text style={styles.modalMessage}>{errorMessage}</Text>
+                        <TouchableOpacity
+                            style={[styles.modalButton, styles.errorButton]}
+                            onPress={() => setShowErrorModal(false)}
+                        >
+                            <Text style={styles.modalButtonText}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Success Modal */}
+            <Modal
+                visible={showSuccessModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => {
+                    setShowSuccessModal(false);
+                    navigation.goBack();
+                }}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalIconContainer}>
+                            <Icon name="check-circle" size={80} color="#4CAF50" />
+                        </View>
+                        <Text style={styles.modalTitle}>Thành công!</Text>
+                        <Text style={styles.modalMessage}>
+                            Thông tin khách hàng đã được cập nhật thành công.
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.modalButton}
+                            onPress={() => {
+                                setShowSuccessModal(false);
+                                navigation.goBack();
+                            }}
+                        >
+                            <Text style={styles.modalButtonText}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </ScrollView>
     );
 };
@@ -249,6 +309,59 @@ const styles = StyleSheet.create({
     },
     loader: {
         marginTop: 20,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: '#FFF',
+        borderRadius: 20,
+        padding: 30,
+        alignItems: 'center',
+        width: '85%',
+        maxWidth: 400,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+    },
+    modalIconContainer: {
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: COLORS.textDark,
+        marginBottom: 10,
+        textAlign: 'center',
+    },
+    modalMessage: {
+        fontSize: 15,
+        color: COLORS.textMedium,
+        textAlign: 'center',
+        marginBottom: 25,
+        lineHeight: 22,
+    },
+    modalButton: {
+        backgroundColor: COLORS.primary,
+        paddingVertical: 14,
+        paddingHorizontal: 40,
+        borderRadius: 12,
+        minWidth: 150,
+        elevation: 2,
+    },
+    modalButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    errorButton: {
+        backgroundColor: '#EF4444',
     },
 });
 

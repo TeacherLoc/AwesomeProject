@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unstable-nested-components */
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert, Modal } from 'react-native';
 import { getApp } from '@react-native-firebase/app';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import { useFocusEffect } from '@react-navigation/native';
@@ -42,6 +42,9 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [pendingUpdate, setPendingUpdate] = useState<{ appointmentId: string; newStatus: Appointment['status'] } | null>(null);
 
     const fetchAppointmentsForAdmin = useCallback(async () => {
         try {
@@ -90,36 +93,40 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
     }, [fetchAppointmentsForAdmin]);
 
     const handleUpdateAppointmentStatus = async (appointmentId: string, newStatus: Appointment['status']) => {
-        Alert.alert(
-            'Xác nhận thay đổi',
-            `Bạn có chắc muốn cập nhật trạng thái lịch hẹn thành "${newStatus.replace('_', ' ')}"?`,
-            [
-                { text: 'Hủy', style: 'cancel' },
-                {
-                    text: 'Đồng ý',
-                    onPress: async () => {
-                        try {
-                            const app = getApp();
-                            const db = firestore(app);
-                            await db.collection('appointments').doc(appointmentId).update({
-                                status: newStatus,
-                                ...(newStatus === 'confirmed' && { confirmedAt: firestore.FieldValue.serverTimestamp() }),
-                                ...(newStatus === 'rejected' && { rejectedAt: firestore.FieldValue.serverTimestamp() }),
-                                ...(newStatus === 'cancelled_by_admin' && { cancelledAt: firestore.FieldValue.serverTimestamp() }),
-                                ...(newStatus === 'completed' && { completedAt: firestore.FieldValue.serverTimestamp() }),
-                            });
-                            Alert.alert('Thành công', 'Trạng thái lịch hẹn đã được cập nhật.');
-                            setAppointments(prevAppointments =>
-                                prevAppointments.map(apt =>
-                                    apt.id === appointmentId ? { ...apt, status: newStatus } : apt
-                                )
-                            );
-                        } catch (error) {
-                            console.error('Error updating appointment status: ', error);
-                            Alert.alert('Lỗi', 'Không thể cập nhật trạng thái lịch hẹn.');
-                        }
-                    }}]
-        );
+        setPendingUpdate({ appointmentId, newStatus });
+        setShowConfirmModal(true);
+    };
+
+    const confirmUpdate = async () => {
+        if (!pendingUpdate) {
+            return;
+        }
+
+        setShowConfirmModal(false);
+        const { appointmentId, newStatus } = pendingUpdate;
+
+        try {
+            const app = getApp();
+            const db = firestore(app);
+            await db.collection('appointments').doc(appointmentId).update({
+                status: newStatus,
+                ...(newStatus === 'confirmed' && { confirmedAt: firestore.FieldValue.serverTimestamp() }),
+                ...(newStatus === 'rejected' && { rejectedAt: firestore.FieldValue.serverTimestamp() }),
+                ...(newStatus === 'cancelled_by_admin' && { cancelledAt: firestore.FieldValue.serverTimestamp() }),
+                ...(newStatus === 'completed' && { completedAt: firestore.FieldValue.serverTimestamp() }),
+            });
+            setShowSuccessModal(true);
+            setAppointments(prevAppointments =>
+                prevAppointments.map(apt =>
+                    apt.id === appointmentId ? { ...apt, status: newStatus } : apt
+                )
+            );
+        } catch (error) {
+            console.error('Error updating appointment status: ', error);
+            Alert.alert('Lỗi', 'Không thể cập nhật trạng thái lịch hẹn.');
+        } finally {
+            setPendingUpdate(null);
+        }
     };
 
     const getStatusStyle = (status: Appointment['status']) => {
@@ -131,6 +138,16 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
             case 'rejected': return { backgroundColor: COLORS.errorLight, color: COLORS.errorDark, text: 'Đã từ chối' };
             case 'completed': return { backgroundColor: COLORS.infoLight, color: COLORS.infoDark, text: 'Đã hoàn thành' };
             default: return { backgroundColor: COLORS.greyLight, color: COLORS.textMedium, text: status || 'Không rõ' };
+        }
+    };
+
+    const getStatusDisplayText = (status: Appointment['status']) => {
+        switch (status) {
+            case 'confirmed': return 'Đã xác nhận';
+            case 'rejected': return 'Từ chối';
+            case 'cancelled_by_admin': return 'Hủy';
+            case 'completed': return 'Hoàn thành';
+            default: return status;
         }
     };
 
@@ -237,16 +254,81 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     return (
-        <FlatList
-            data={appointments}
-            renderItem={renderAppointmentItem}
-            keyExtractor={item => item.id}
-            style={styles.container}
-            contentContainerStyle={styles.listContentContainer}
-            refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
-            }
-        />
+        <>
+            <FlatList
+                data={appointments}
+                renderItem={renderAppointmentItem}
+                keyExtractor={item => item.id}
+                style={styles.container}
+                contentContainerStyle={styles.listContentContainer}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+                }
+            />
+
+            {/* Confirm Modal */}
+            <Modal
+                visible={showConfirmModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowConfirmModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalIconContainer}>
+                            <Icon name="help-outline" size={80} color={COLORS.primary} />
+                        </View>
+                        <Text style={styles.modalTitle}>Xác nhận thay đổi</Text>
+                        <Text style={styles.modalMessage}>
+                            {pendingUpdate && `Bạn có chắc muốn cập nhật trạng thái lịch hẹn thành "${getStatusDisplayText(pendingUpdate.newStatus)}"?`}
+                        </Text>
+                        <View style={styles.modalButtonContainer}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalCancelButton]}
+                                onPress={() => {
+                                    setShowConfirmModal(false);
+                                    setPendingUpdate(null);
+                                }}
+                            >
+                                <Text style={styles.modalCancelButtonText}>Hủy</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalConfirmButton]}
+                                onPress={confirmUpdate}
+                            >
+                                <Text style={styles.modalButtonText}>Đồng ý</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Success Modal */}
+            <Modal
+                visible={showSuccessModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowSuccessModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalIconContainer}>
+                            <Icon name="check-circle" size={80} color="#4CAF50" />
+                        </View>
+                        <Text style={styles.modalTitle}>Thành công!</Text>
+                        <Text style={styles.modalMessage}>
+                            Trạng thái lịch hẹn đã được cập nhật thành công.
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.modalButton}
+                            onPress={() => setShowSuccessModal(false)}
+                        >
+                            <Text style={styles.modalButtonText}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+        </>
     );
 };
 
@@ -406,6 +488,77 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
         marginRight: 4,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: '#FFF',
+        borderRadius: 20,
+        padding: 30,
+        alignItems: 'center',
+        width: '85%',
+        maxWidth: 400,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+    },
+    modalIconContainer: {
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: COLORS.textDark,
+        marginBottom: 10,
+        textAlign: 'center',
+    },
+    modalMessage: {
+        fontSize: 15,
+        color: COLORS.textMedium,
+        textAlign: 'center',
+        marginBottom: 25,
+        lineHeight: 22,
+    },
+    modalButton: {
+        backgroundColor: COLORS.primary,
+        paddingVertical: 14,
+        paddingHorizontal: 40,
+        borderRadius: 12,
+        minWidth: 150,
+        elevation: 2,
+    },
+    modalButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    modalButtonContainer: {
+        flexDirection: 'row',
+        gap: 12,
+        width: '100%',
+    },
+    modalCancelButton: {
+        backgroundColor: '#E5E7EB',
+        flex: 1,
+        minWidth: 0,
+    },
+    modalConfirmButton: {
+        backgroundColor: COLORS.primary,
+        flex: 1,
+        minWidth: 0,
+    },
+    modalCancelButtonText: {
+        color: COLORS.textDark,
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center',
     },
 });
 

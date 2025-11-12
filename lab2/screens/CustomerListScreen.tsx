@@ -1,6 +1,6 @@
 // filepath: screens/Admin/CustomerListScreen.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TextInput, TouchableOpacity, Modal } from 'react-native';
 import { COLORS } from '../theme/colors';
 import { getFirestore, collection, getDocs, query, where, doc, deleteDoc } from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -49,12 +49,20 @@ const CustomerListScreen = ({ navigation }: any) => {
     const [filteredCustomers, setFilteredCustomers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    
+    // Modal states
+    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [showWarningModal, setShowWarningModal] = useState(false);
+    const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         navigation.setOptions({
             headerTitle: 'Quản Lý Khách Hàng',
             headerTitleAlign: 'center',
-            headerTitleStyle: { fontSize: 20, fontWeight: 'bold' },
+            headerTitleStyle: { fontSize: 20 },
         });
     }, [navigation]);
 
@@ -93,37 +101,37 @@ const CustomerListScreen = ({ navigation }: any) => {
         }
     };
 
-    const handleDeleteCustomer = async (customerId: string) => {
-        Alert.alert(
-            'Xác nhận xoá',
-            'Bạn có chắc chắn muốn xoá khách hàng này không?',
-            [
-                { text: 'Huỷ', style: 'cancel' },
-                {
-                    text: 'Xoá',
-                    onPress: async () => {
-                        try {
-                            const firestoreInstance = getFirestore();
-                            await deleteDoc(doc(firestoreInstance, 'users', customerId));
-                            Alert.alert('Thành công', 'Đã xoá khách hàng.');
-                            // Refresh the list
-                            setCustomers(prevCustomers => prevCustomers.filter(cust => cust.id !== customerId));
-                            setFilteredCustomers(prevFiltered => prevFiltered.filter(cust => cust.id !== customerId));
-                        } catch (error) {
-                            console.error('Error deleting customer: ', error);
-                            Alert.alert('Lỗi', 'Không thể xoá khách hàng. Vui lòng thử lại.');
-                        }
-                    },
-                    style: 'destructive',
-                },
-            ]
-        );
+    const handleDeleteCustomer = (customer: any) => {
+        setSelectedCustomer(customer);
+        setShowDeleteConfirmModal(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!selectedCustomer) {
+            return;
+        }
+        
+        setShowDeleteConfirmModal(false);
+        
+        try {
+            const firestoreInstance = getFirestore();
+            await deleteDoc(doc(firestoreInstance, 'users', selectedCustomer.id));
+            
+            // Refresh the list
+            setCustomers(prevCustomers => prevCustomers.filter(cust => cust.id !== selectedCustomer.id));
+            setFilteredCustomers(prevFiltered => prevFiltered.filter(cust => cust.id !== selectedCustomer.id));
+            
+            setShowSuccessModal(true);
+        } catch (error) {
+            console.error('Error deleting customer: ', error);
+            setErrorMessage('Không thể xoá khách hàng. Vui lòng thử lại.');
+            setShowErrorModal(true);
+        }
     };
 
     const handleEditCustomer = (customer: any) => {
-        navigation.navigate('EditCustomerScreen', { customerData: customer });
-        console.log('Edit customer: ', customer);
-        Alert.alert('Chức năng sửa', `Đây là thông tin bảo mật của: ${customer.name}. Hãy cẩn thận khi sửa đổi!`);
+        setSelectedCustomer(customer);
+        setShowWarningModal(true);
     };
 
     const renderItem = ({ item }: { item: any }) => (
@@ -163,7 +171,7 @@ const CustomerListScreen = ({ navigation }: any) => {
                     <Text style={styles.actionBtnText}>Sửa</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                    onPress={() => handleDeleteCustomer(item.id)}
+                    onPress={() => handleDeleteCustomer(item)}
                     style={[styles.actionBtn, styles.deleteBtn]}
                 >
                     <Icon name="delete" size={18} color="#fff" />
@@ -201,6 +209,120 @@ const CustomerListScreen = ({ navigation }: any) => {
                 }
                 contentContainerStyle={styles.listContentContainer}
             />
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                visible={showDeleteConfirmModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowDeleteConfirmModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalIconContainer}>
+                            <Icon name="warning" size={80} color="#FF9800" />
+                        </View>
+                        <Text style={styles.modalTitle}>Xác nhận xoá</Text>
+                        <Text style={styles.modalMessage}>
+                            Bạn có chắc chắn muốn xoá khách hàng{' '}
+                            <Text style={styles.boldText}>{selectedCustomer?.name}</Text> không?
+                        </Text>
+                        <View style={styles.modalButtonContainer}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalCancelButton]}
+                                onPress={() => setShowDeleteConfirmModal(false)}
+                            >
+                                <Text style={styles.modalCancelButtonText}>Huỷ</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalDeleteButton]}
+                                onPress={confirmDelete}
+                            >
+                                <Text style={styles.modalButtonText}>Xoá</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Success Modal */}
+            <Modal
+                visible={showSuccessModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowSuccessModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalIconContainer}>
+                            <Icon name="check-circle" size={80} color="#4CAF50" />
+                        </View>
+                        <Text style={styles.modalTitle}>Thành công!</Text>
+                        <Text style={styles.modalMessage}>Đã xoá khách hàng thành công.</Text>
+                        <TouchableOpacity
+                            style={styles.modalButton}
+                            onPress={() => setShowSuccessModal(false)}
+                        >
+                            <Text style={styles.modalButtonText}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Error Modal */}
+            <Modal
+                visible={showErrorModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowErrorModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalIconContainer}>
+                            <Icon name="error-outline" size={80} color="#EF4444" />
+                        </View>
+                        <Text style={styles.modalTitle}>Lỗi</Text>
+                        <Text style={styles.modalMessage}>{errorMessage}</Text>
+                        <TouchableOpacity
+                            style={[styles.modalButton, styles.errorButton]}
+                            onPress={() => setShowErrorModal(false)}
+                        >
+                            <Text style={styles.modalButtonText}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Warning Modal for Edit */}
+            <Modal
+                visible={showWarningModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowWarningModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalIconContainer}>
+                            <Icon name="info" size={80} color={COLORS.primary} />
+                        </View>
+                        <Text style={styles.modalTitle}>Chức năng sửa</Text>
+                        <Text style={styles.modalMessage}>
+                            Đây là thông tin bảo mật của:{' '}
+                            <Text style={styles.boldText}>{selectedCustomer?.name}</Text>.{'\n'}
+                            Hãy cẩn thận khi sửa đổi!
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.modalButton}
+                            onPress={() => {
+                                setShowWarningModal(false);
+                                navigation.navigate('EditCustomerScreen', { customerData: selectedCustomer });
+                            }}
+                        >
+                            <Text style={styles.modalButtonText}>Đồng ý</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -344,6 +466,82 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#999',
         marginTop: 16,
+    },
+    // Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 30,
+        width: '85%',
+        maxWidth: 400,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+    },
+    modalIconContainer: {
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#333',
+        textAlign: 'center',
+        marginBottom: 12,
+    },
+    modalMessage: {
+        fontSize: 15,
+        color: '#666',
+        textAlign: 'center',
+        lineHeight: 22,
+        marginBottom: 25,
+    },
+    boldText: {
+        fontWeight: 'bold',
+        color: COLORS.primary,
+    },
+    modalButton: {
+        backgroundColor: COLORS.primary,
+        paddingVertical: 14,
+        paddingHorizontal: 40,
+        borderRadius: 12,
+        minWidth: 150,
+        alignItems: 'center',
+        elevation: 2,
+    },
+    modalButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    modalButtonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
+    modalCancelButton: {
+        backgroundColor: '#9E9E9E',
+        flex: 1,
+    },
+    modalDeleteButton: {
+        backgroundColor: '#EF4444',
+        flex: 1,
+    },
+    modalCancelButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    errorButton: {
+        backgroundColor: '#EF4444',
     },
 });
 

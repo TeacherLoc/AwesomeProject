@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     headerCard: {
-        backgroundColor: COLORS.primary,
+        backgroundColor: '#F8E6EF',
         margin: 16,
         borderRadius: 16,
         padding: 24,
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        backgroundColor: COLORS.primary,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     serviceName: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: COLORS.white,
+        color: COLORS.primary,
         textAlign: 'center',
         marginBottom: 12,
     },

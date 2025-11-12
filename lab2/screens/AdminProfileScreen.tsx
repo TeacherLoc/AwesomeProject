@@ -19,7 +19,7 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
         navigation.setOptions({
             headerTitle: 'Hồ Sơ Admin',
             headerTitleAlign: 'center',
-            headerTitleStyle: { fontSize: 20, fontWeight: 'bold' },
+            headerTitleStyle: { fontSize: 20 },
         });
     }, [navigation]);
 
