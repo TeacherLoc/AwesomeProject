@@ -1,0 +1,217 @@
+/* Light Theme (Default) */
+:root[data-theme="light"] {
+  /* Background colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-tertiary: #e0e0e0;
+  --bg-card: #ffffff;
+  --bg-sidebar: #1a1a2e;
+  --bg-hover: #f0f0f0;
+  
+  /* Text colors */
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --text-white: #ffffff;
+  --text-sidebar: #ffffff;
+  
+  /* Border colors */
+  --border-color: #e0e0e0;
+  --border-light: #f0f0f0;
+  
+  /* Shadow */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
+  
+  /* Brand colors - unchanged */
+  --color-primary: #E0408C;
+  --color-success: #4CAF50;
+  --color-error: #EF4444;
+  --color-warning: #FF9800;
+  --color-info: #2196F3;
+  
+  /* Status colors */
+  --status-pending: #ff9800;
+  --status-confirmed: #2196f3;
+  --status-completed: #4caf50;
+  --status-cancelled: #f44336;
+}
+
+/* Dark Theme */
+:root[data-theme="dark"] {
+  /* Background colors */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --bg-tertiary: #404040;
+  --bg-card: #2d2d2d;
+  --bg-sidebar: #0f0f1e;
+  --bg-hover: #3a3a3a;
+  
+  /* Text colors */
+  --text-primary: #e0e0e0;
+  --text-secondary: #b0b0b0;
+  --text-tertiary: #808080;
+  --text-white: #ffffff;
+  --text-sidebar: #e0e0e0;
+  
+  /* Border colors */
+  --border-color: #404040;
+  --border-light: #353535;
+  
+  /* Shadow */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+  
+  /* Brand colors - slightly adjusted for dark mode */
+  --color-primary: #E0408C;
+  --color-success: #66BB6A;
+  --color-error: #EF5350;
+  --color-warning: #FFA726;
+  --color-info: #42A5F5;
+  
+  /* Status colors */
+  --status-pending: #ffa726;
+  --status-confirmed: #42a5f5;
+  --status-completed: #66bb6a;
+  --status-cancelled: #ef5350;
+}
+
+/* Global styles */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Card styles */
+.card,
+.stat-card,
+.service-card,
+.customer-card,
+.appointment-card,
+.chart-card,
+.revenue-card {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Input styles */
+input,
+textarea,
+select {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+/* Table styles */
+table {
+  background-color: var(--bg-card);
+}
+
+th {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-color);
+}
+
+td {
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-light);
+}
+
+tr:hover {
+  background-color: var(--bg-hover);
+}
+
+/* Modal styles */
+.modal-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-content {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Button styles */
+.btn-secondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-tertiary);
+}
+
+/* Status badges */
+.status-badge {
+  color: white;
+  font-weight: 500;
+}
+
+.status-badge.pending {
+  background-color: var(--status-pending);
+}
+
+.status-badge.confirmed {
+  background-color: var(--status-confirmed);
+}
+
+.status-badge.completed {
+  background-color: var(--status-completed);
+}
+
+.status-badge.cancelled {
+  background-color: var(--status-cancelled);
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-color);
+}
+
+/* Loading spinner */
+.spinner {
+  border-color: var(--border-light);
+  border-top-color: var(--color-primary);
+}

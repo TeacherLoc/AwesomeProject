@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS } from '../../utils/theme';
+import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import './DashboardLayout.css';
 
 const DashboardLayout: React.FC = () => {
@@ -75,6 +76,7 @@ const DashboardLayout: React.FC = () => {
           </button>
 
           <div className="header-right">
+            <ThemeToggle />
             <div className="user-info">
               <div className="user-avatar" style={{ backgroundColor: COLORS.primary }}>
                 {user?.email?.charAt(0).toUpperCase()}
