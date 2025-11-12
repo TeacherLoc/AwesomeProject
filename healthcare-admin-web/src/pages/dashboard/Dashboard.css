@@ -1,0 +1,293 @@
+.dashboard {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  margin-bottom: 32px;
+}
+
+.dashboard-header h1 {
+  font-size: 32px;
+  font-weight: bold;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.dashboard-header p {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-content h3 {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 8px 0;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
+
+.revenue-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  padding: 32px;
+  margin-bottom: 24px;
+  color: white;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+}
+
+.revenue-header h2 {
+  font-size: 24px;
+  margin: 0 0 8px 0;
+}
+
+.revenue-subtitle {
+  font-size: 14px;
+  opacity: 0.9;
+  margin: 0 0 16px 0;
+}
+
+.revenue-amount {
+  font-size: 48px;
+  font-weight: bold;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card h3 {
+  font-size: 18px;
+  color: #333;
+  margin: 0 0 20px 0;
+}
+
+.recent-appointments {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+.recent-appointments h2 {
+  font-size: 20px;
+  color: #333;
+  margin: 0 0 20px 0;
+}
+
+.appointments-table {
+  overflow-x: auto;
+}
+
+.appointments-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.appointments-table th {
+  background: #f5f5f5;
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #666;
+  font-size: 14px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.appointments-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  color: #666;
+}
+
+.appointments-table tr:hover {
+  background: #fafafa;
+}
+
+.service-cell {
+  font-weight: 600;
+  color: #333;
+}
+
+.date-cell {
+  font-size: 13px;
+  color: #999;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  font-size: 16px;
+}
+
+.dashboard-content {
+  display: grid;
+  gap: 20px;
+}
+
+.welcome-card {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-card h2 {
+  font-size: 24px;
+  color: #333;
+  margin: 0 0 16px 0;
+}
+
+.welcome-card p {
+  font-size: 16px;
+  color: #666;
+  margin: 0 0 16px 0;
+}
+
+.welcome-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.welcome-card li {
+  font-size: 15px;
+  color: #666;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.welcome-card li:last-child {
+  border-bottom: none;
+}
+
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #E0408C;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.dashboard-loading p {
+  color: #666;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-header h1 {
+    font-size: 24px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .revenue-amount {
+    font-size: 36px;
+  }
+
+  .welcome-card {
+    padding: 24px;
+  }
+
+  .welcome-card h2 {
+    font-size: 20px;
+  }
+
+  .appointments-table {
+    font-size: 12px;
+  }
+
+  .appointments-table th,
+  .appointments-table td {
+    padding: 8px 6px;
+  }
+}
