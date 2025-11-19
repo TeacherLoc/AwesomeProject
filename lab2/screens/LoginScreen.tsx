@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   Text,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
   StatusBar,
+  Modal,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 // Firebase Auth for React Native
@@ -20,6 +20,7 @@ import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-si
 // Firebase Firestore for React Native
 import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../theme/colors';
 import { useAuth } from '../navigation/AuthContext';
 import Config from '../config/env.config';
@@ -118,37 +119,39 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
         });
 
         contextSignIn(userCredential.user.uid, role);
-        Alert.alert('Thành công', 'Đăng nhập Google thành công!');
+        showSuccess('Đăng nhập Google thành công!');
       } else {
-        Alert.alert('Lỗi', 'Đăng nhập Google thất bại. Không tìm thấy thông tin người dùng.');
+        showError('Lỗi đăng nhập', 'Đăng nhập Google thất bại. Không tìm thấy thông tin người dùng.');
       }
     } catch (error: any) {
       console.log('Google Sign-In Error:', error);
       console.log('Error code:', error.code);
       console.log('Error message:', error.message);
 
-      let errorMessage = 'Đăng nhập Google thất bại.';
+      let title = 'Lỗi đăng nhập Google';
+      let message = 'Đăng nhập Google thất bại.';
 
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        Alert.alert('Hủy Đăng Nhập', 'Bạn đã hủy đăng nhập Google.');
+        showError('Hủy Đăng Nhập', 'Bạn đã hủy đăng nhập Google.');
         setLoading(false);
         return;
       } else if (error.code === statusCodes.IN_PROGRESS) {
-        errorMessage = 'Đang xử lý đăng nhập Google. Vui lòng đợi.';
+        message = 'Đang xử lý đăng nhập Google. Vui lòng đợi.';
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        errorMessage = 'Google Play Services không khả dụng. Vui lòng cập nhật Google Play Services.';
+        message = 'Google Play Services không khả dụng. Vui lòng cập nhật Google Play Services.';
       } else if (error.code === statusCodes.SIGN_IN_REQUIRED) {
-        errorMessage = 'Cần đăng nhập Google. Vui lòng thử lại.';
+        message = 'Cần đăng nhập Google. Vui lòng thử lại.';
       } else if (error.code === '12501') {
-        // OAuth error - most likely incorrect configuration
-        errorMessage = 'Lỗi cấu hình OAuth. Kiểm tra webClientId và Android OAuth Client trong Google Console.';
+        title = 'Lỗi cấu hình';
+        message = 'Lỗi cấu hình OAuth. Kiểm tra webClientId và Android OAuth Client trong Google Console.';
       } else if (error.message?.includes('non-recoverable')) {
-        errorMessage = 'Lỗi cấu hình Google Sign-In. Vui lòng kiểm tra:\n• WebClientId trong code\n• Android OAuth Client trong Google Console\n• SHA-1 certificate';
+        title = 'Lỗi cấu hình';
+        message = 'Lỗi cấu hình Google Sign-In. Vui lòng kiểm tra:\n• WebClientId trong code\n• Android OAuth Client trong Google Console\n• SHA-1 certificate';
       } else if (error.message) {
-        errorMessage = `Lỗi: ${error.message}`;
+        message = `Lỗi: ${error.message}`;
       }
 
-      Alert.alert('Lỗi đăng nhập Google', errorMessage);
+      showError(title, message);
     } finally {
       setLoading(false);
     }
@@ -159,18 +162,36 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
   const [loading, setLoading] = useState(false);
   const { signIn: contextSignIn } = useAuth();
 
+  // Error modal states
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorTitle, setErrorTitle] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
   const toggleShowPassword = () => setShowPassword(!showPassword);
+
+  const showError = (title: string, message: string) => {
+    setErrorTitle(title);
+    setErrorMessage(message);
+    setShowErrorModal(true);
+  };
+
+  const showSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setShowSuccessModal(true);
+  };
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim();
     if (!trimmedEmail || !password) {
-        Alert.alert('Lỗi', 'Vui lòng nhập email và mật khẩu.');
+        showError('Thông tin thiếu', 'Vui lòng nhập đầy đủ email và mật khẩu.');
         return;
     }
 
     // Thêm kiểm tra định dạng email ở client
     if (!isValidEmail(trimmedEmail)) {
-        Alert.alert('Lỗi', 'Địa chỉ email không hợp lệ. Vui lòng kiểm tra lại.');
+        showError('Email không hợp lệ', 'Địa chỉ email không đúng định dạng. Vui lòng kiểm tra lại.');
         return;
     }
 
@@ -202,21 +223,27 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
         }
         contextSignIn(userCredential.user.uid, role);
       } else {
-        Alert.alert('Lỗi', 'Đăng nhập thất bại. Không tìm thấy thông tin người dùng.');
+        showError('Lỗi đăng nhập', 'Đăng nhập thất bại. Không tìm thấy thông tin người dùng.');
       }
     } catch (error: any) {
-      let errorMessage = 'Đăng nhập thất bại. Vui lòng thử lại.';
+      let title = 'Đăng nhập thất bại';
+      let message = 'Có lỗi xảy ra. Vui lòng thử lại.';
+
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        errorMessage = 'Sai email hoặc mật khẩu.';
+        title = 'Thông tin không đúng';
+        message = 'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.';
       }
       else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Địa chỉ email không hợp lệ.';
+        title = 'Email không hợp lệ';
+        message = 'Địa chỉ email không đúng định dạng.';
       } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = 'Quá nhiều yêu cầu đăng nhập. Vui lòng thử lại sau.';
+        title = 'Quá nhiều thử';
+        message = 'Tài khoản tạm thời bị khóa do quá nhiều lần đăng nhập sai. Vui lòng thử lại sau.';
       } else if (error.code === 'auth/network-request-failed') {
-        errorMessage = 'Lỗi mạng. Vui lòng kiểm tra kết nối và thử lại.';
+        title = 'Lỗi kết nối';
+        message = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối internet.';
       }
-      Alert.alert('Lỗi đăng nhập', errorMessage); // Hiển thị thông báo thân thiện cho người dùng
+      showError(title, message); // Hiển thị thông báo thân thiện cho người dùng
       // console.error('Login error: ', error);    // Tạm thời bình luận dòng này nếu bạn không muốn thấy nó trên màn hình phát triển
     } finally {
         setLoading(false);
@@ -227,6 +254,55 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
     <LinearGradient colors={['#fde6e9', '#e6a8b3']} style={styles.linearGradient}>
       <StatusBar barStyle="dark-content" />
       <SafeAreaView style={styles.safeArea}>
+        {/* Error Modal */}
+        <Modal
+          visible={showErrorModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowErrorModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.errorIconContainer}>
+                <MaterialIcon name="error-outline" size={70} color="#e74c3c" />
+              </View>
+              <Text style={styles.modalTitle}>{errorTitle}</Text>
+              <Text style={styles.modalMessage}>{errorMessage}</Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setShowErrorModal(false)}
+              >
+                <MaterialIcon name="close" size={18} color="#FFF" />
+                <Text style={styles.modalButtonText}>Đóng</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Success Modal */}
+        <Modal
+          visible={showSuccessModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowSuccessModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <View style={styles.successIconContainer}>
+                <MaterialIcon name="check-circle" size={70} color="#27ae60" />
+              </View>
+              <Text style={styles.modalTitleSuccess}>Đăng nhập thành công!</Text>
+              <Text style={styles.modalMessage}>{successMessage}</Text>
+              <TouchableOpacity
+                style={styles.modalButtonSuccess}
+                onPress={() => setShowSuccessModal(false)}
+              >
+                <MaterialIcon name="check" size={18} color="#FFF" />
+                <Text style={styles.modalButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.container}>
@@ -401,6 +477,92 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     marginTop: 15,
     textAlign: 'center',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    width: '90%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  errorIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#ffe6e6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  successIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#e6f7ed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#e74c3c',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 15,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  modalButton: {
+    flexDirection: 'row',
+    backgroundColor: '#e74c3c',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    gap: 8,
+  },
+  modalButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalTitleSuccess: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#27ae60',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalButtonSuccess: {
+    flexDirection: 'row',
+    backgroundColor: '#27ae60',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    gap: 8,
   },
 });
 

@@ -143,6 +143,10 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
     const [editing, setEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showAvatarSuccessModal, setShowAvatarSuccessModal] = useState(false);
+    const [showAvatarErrorModal, setShowAvatarErrorModal] = useState(false);
+    const [avatarErrorMessage, setAvatarErrorMessage] = useState('');
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
     // --- UPDATED: Add state for all profile fields ---
     const [name, setName] = useState('');
@@ -266,23 +270,38 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
         launchImageLibrary({ mediaType: 'photo', quality: 1, includeBase64: true }, async (response) => {
             if (response.didCancel) { return; }
             if (response.errorCode) {
-                Alert.alert('Lỗi', 'Không thể chọn ảnh: ' + response.errorMessage);
+                setAvatarErrorMessage('Không thể chọn ảnh: ' + (response.errorMessage || 'Lỗi không xác định'));
+                setShowAvatarErrorModal(true);
                 return;
             }
             const asset = response.assets && response.assets[0];
             if (asset?.base64) {
-                setAvatar('data:image/jpeg;base64,' + asset.base64);
+                setIsUploadingAvatar(true);
                 try {
                     const authInstance = getAuth();
                     const currentUser = authInstance.currentUser;
-                    if (!currentUser) { return; }
+                    if (!currentUser) {
+                        setIsUploadingAvatar(false);
+                        setAvatarErrorMessage('Không tìm thấy thông tin người dùng');
+                        setShowAvatarErrorModal(true);
+                        return;
+                    }
+
+                    // Update avatar preview immediately
+                    setAvatar('data:image/jpeg;base64,' + asset.base64);
+
+                    // Save to Firestore
                     const firestoreInstance = getFirestore();
                     const userDocumentRef = doc(firestoreInstance, 'users', currentUser.uid);
                     await updateDoc(userDocumentRef, { avatarBase64: asset.base64 });
-                    Alert.alert('Thành công', 'Ảnh đại diện đã được cập nhật!');
+
+                    setIsUploadingAvatar(false);
+                    setShowAvatarSuccessModal(true);
                 } catch (error) {
                     console.error('Lỗi lưu ảnh đại diện:', error);
-                    Alert.alert('Lỗi', 'Không thể lưu ảnh đại diện.');
+                    setIsUploadingAvatar(false);
+                    setAvatarErrorMessage('Không thể lưu ảnh đại diện. Vui lòng thử lại.');
+                    setShowAvatarErrorModal(true);
                 }
             }
         });
@@ -426,6 +445,77 @@ const CustomerProfileScreen = ({ navigation }: { navigation: any }) => {
                             <Icon name="check" size={18} color={COLORS.white} />
                             <Text style={styles.successModalButtonText}>OK</Text>
                         </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Avatar Success Modal */}
+            <Modal
+                visible={showAvatarSuccessModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowAvatarSuccessModal(false)}
+            >
+                <View style={styles.successModalOverlay}>
+                    <View style={styles.successModalContainer}>
+                        <View style={styles.successIconContainer}>
+                            <Icon name="check-circle" size={80} color="#27ae60" />
+                        </View>
+                        <Text style={styles.successModalTitle}>Cập nhật thành công!</Text>
+                        <Text style={styles.successModalMessage}>
+                            Ảnh đại diện của bạn đã được cập nhật.
+                        </Text>
+                        <TouchableOpacity
+                            style={styles.successModalButton}
+                            onPress={() => setShowAvatarSuccessModal(false)}
+                        >
+                            <Icon name="check" size={18} color={COLORS.white} />
+                            <Text style={styles.successModalButtonText}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Avatar Error Modal */}
+            <Modal
+                visible={showAvatarErrorModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowAvatarErrorModal(false)}
+            >
+                <View style={styles.successModalOverlay}>
+                    <View style={styles.successModalContainer}>
+                        <View style={[styles.successIconContainer, { backgroundColor: '#ffe6e6' }]}>
+                            <Icon name="error-outline" size={80} color="#e74c3c" />
+                        </View>
+                        <Text style={[styles.successModalTitle, { color: '#e74c3c' }]}>Có lỗi xảy ra</Text>
+                        <Text style={styles.successModalMessage}>
+                            {avatarErrorMessage}
+                        </Text>
+                        <TouchableOpacity
+                            style={[styles.successModalButton, { backgroundColor: '#e74c3c' }]}
+                            onPress={() => setShowAvatarErrorModal(false)}
+                        >
+                            <Icon name="close" size={18} color={COLORS.white} />
+                            <Text style={styles.successModalButtonText}>Đóng</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Avatar Uploading Modal */}
+            <Modal
+                visible={isUploadingAvatar}
+                transparent={true}
+                animationType="fade"
+            >
+                <View style={styles.successModalOverlay}>
+                    <View style={styles.successModalContainer}>
+                        <ActivityIndicator size={80} color={COLORS.primary} />
+                        <Text style={[styles.successModalTitle, { marginTop: 20 }]}>Đang tải lên...</Text>
+                        <Text style={styles.successModalMessage}>
+                            Vui lòng đợi trong giây lát
+                        </Text>
                     </View>
                 </View>
             </Modal>
