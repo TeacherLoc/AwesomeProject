@@ -155,7 +155,7 @@ const CustomerAppointmentScreen: React.FC<CustomerAppointmentScreenProps> = ({ r
                                 style={[styles.modalButton, styles.modalButtonSecondary]}
                                 onPress={() => {
                                     setShowSuccessModal(false);
-                                    navigation.navigate('AppointmentsTab', {
+                                    navigation.navigate('ProfileTab', {
                                         screen: 'CustomerAppointmentDetail',
                                         params: { appointmentId: newAppointmentId },
                                     });
@@ -168,7 +168,7 @@ const CustomerAppointmentScreen: React.FC<CustomerAppointmentScreenProps> = ({ r
                                 style={[styles.modalButton, styles.modalButtonPrimary]}
                                 onPress={() => {
                                     setShowSuccessModal(false);
-                                    navigation.navigate('AppointmentsTab', { screen: 'CustomerAppointmentList' });
+                                    navigation.navigate('ProfileTab', { screen: 'CustomerAppointmentList' });
                                 }}
                             >
                                 <Icon name="check" size={18} color={COLORS.white} />
