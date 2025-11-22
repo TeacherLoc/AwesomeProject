@@ -113,3 +113,34 @@ export const createAppointmentRejectedNotification = async (
         console.error('Error creating appointment rejected notification:', error);
     }
 };
+
+// Tạo thông báo khi admin trả lời tin nhắn
+export const createAdminReplyNotification = async (
+    userId: string,
+    messageId: string,
+    userQuestion: string,
+    adminReply: string
+) => {
+    try {
+        const db = getFirestore(getApp());
+        const notificationsRef = collection(db, 'notifications');
+
+        const shortQuestion = userQuestion.length > 50 
+            ? userQuestion.substring(0, 50) + '...' 
+            : userQuestion;
+
+        await addDoc(notificationsRef, {
+            userId: userId,
+            type: 'admin_reply',
+            title: '💬 Admin đã trả lời',
+            message: `Câu hỏi: "${shortQuestion}"\n\nTrả lời: ${adminReply}`,
+            isRead: false,
+            createdAt: Timestamp.now(),
+            relatedId: messageId,
+        });
+
+        console.log('Created admin reply notification');
+    } catch (error) {
+        console.error('Error creating admin reply notification:', error);
+    }
+};

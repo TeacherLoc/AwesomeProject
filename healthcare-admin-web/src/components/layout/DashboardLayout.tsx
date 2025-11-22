@@ -25,6 +25,7 @@ const DashboardLayout: React.FC = () => {
     { path: '/appointments', icon: '📅', label: 'Quản lý lịch hẹn' },
     { path: '/services', icon: '🏥', label: 'Quản lý dịch vụ' },
     { path: '/customers', icon: '👥', label: 'Quản lý khách hàng' },
+    { path: '/chat-management', icon: '💬', label: 'Tin nhắn khách hàng' },
   ];
 
   return (

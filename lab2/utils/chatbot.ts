@@ -9,6 +9,7 @@ export type ChatbotIntent =
   | 'account'
   | 'greeting'
   | 'thanks'
+  | 'contact_admin'
   | 'fallback';
 
 type KeywordConfig = {
@@ -20,6 +21,19 @@ const KEYWORD_CONFIG: KeywordConfig[] = [
   {
     intent: 'thanks',
     keywords: ['cam on', 'cam on ban', 'thank', 'thanks', 'gratitude'],
+  },
+  {
+    intent: 'contact_admin',
+    keywords: [
+      'nhan admin',
+      'gui admin',
+      'lien he admin',
+      'noi chuyen admin',
+      'ho tro truc tiep',
+      'chat admin',
+      'admin oi',
+      'admin giup',
+    ],
   },
   {
     intent: 'greeting',
@@ -119,6 +133,7 @@ export const QUICK_REPLY_TEMPLATES = {
   health: { title: 'Tư vấn sức khỏe', value: 'intent:health' },
   nutrition: { title: 'Tư vấn dinh dưỡng', value: 'intent:nutrition' },
   account: { title: 'Hồ sơ của tôi', value: 'intent:account' },
+  contact_admin: { title: '💬 Nhắn cho Admin', value: 'intent:contact_admin' },
 } as const;
 
 export type QuickReplyKey = keyof typeof QUICK_REPLY_TEMPLATES;

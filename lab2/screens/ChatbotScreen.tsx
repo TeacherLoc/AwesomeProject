@@ -15,6 +15,9 @@ import {
   type ChatbotIntent,
 } from '../utils/chatbot';
 
+import { askGemini, isRelevantQuestion } from '../services/geminiService';
+import { sendMessageToAdmin, listenToAdminReplies } from '../services/adminMessageService';
+
 type AppointmentDocument = {
   id: string;
   serviceName?: string;
@@ -61,6 +64,7 @@ const QUICK_REPLY_INTENT_MAP: Record<QuickReplyKey, ChatbotIntent> = {
   health: 'health',
   nutrition: 'nutrition',
   account: 'account',
+  contact_admin: 'contact_admin',
 };
 
 const CACHE_DURATION_MS = 5 * 60 * 1000;
@@ -152,6 +156,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<FirebaseAuthTypes.User | null>(auth().currentUser);
+  const [waitingForAdminMessage, setWaitingForAdminMessage] = useState<boolean>(false);
 
   const appointmentsCacheRef = useRef<CachedValue<AppointmentDocument[]> | null>(null);
   const profileCacheRef = useRef<CachedValue<UserProfile | null> | null>(null);
@@ -179,6 +184,30 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
 
     return unsubscribe;
   }, []);
+
+  // Lắng nghe câu trả lời từ Admin
+  useEffect(() => {
+    if (!currentUser) {
+      return;
+    }
+
+    try {
+      const unsubscribe = listenToAdminReplies(currentUser.uid, adminMessage => {
+        if (adminMessage.adminReply) {
+          const botMessage = createBotMessage(
+            `📨 Admin đã trả lời:\n\n"${adminMessage.adminReply}"\n\n💬 Bạn có thể tiếp tục hỏi bằng cách chọn "Trả lời Admin" bên dưới hoặc đặt câu hỏi mới.`,
+            ['contact_admin', 'help', 'upcoming'],
+          );
+          setMessages(previousMessages => limitHistory(GiftedChat.append(previousMessages, [botMessage])));
+        }
+      });
+
+      return unsubscribe;
+    } catch (error) {
+      console.error('Error setting up admin replies listener:', error);
+      // Không crash app, chỉ log lỗi
+    }
+  }, [currentUser]);
 
   const loadAppointments = useCallback(async (): Promise<AppointmentDocument[]> => {
     if (!currentUser) {
@@ -247,6 +276,49 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
           text: 'Tôi chưa nghe rõ câu hỏi của bạn. Bạn có thể chọn một trong những lựa chọn bên dưới nhé.',
           quickReplyKeys: QUICK_REPLY_ORDER,
         };
+      }
+
+      // Nếu đang ở chế độ nhắn admin, gửi tất cả tin nhắn cho admin
+      if (waitingForAdminMessage && !trimmed.startsWith('intent:')) {
+        // Kiểm tra lệnh thoát
+        const exitCommands = ['thoát', 'exit', 'dừng', 'stop', 'hủy', 'cancel'];
+        if (exitCommands.some(cmd => trimmed.toLowerCase().includes(cmd))) {
+          setWaitingForAdminMessage(false);
+          return {
+            text: '✅ Đã thoát chế độ nhắn Admin.\n\nBạn có thể tiếp tục chat với trợ lý ảo hoặc chọn chủ đề bên dưới.',
+            quickReplyKeys: QUICK_REPLY_ORDER,
+          };
+        }
+        
+        if (!currentUser) {
+          setWaitingForAdminMessage(false);
+          return {
+            text: 'Bạn cần đăng nhập để có thể nhắn tin cho Admin.',
+            quickReplyKeys: ['help'],
+          };
+        }
+
+        try {
+          const profile = await loadUserProfile();
+          await sendMessageToAdmin(
+            currentUser.uid,
+            profile?.name || currentUser.displayName || 'Người dùng',
+            currentUser.email || '',
+            trimmed,
+          );
+
+          // GIỮ NGUYÊN state để tiếp tục nhận tin nhắn cho admin
+          return {
+            text: '✅ Đã gửi: "' + trimmed + '"\n\nAdmin sẽ trả lời sớm. Bạn có thể tiếp tục nhắn tin hoặc gõ "thoát" để dừng.',
+            quickReplyKeys: [], // Không hiện quick replies khi đang trong chế độ chat
+          };
+        } catch (error) {
+          console.error('Error sending to admin:', error);
+          return {
+            text: '❌ Lỗi: Không thể gửi tin nhắn.\n\nVui lòng kiểm tra kết nối hoặc gọi Hotline: 0911550316\n\nGõ "thoát" để dừng nhắn Admin.',
+            quickReplyKeys: [],
+          };
+        }
       }
 
       let interpretedIntent: ChatbotIntent;
@@ -408,13 +480,63 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
               quickReplyKeys: QUICK_REPLY_ORDER,
             };
 
-          case 'fallback':
-          default:
+          case 'contact_admin': {
+            if (!currentUser) {
+              return {
+                text: 'Bạn cần đăng nhập để có thể nhắn tin cho Admin.',
+                quickReplyKeys: ['help'],
+              };
+            }
+
+            // Nếu là quick reply (không có nội dung thực), bật chế độ chờ tin nhắn
+            if (trimmed === 'intent:contact_admin' || trimmed.toLowerCase().includes('nhắn admin')) {
+              setWaitingForAdminMessage(true); // Bật chế độ chờ
+              return {
+                text: '💬 Chế độ nhắn Admin đã BẬT\n\n📝 Từ giờ, mọi tin nhắn bạn gửi sẽ được chuyển trực tiếp đến Admin cho đến khi bạn:\n• Gõ "thoát" để dừng\n• Thoát ứng dụng\n\n💡 Bắt đầu nhắn tin cho Admin ngay bây giờ!\n\n📞 Gọi Hotline: 0911550316 nếu cần gấp.',
+                quickReplyKeys: [],
+              };
+            }
+
+            // Không bao giờ đến đây vì đã xử lý ở trên
             return {
-              text:
-                '🤔 Tôi chưa hiểu rõ yêu cầu của bạn.\n\nBạn có thể hỏi tôi về:\n• 📱 Hướng dẫn sử dụng ứng dụng (5 tab)\n• 📅 Lịch hẹn (sắp tới, lịch sử, đặt mới)\n• 💪 Tư vấn sức khỏe\n• 🥗 Tư vấn dinh dưỡng\n• 👤 Thông tin tài khoản\n• ☎️ Hotline hỗ trợ: 0911550316\n• 🔔 Thông báo và nhắc nhở\n\nHãy chọn một chủ đề bên dưới hoặc hỏi tôi nhé!',
-              quickReplyKeys: QUICK_REPLY_ORDER,
+              text: 'Đã có lỗi xảy ra. Vui lòng thử lại.',
+              quickReplyKeys: ['help'],
             };
+          }
+
+          case 'fallback':
+          default: {
+            // Kiểm tra câu hỏi có liên quan không
+            if (!isRelevantQuestion(trimmed)) {
+              return {
+                text: '🤔 Câu hỏi này có vẻ không liên quan đến sức khỏe hoặc ứng dụng của chúng tôi.\n\nTôi chỉ có thể hỗ trợ bạn về:\n• Hướng dẫn sử dụng app\n• Lịch hẹn khám\n• Tư vấn sức khỏe và dinh dưỡng\n• Thông tin tài khoản\n\nBạn có câu hỏi nào khác không?',
+                quickReplyKeys: QUICK_REPLY_ORDER,
+              };
+            }
+
+            // Gọi AI để trả lời
+            try {
+              const aiResponse = await askGemini(trimmed);
+              // Nếu AI không chắc chắn, đề xuất nhắn Admin
+              if (aiResponse.suggestAdminContact) {
+                return {
+                  text: `${aiResponse.text}\n\n💡 Nếu cần hỗ trợ chi tiết hơn, bạn có thể nhắn trực tiếp cho Admin hoặc gọi Hotline: 0911550316`,
+                  quickReplyKeys: ['contact_admin', 'help', 'health'],
+                };
+              }
+
+              return {
+                text: aiResponse.text,
+                quickReplyKeys: ['contact_admin', 'help', 'upcoming'],
+              };
+            } catch (error) {
+              console.error('AI fallback error:', error);
+              return {
+                text: '🤔 Tôi chưa hiểu rõ yêu cầu của bạn.\n\nBạn có thể:\n• Chọn một chủ đề bên dưới\n• Nhắn trực tiếp cho Admin\n• Gọi Hotline: 0911550316',
+                quickReplyKeys: ['contact_admin', 'help', 'upcoming'],
+              };
+            }
+          }
         }
       } catch (error) {
         console.error('Chatbot::generateBotReply error', error);

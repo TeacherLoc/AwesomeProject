@@ -8,6 +8,7 @@ import Dashboard from './pages/dashboard/Dashboard';
 import AppointmentList from './pages/appointments/AppointmentList';
 import ServiceList from './pages/services/ServiceList';
 import CustomerList from './pages/customers/CustomerList';
+import AdminChatManagement from './pages/AdminChatManagement';
 import './App.css';
 
 // Protected Route Component
@@ -111,6 +112,7 @@ function App() {
             <Route path="appointments" element={<AppointmentList />} />
             <Route path="services" element={<ServiceList />} />
             <Route path="customers" element={<CustomerList />} />
+            <Route path="chat-management" element={<AdminChatManagement />} />
           </Route>
 
           {/* Catch all */}
