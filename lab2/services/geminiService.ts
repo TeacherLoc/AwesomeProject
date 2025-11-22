@@ -1,11 +1,13 @@
-// API Key - Bạn cần đăng ký tại: https://makersuite.google.com/app/apikey
-// ⚠️ LƯU Ý: API key mẫu bên dưới KHÔNG hoạt động, bạn PHẢI thay bằng key của mình
+import { GOOGLE_GEMINI_API_KEY } from '@env';
+
+// API Key được lấy từ biến môi trường .env
+// ⚠️ LƯU Ý: Cần cấu hình file .env với GOOGLE_GEMINI_API_KEY
 // Hướng dẫn lấy API key:
 // 1. Truy cập: https://aistudio.google.com/app/apikey
 // 2. Đăng nhập tài khoản Google
 // 3. Click "Create API key"
-// 4. Copy API key và paste vào dưới đây
-const API_KEY = 'AIzaSyBfqlkkHLcS7BLeI84SKYLdFB0FC7MmQdU'; // ⚠️ THAY API KEY CỦA BẠN TẠI ĐÂY
+// 4. Copy API key và thêm vào file .env: GOOGLE_GEMINI_API_KEY=your_key_here
+const API_KEY = GOOGLE_GEMINI_API_KEY;
 
 // Context về ứng dụng để AI hiểu và trả lời chính xác
 const APP_CONTEXT = `
