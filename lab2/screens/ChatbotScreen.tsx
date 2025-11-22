@@ -271,6 +271,8 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
   const generateBotReply = useCallback(
     async (rawInput: string): Promise<BotReply> => {
       const trimmed = rawInput.trim();
+      console.log('🔍 generateBotReply called:', { trimmed, waitingForAdminMessage });
+      
       if (!trimmed) {
         return {
           text: 'Tôi chưa nghe rõ câu hỏi của bạn. Bạn có thể chọn một trong những lựa chọn bên dưới nhé.',
@@ -280,6 +282,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
 
       // Nếu đang ở chế độ nhắn admin, gửi tất cả tin nhắn cho admin
       if (waitingForAdminMessage && !trimmed.startsWith('intent:')) {
+        console.log('✅ Đang ở chế độ nhắn Admin');
         // Kiểm tra lệnh thoát
         const exitCommands = ['thoát', 'exit', 'dừng', 'stop', 'hủy', 'cancel'];
         if (exitCommands.some(cmd => trimmed.toLowerCase().includes(cmd))) {
@@ -543,10 +546,10 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
         return {
           text: 'Xin lỗi, tôi đang gặp chút trục trặc khi truy xuất dữ liệu. Bạn hãy thử lại sau một lát nhé!',
           quickReplyKeys: ['help', 'health', 'nutrition'],
-        };
+        }
       }
     },
-    [currentUser, loadAppointments, loadUserProfile],
+    [currentUser, loadAppointments, loadUserProfile, waitingForAdminMessage],
   );
 
   const handleBotResponse = useCallback(

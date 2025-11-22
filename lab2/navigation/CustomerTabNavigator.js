@@ -20,6 +20,7 @@ import CustomerAppointmentDetailScreen from '../screens/CustomerAppointmentDetai
 import HealthNewsScreen from '../screens/HealthNewsScreen'; // Import màn hình mới
 import ChatbotScreen from '../screens/ChatbotScreen';
 import NotificationScreen from '../screens/NotificationScreen';
+import ClinicInfoScreen from '../screens/ClinicInfoScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -62,6 +63,11 @@ const HomeStackNavigator = () => (
             name="CustomerHome"
             component={CustomerHomeScreen}
             options={{ headerShown: false }}
+        />
+        <Stack.Screen
+            name="ClinicInfo"
+            component={ClinicInfoScreen}
+            options={{ title: 'Thông tin phòng khám', headerLeft: undefined }}
         />
     </Stack.Navigator>
 );

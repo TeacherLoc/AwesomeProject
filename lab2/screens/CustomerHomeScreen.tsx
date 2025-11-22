@@ -76,11 +76,11 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
     const quickActions = [
         {
             id: 1,
-            title: 'Dịch vụ',
-            icon: 'medical-services',
-            color: '#10B981',
-            bgColor: '#D1FAE5',
-            onPress: () => navigation.navigate('ServicesTab'),
+            title: 'Thông tin',
+            icon: 'info',
+            color: '#3B82F6',
+            bgColor: '#DBEAFE',
+            onPress: () => navigation.navigate('ClinicInfo'),
         },
         {
             id: 2,
@@ -121,14 +121,6 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
             onPress: () => navigation.navigate('ServicesTab'),
         },
         {
-            id: 2,
-            title: 'Đặt lịch khám',
-            icon: 'calendar-today',
-            color: '#14B8A6',
-            bgColor: '#CCFBF1',
-            onPress: () => navigation.navigate('ServicesTab'),
-        },
-        {
             id: 3,
             title: 'Hỗ trợ trực tuyến',
             icon: 'chat',
@@ -143,7 +135,7 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
             color: '#F59E0B',
             bgColor: '#FEF3C7',
             onPress: () => {
-                const phoneNumber = '11x';
+                const phoneNumber = '0911550316';
                 Alert.alert(
                     'Gọi hotline',
                     `Bạn muốn gọi đến số ${phoneNumber}?`,
@@ -437,12 +429,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 40,
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
         color: COLORS.textDark,
+        marginBottom: 20,
     },
     seeAllText: {
         fontSize: 14,
