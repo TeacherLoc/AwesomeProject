@@ -263,7 +263,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
             const profile = await loadUserProfile();
             const name = profile?.name || currentUser?.displayName || 'bạn';
             return {
-              text: `Chào ${name}! Tôi có thể giúp bạn kiểm tra lịch hẹn, hướng dẫn sử dụng ứng dụng hoặc chia sẻ bí quyết chăm sóc sức khỏe. Bạn muốn tìm hiểu điều gì trước?`,
+              text: `Chào ${name}! 👋\n\nTôi là trợ lý ảo của ứng dụng chăm sóc sức khỏe. Tôi có thể giúp bạn:\n• 📅 Kiểm tra và quản lý lịch hẹn\n• 📖 Hướng dẫn sử dụng ứng dụng (5 tab: Trang chủ, Hỗ trợ, Đặt lịch, Tin tức, Cá nhân)\n• 💪 Tư vấn sức khỏe và dinh dưỡng\n• ☎️ Hỗ trợ Hotline khẩn cấp: 0911550316\n• 🔔 Theo dõi thông báo và nhắc nhở\n\nBạn muốn tìm hiểu điều gì?`,
               quickReplyKeys: QUICK_REPLY_ORDER,
             };
           }
@@ -271,7 +271,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
           case 'help': {
             return {
               text:
-                'Bạn có thể sử dụng ứng dụng như sau:\n1. Đặt lịch: vào tab "Dịch vụ", chọn dịch vụ và làm theo bước hướng dẫn.\n2. Theo dõi lịch: mở tab "Lịch hẹn" để xem, cập nhật hoặc hủy lịch.\n3. Cập nhật hồ sơ: vào mục "Hồ sơ" để chỉnh sửa thông tin cá nhân.\nNếu cần hỗ trợ thêm, hãy cho tôi biết nhé!',
+                '📱 Ứng dụng có 5 tab chính:\n\n🏠 Trang chủ: Xem lịch hẹn sắp tới, tin tức sức khỏe, và truy cập nhanh các tính năng.\n💬 Hỗ trợ: Chat với tôi để được tư vấn và hướng dẫn.\n📅 Đặt lịch: Xem danh sách dịch vụ và đặt lịch hẹn khám.\n📰 Tin tức: Đọc các bài viết về sức khỏe và y tế.\n👤 Cá nhân: Quản lý hồ sơ, xem lịch hẹn, thông báo và đổi mật khẩu.\n\n✨ Tính năng nổi bật:\n• Hotline: Gọi điện trực tiếp 0911550316 từ trang chủ\n• Thông báo: Nhận thông báo về lịch hẹn và nhắc uống nước\n• Lịch hẹn thông minh: Theo dõi trạng thái và lịch sử đặt lịch\n\nCần hỗ trợ gì thêm không?',
               quickReplyKeys: ['upcoming', 'history', 'account', 'health', 'nutrition'],
             };
           }
@@ -293,7 +293,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
             if (upcoming.length === 0) {
               return {
                 text:
-                  'Hiện bạn chưa có lịch hẹn nào sắp tới. Bạn có thể vào tab "Dịch vụ" để đặt lịch mới hoặc hỏi tôi nếu cần hướng dẫn.',
+                  '📅 Hiện bạn chưa có lịch hẹn nào sắp tới.\n\nĐể đặt lịch mới, bạn có thể:\n• Vào tab "Đặt lịch" ở giữa thanh tab\n• Hoặc từ Trang chủ → nhấn "Lịch hẹn"\n• Hoặc từ tab Cá nhân → "Lịch hẹn khám"\n\nNếu gấp, gọi Hotline: 0911550316 để được hỗ trợ ngay!',
                 quickReplyKeys: ['help', 'history', 'nutrition'],
               };
             }
@@ -322,7 +322,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
             const appointments = await loadAppointments();
             if (appointments.length === 0) {
               return {
-                text: 'Tôi chưa tìm thấy lịch hẹn nào trong tài khoản của bạn. Bạn muốn đặt lịch mới không?',
+                text: '📝 Tôi chưa tìm thấy lịch hẹn nào trong tài khoản của bạn.\n\nĐể xem chi tiết lịch hẹn, bạn có thể:\n• Vào tab "Cá nhân" → "Lịch hẹn khám"\n• Lọc theo trạng thái: Tất cả, Chờ xác nhận, Hoàn thành, Đã hủy\n• Xem chi tiết từng lịch hẹn\n\nBạn muốn đặt lịch mới không?',
                 quickReplyKeys: ['help', 'upcoming', 'nutrition'],
               };
             }
@@ -350,7 +350,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
             const personalized = `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
             return {
               text:
-                `${personalized}, để duy trì sức khỏe tốt bạn nên:\n• Ăn uống đầy đủ và cân đối, ưu tiên rau xanh & trái cây.\n• Vận động ít nhất 30 phút mỗi ngày (đi bộ, yoga, đạp xe).\n• Ngủ đủ 7-8 tiếng và hạn chế màn hình trước khi ngủ.\n• Kiểm tra sức khỏe định kỳ nếu cảm thấy bất thường.\nNếu bạn có lịch hẹn sắp tới, hãy đến đúng giờ và chuẩn bị câu hỏi cho bác sĩ nhé!`,
+                `💪 ${personalized}, để duy trì sức khỏe tốt bạn nên:\n\n🥗 Dinh dưỡng:\n• Ăn uống đầy đủ và cân đối\n• Ưu tiên rau xanh & trái cây\n• Uống đủ 1.5-2 lít nước/ngày\n\n🏃 Vận động:\n• Ít nhất 30 phút mỗi ngày\n• Đi bộ, yoga, đạp xe\n\n😴 Nghỉ ngơi:\n• Ngủ đủ 7-8 tiếng\n• Hạn chế màn hình trước khi ngủ\n\n🔔 Nhắc nhở:\n• Ứng dụng sẽ gửi thông báo nhắc uống nước hàng ngày\n• Nhận thông báo về lịch hẹn sắp tới (24h trước)\n\n☎️ Khẩn cấp? Gọi Hotline: 0911550316`,
               quickReplyKeys: ['upcoming', 'nutrition', 'help'],
             };
           }
@@ -364,7 +364,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
                 : 'duy trì khẩu phần giàu đạm lành mạnh như cá, thịt nạc, cùng với nhiều rau củ.';
             return {
               text:
-                `Một chế độ dinh dưỡng cân bằng nên bao gồm:\n• 50% rau củ và trái cây tươi.\n• 25% đạm lành mạnh (cá, đậu, thịt nạc).\n• 25% tinh bột nguyên cám (gạo lứt, yến mạch).\n• Uống đủ 1.5-2 lít nước mỗi ngày và hạn chế đồ uống có đường.\nNgoài ra, hãy ${focus} Nếu cần thực đơn chi tiết, bạn có thể hỏi chuyên gia dinh dưỡng tại cơ sở nhé!`,
+                `🥗 Một chế độ dinh dưỡng cân bằng:\n\n📊 Tỷ lệ khuyến nghị:\n• 50% rau củ và trái cây tươi\n• 25% đạm lành mạnh (cá, đậu, thịt nạc)\n• 25% tinh bột nguyên cám (gạo lứt, yến mạch)\n\n💧 Hydrate:\n• Uống đủ 1.5-2 lít nước/ngày\n• Hạn chế đồ uống có đường\n• Nhận nhắc nhở uống nước từ thông báo\n\n👤 Cá nhân hóa:\n• ${focus}\n\n📰 Đọc thêm:\n• Vào tab "Tin tức" để xem bài viết về dinh dưỡng và sức khỏe\n• Trang chủ cũng hiển thị tin tức nổi bật\n\n☎️ Tư vấn chuyên sâu? Gọi: 0911550316`,
               quickReplyKeys: ['health', 'upcoming', 'history'],
             };
           }
@@ -395,9 +395,9 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
 
             return {
               text:
-                'Tôi đã kiểm tra hồ sơ của bạn:\n' +
+                '👤 Tôi đã kiểm tra hồ sơ của bạn:\n' +
                 details.join('\n') +
-                '\nBạn có thể vào mục "Hồ sơ" để chỉnh sửa hoặc bổ sung thông tin bất cứ lúc nào.',
+                '\n\n📱 Tính năng trong tab Cá nhân:\n• Chỉnh sửa thông tin cá nhân\n• Xem và quản lý lịch hẹn khám\n• Xem thông báo (có bộ lọc: Tất cả/Chưa đọc/Đã đọc)\n• Đổi mật khẩu\n• Đăng xuất\n\nBạn có thể cập nhật thông tin bất cứ lúc nào!',
               quickReplyKeys: ['help', 'upcoming', 'history'],
             };
           }
@@ -412,7 +412,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
           default:
             return {
               text:
-                'Tôi chưa hiểu rõ yêu cầu của bạn. Bạn có thể hỏi tôi về lịch hẹn, hướng dẫn sử dụng ứng dụng hoặc xin tư vấn sức khỏe/dinh dưỡng. Hãy thử lại với một từ khóa cụ thể nhé!',
+                '🤔 Tôi chưa hiểu rõ yêu cầu của bạn.\n\nBạn có thể hỏi tôi về:\n• 📱 Hướng dẫn sử dụng ứng dụng (5 tab)\n• 📅 Lịch hẹn (sắp tới, lịch sử, đặt mới)\n• 💪 Tư vấn sức khỏe\n• 🥗 Tư vấn dinh dưỡng\n• 👤 Thông tin tài khoản\n• ☎️ Hotline hỗ trợ: 0911550316\n• 🔔 Thông báo và nhắc nhở\n\nHãy chọn một chủ đề bên dưới hoặc hỏi tôi nhé!',
               quickReplyKeys: QUICK_REPLY_ORDER,
             };
         }

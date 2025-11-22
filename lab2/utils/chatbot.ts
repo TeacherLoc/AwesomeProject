@@ -39,6 +39,13 @@ const KEYWORD_CONFIG: KeywordConfig[] = [
       'tro giup',
       'dat lich the nao',
       'dang ky',
+      'tinh nang',
+      'co gi',
+      'lam duoc gi',
+      'ung dung nay',
+      'tab',
+      'hotline',
+      'thong bao',
     ],
   },
   {
