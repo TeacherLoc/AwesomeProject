@@ -191,7 +191,7 @@ const CustomerProfileMenuScreen = ({ navigation }: { navigation: any }) => {
                 <View style={styles.menuCard}>
                     <TouchableOpacity
                         style={styles.menuItem}
-                        onPress={() => navigation.navigate('AppointmentsTab')}
+                        onPress={() => navigation.navigate('CustomerAppointmentList')}
                     >
                         <View style={[styles.menuIconContainer, { backgroundColor: '#FEE2E2' }]}>
                             <Icon name="calendar-today" size={22} color="#EF4444" />

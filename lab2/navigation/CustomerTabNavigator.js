@@ -8,6 +8,7 @@ import Icon from 'react-native-vector-icons/FontAwesome'; // Or your preferred i
 import { COLORS } from '../theme/colors';
 
 // Import Customer Screens
+import CustomerHomeScreen from '../screens/CustomerHomeScreen';
 import CustomerServiceListScreen from '../screens/ServiceListScreen';
 import CustomerServiceDetailScreen from '../screens/CustomerServiceDetailScreen';
 import CustomerAppointmentScreen from '../screens/CustomerAppointmentScreen';
@@ -53,6 +54,17 @@ const defaultStackScreenOptions = {
     },
     headerBackTitleVisible: false,
 };
+
+// Stack Navigator for Home Screen
+const HomeStackNavigator = () => (
+    <Stack.Navigator screenOptions={defaultStackScreenOptions}>
+        <Stack.Screen
+            name="CustomerHome"
+            component={CustomerHomeScreen}
+            options={{ headerShown: false }}
+        />
+    </Stack.Navigator>
+);
 
 // Stack Navigator for Service Browsing/Booking Flow
 const ServiceStackNavigator = () => (
@@ -114,6 +126,16 @@ const ProfileStackNavigator = () => (
             component={NotificationScreen}
             options={{ title: 'Thông báo', headerLeft: undefined }}
         />
+        <Stack.Screen
+            name="CustomerAppointmentList"
+            component={CustomerAppointmentListScreen}
+            options={{ title: 'Lịch hẹn của tôi', headerLeft: undefined }}
+        />
+        <Stack.Screen
+            name="CustomerAppointmentDetail"
+            component={CustomerAppointmentDetailScreen}
+            options={{ title: 'Chi tiết lịch hẹn', headerLeft: undefined }}
+        />
     </Stack.Navigator>
 );
 
@@ -147,14 +169,14 @@ const CustomerTabNavigator = () => {
                     let iconName = 'circle'; // Icon mặc định
                     if (route.name === 'ServicesTab') {
                         return null; // Không hiển thị icon thông thường cho ServicesTab
-                    } else if (route.name === 'AppointmentsTab') {
-                        iconName = focused ? 'calendar-check-o' : 'calendar';
+                    } else if (route.name === 'HomeTab') {
+                        iconName = focused ? 'home' : 'home';
+                    } else if (route.name === 'ChatbotTab') {
+                        iconName = focused ? 'comments' : 'comment';
                     } else if (route.name === 'ProfileTab') {
                         iconName = focused ? 'user-circle' : 'user-circle-o';
                     } else if (route.name === 'HealthNewsTab') {
                         iconName = focused ? 'heartbeat' : 'heartbeat';
-                    } else if (route.name === 'ChatbotTab') {
-                        iconName = focused ? 'comments' : 'comment';
                     }
                     return <Icon name={iconName} size={size} color={color} />;
                 },
@@ -187,13 +209,13 @@ const CustomerTabNavigator = () => {
                 headerShown: false, // Stack Navigators sẽ quản lý header
             })}
         >
-            <Tab.Screen name="AppointmentsTab" component={AppointmentStackNavigator} options={{ title: 'Lịch hẹn' }} />
+            <Tab.Screen name="HomeTab" component={HomeStackNavigator} options={{ title: 'Trang chủ' }} />
             <Tab.Screen name="ChatbotTab" component={ChatbotStackNavigator} options={{ title: 'Hỗ trợ' }} />
             <Tab.Screen
                 name="ServicesTab"
                 component={ServiceStackNavigator}
                 options={{
-                    title: 'Dịch vụ',
+                    title: 'Đặt lịch',
                     tabBarIcon: ({ focused }) => (
                         <View style={styles.centerButtonContainer}>
                             <View style={styles.centerButton}>
@@ -203,8 +225,8 @@ const CustomerTabNavigator = () => {
                     ),
                 }}
             />
-            <Tab.Screen name="ProfileTab" component={ProfileStackNavigator} options={{ title: 'Cá nhân' }} />
             <Tab.Screen name="HealthNewsTab" component={HealthNewsStackNavigator} options={{ title: 'Tin tức' }} />
+            <Tab.Screen name="ProfileTab" component={ProfileStackNavigator} options={{ title: 'Cá nhân' }} />
         </Tab.Navigator>
     );
 };
