@@ -501,6 +501,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
       renderSend={renderSend}
       renderInputToolbar={renderInputToolbar}
       messagesContainerStyle={styles.listView}
+      bottomOffset={40}
       timeFormat="HH:mm"
       dateFormat="DD/MM/YYYY"
       renderAvatarOnTop
@@ -549,6 +550,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#E0E0E0',
     paddingVertical: 4,
     paddingHorizontal: 8,
+    marginBottom: 20,
   },
   bubbleLeft: {
     backgroundColor: '#FFF',

@@ -8,6 +8,7 @@ import { launchImageLibrary, ImagePickerResponse, Asset } from 'react-native-ima
 
 import { COLORS } from '../theme/colors';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { createAppointmentCancelledNotification } from '../utils/notificationHelper';
 
 interface Review {
     id: string;
@@ -258,7 +259,19 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
                 status: 'cancelled_by_customer',
                 cancelledAt: Timestamp.now(),
             });
-            Alert.alert('Thành công', 'Lịch hẹn của bạn đã được hủy.');
+            
+            // Tạo thông báo huỷ lịch hẹn
+            const currentUser = auth().currentUser;
+            if (currentUser) {
+                await createAppointmentCancelledNotification(
+                    currentUser.uid,
+                    appointment.id,
+                    appointment.serviceName,
+                    'customer'
+                );
+            }
+            
+            Alert.alert('Thành công', 'Lịch hẹn của bạn đã được huỷ.');
             setAppointment((prev: any) => ({ ...prev, status: 'cancelled_by_customer' }));
         } catch (error) {
             console.error('Lỗi khi hủy lịch hẹn: ', error);

@@ -5,6 +5,12 @@ import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { COLORS } from '../theme/colors';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {
+    createAppointmentConfirmedNotification,
+    createAppointmentCompletedNotification,
+    createAppointmentCancelledNotification,
+    createAppointmentRejectedNotification,
+} from '../utils/notificationHelper';
 
 // Định nghĩa kiểu cho params của route
 type AdminAppointmentDetailScreenRouteParams = {
@@ -171,6 +177,36 @@ const AdminAppointmentDetailScreen: React.FC = () => {
                             else if (newStatus === 'completed') {updateData.completedAt = firestore.FieldValue.serverTimestamp();}
 
                             await firestore().collection('appointments').doc(appointment.id).update(updateData);
+                            
+                            // Tạo thông báo cho khách hàng
+                            if (newStatus === 'confirmed') {
+                                await createAppointmentConfirmedNotification(
+                                    appointment.customerId,
+                                    appointment.id,
+                                    appointment.serviceName,
+                                    appointment.appointmentDateTime.toDate()
+                                );
+                            } else if (newStatus === 'completed') {
+                                await createAppointmentCompletedNotification(
+                                    appointment.customerId,
+                                    appointment.id,
+                                    appointment.serviceName
+                                );
+                            } else if (newStatus === 'cancelled_by_admin') {
+                                await createAppointmentCancelledNotification(
+                                    appointment.customerId,
+                                    appointment.id,
+                                    appointment.serviceName,
+                                    'admin'
+                                );
+                            } else if (newStatus === 'rejected') {
+                                await createAppointmentRejectedNotification(
+                                    appointment.customerId,
+                                    appointment.id,
+                                    appointment.serviceName
+                                );
+                            }
+                            
                             Alert.alert('Thành công', 'Trạng thái lịch hẹn đã được cập nhật.');
                             setAppointment(prev => {
                                 if (!prev) {return null;}

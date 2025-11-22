@@ -18,6 +18,9 @@ interface Appointment {
     // Add other relevant fields if necessary
 }
 
+// Define filter types
+type FilterType = 'all' | 'pending' | 'completed' | 'cancelled';
+
 // Define navigation props
 type CustomerAppointmentListScreenNavigationProp = StackNavigationProp<any>; // Replace 'any' with your RootStackParamList if available
 
@@ -40,6 +43,7 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
     const currentUser = getAuth(getApp()).currentUser;
 
     const fetchAppointments = useCallback(async () => {
@@ -106,6 +110,42 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
             default:
                 return { backgroundColor: COLORS.greyLight, color: COLORS.textMedium, text: status || 'Không rõ' };
         }
+    };
+
+    // Filter appointments based on selected filter
+    const filteredAppointments = appointments.filter(appointment => {
+        if (selectedFilter === 'all') {
+            return true;
+        }
+        if (selectedFilter === 'pending') {
+            return appointment.status === 'pending';
+        }
+        if (selectedFilter === 'completed') {
+            return appointment.status === 'completed';
+        }
+        if (selectedFilter === 'cancelled') {
+            return ['cancelled_by_customer', 'cancelled_by_admin', 'rejected'].includes(appointment.status);
+        }
+        return true;
+    });
+
+    const renderFilterButton = (filter: FilterType, label: string, icon: string) => {
+        const isSelected = selectedFilter === filter;
+        return (
+            <TouchableOpacity
+                style={[styles.filterButton, isSelected && styles.filterButtonActive]}
+                onPress={() => setSelectedFilter(filter)}
+            >
+                <Icon
+                    name={icon}
+                    size={16}
+                    color={isSelected ? COLORS.white : COLORS.primary}
+                />
+                <Text style={[styles.filterButtonText, isSelected && styles.filterButtonTextActive]}>
+                    {label}
+                </Text>
+            </TouchableOpacity>
+        );
     };
 
     const renderAppointmentItem = ({ item }: { item: Appointment }) => {
@@ -193,16 +233,29 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     return (
-        <FlatList
-            data={appointments}
-            renderItem={renderAppointmentItem}
-            keyExtractor={item => item.id}
-            style={styles.container}
-            contentContainerStyle={styles.listContentContainer}
-            refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
-            }
-        />
+        <View style={styles.container}>
+            <View style={styles.filterContainer}>
+                {renderFilterButton('all', 'Tất cả', 'list')}
+                {renderFilterButton('pending', 'Chờ xác nhận', 'clock-o')}
+                {renderFilterButton('completed', 'Đã hoàn thành', 'check-circle')}
+                {renderFilterButton('cancelled', 'Đã hủy', 'times-circle')}
+            </View>
+            <FlatList
+                data={filteredAppointments}
+                renderItem={renderAppointmentItem}
+                keyExtractor={item => item.id}
+                contentContainerStyle={styles.listContentContainer}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+                }
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Icon name="inbox" size={48} color={COLORS.textLight} />
+                        <Text style={styles.emptyFilterText}>Không có lịch hẹn nào</Text>
+                    </View>
+                }
+            />
+        </View>
     );
 };
 
@@ -210,6 +263,40 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F5F7FA',
+    },
+    filterContainer: {
+        flexDirection: 'row',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: '#FFF',
+        gap: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E7EB',
+    },
+    filterButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 8,
+        borderRadius: 12,
+        backgroundColor: '#FFF',
+        borderWidth: 1.5,
+        borderColor: COLORS.primary,
+        gap: 6,
+    },
+    filterButtonActive: {
+        backgroundColor: COLORS.primary,
+        borderColor: COLORS.primary,
+    },
+    filterButtonText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: COLORS.primary,
+    },
+    filterButtonTextActive: {
+        color: COLORS.white,
     },
     listContentContainer: {
         paddingVertical: 12,
@@ -250,6 +337,16 @@ const styles = StyleSheet.create({
         lineHeight: 22,
         marginBottom: 24,
         paddingHorizontal: 20,
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 60,
+    },
+    emptyFilterText: {
+        fontSize: 15,
+        color: COLORS.textMedium,
+        marginTop: 12,
     },
     bookButton: {
         flexDirection: 'row',

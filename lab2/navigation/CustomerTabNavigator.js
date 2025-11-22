@@ -3,7 +3,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Or your preferred icon set
 import { COLORS } from '../theme/colors';
 
@@ -13,10 +13,12 @@ import CustomerServiceDetailScreen from '../screens/CustomerServiceDetailScreen'
 import CustomerAppointmentScreen from '../screens/CustomerAppointmentScreen';
 import CustomerAppointmentListScreen from '../screens/CustomerAppointmentListScreen';
 import CustomerProfileScreen from '../screens/CustomerProfileScreen';
+import CustomerProfileMenuScreen from '../screens/CustomerProfileMenuScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import CustomerAppointmentDetailScreen from '../screens/CustomerAppointmentDetailScreen';
 import HealthNewsScreen from '../screens/HealthNewsScreen'; // Import màn hình mới
 import ChatbotScreen from '../screens/ChatbotScreen';
+import NotificationScreen from '../screens/NotificationScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -93,14 +95,24 @@ const AppointmentStackNavigator = () => (
 const ProfileStackNavigator = () => (
     <Stack.Navigator screenOptions={defaultStackScreenOptions}>
         <Stack.Screen
+            name="CustomerProfileMenu"
+            component={CustomerProfileMenuScreen}
+            options={{ title: 'Cá nhân', headerLeft: renderHeaderLogo }}
+        />
+        <Stack.Screen
             name="CustomerProfile"
             component={CustomerProfileScreen}
-            options={{ title: 'Hồ sơ của tôi', headerLeft: renderHeaderLogo }}
+            options={{ title: 'Hồ sơ của tôi', headerLeft: undefined }}
         />
         <Stack.Screen
             name="CustomerChangePassword"
             component={ChangePasswordScreen}
             options={{ title: 'Đổi mật khẩu', headerLeft: undefined }}
+        />
+        <Stack.Screen
+            name="NotificationScreen"
+            component={NotificationScreen}
+            options={{ title: 'Thông báo', headerLeft: undefined }}
         />
     </Stack.Navigator>
 );
@@ -134,7 +146,7 @@ const CustomerTabNavigator = () => {
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName = 'circle'; // Icon mặc định
                     if (route.name === 'ServicesTab') {
-                        iconName = focused ? 'list-alt' : 'list';
+                        return null; // Không hiển thị icon thông thường cho ServicesTab
                     } else if (route.name === 'AppointmentsTab') {
                         iconName = focused ? 'calendar-check-o' : 'calendar';
                     } else if (route.name === 'ProfileTab') {
@@ -144,7 +156,7 @@ const CustomerTabNavigator = () => {
                     } else if (route.name === 'ChatbotTab') {
                         iconName = focused ? 'comments' : 'comment';
                     }
-                    return <Icon name={iconName} size={size * 0.9} color={color} />;
+                    return <Icon name={iconName} size={size} color={color} />;
                 },
                 tabBarActiveTintColor: COLORS.primary,
                 tabBarInactiveTintColor: COLORS.textLight,
@@ -152,20 +164,45 @@ const CustomerTabNavigator = () => {
                     backgroundColor: COLORS.white,
                     borderTopColor: COLORS.border,
                     borderTopWidth: 1,
-                    paddingTop: 5,
-                    height: 60,
+                    paddingTop: 8,
+                    paddingBottom: 8,
+                    height: 65,
+                    elevation: 8,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: -2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 3,
+                    borderTopLeftRadius: 20,
+                    borderTopRightRadius: 20,
                 },
                 tabBarLabelStyle: {
                     fontSize: 11,
-                    fontWeight: 'bold',
-                    paddingBottom: 5,
+                    fontWeight: '600',
+                    marginTop: 4,
+                    marginBottom: 4,
+                },
+                tabBarIconStyle: {
+                    marginTop: 4,
                 },
                 headerShown: false, // Stack Navigators sẽ quản lý header
             })}
         >
-            <Tab.Screen name="ServicesTab" component={ServiceStackNavigator} options={{ title: 'Dịch vụ' }} />
             <Tab.Screen name="AppointmentsTab" component={AppointmentStackNavigator} options={{ title: 'Lịch hẹn' }} />
             <Tab.Screen name="ChatbotTab" component={ChatbotStackNavigator} options={{ title: 'Hỗ trợ' }} />
+            <Tab.Screen
+                name="ServicesTab"
+                component={ServiceStackNavigator}
+                options={{
+                    title: 'Dịch vụ',
+                    tabBarIcon: ({ focused }) => (
+                        <View style={styles.centerButtonContainer}>
+                            <View style={styles.centerButton}>
+                                <Icon name="briefcase" size={26} color={COLORS.white} />
+                            </View>
+                        </View>
+                    ),
+                }}
+            />
             <Tab.Screen name="ProfileTab" component={ProfileStackNavigator} options={{ title: 'Cá nhân' }} />
             <Tab.Screen name="HealthNewsTab" component={HealthNewsStackNavigator} options={{ title: 'Tin tức' }} />
         </Tab.Navigator>
@@ -181,6 +218,26 @@ const styles = StyleSheet.create({
     logo: {
         width: '100%',
         height: '100%',
+    },
+    centerButtonContainer: {
+        top: -20,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    centerButton: {
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: COLORS.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        borderWidth: 4,
+        borderColor: COLORS.white,
     },
 });
 

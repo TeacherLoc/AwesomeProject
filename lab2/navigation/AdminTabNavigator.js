@@ -142,27 +142,38 @@ const AdminTabNavigator = () => {
                     } else if (route.name === 'ProfileTab') {
                         iconName = focused ? 'user-circle' : 'user-circle-o';
                     } else if (route.name === 'AppointmentsTabAdmin') {
-                        iconName = focused ? 'calendar-plus' : 'calendar-plus-o'; // Icon cho tab Lịch Hẹn
+                        iconName = focused ? 'calendar-check-o' : 'calendar-plus-o'; // Icon cho tab Lịch Hẹn
                     }
                     return <Icon name={iconName} size={size} color={color} />;
                 },
-                tabBarActiveTintColor: COLORS.primary, // Cập nhật màu active
-                tabBarInactiveTintColor: COLORS.textLight, // Cập nhật màu inactive
-                headerShown: false,
-            })}
-            tabBarOptions={{
-                activeTintColor: COLORS.primary,
-                inactiveTintColor: COLORS.textLight,
-                labelStyle: {
-                    fontSize: 12,
-                    fontWeight: 'bold',
-                },
-                style: {
+                tabBarActiveTintColor: COLORS.primary,
+                tabBarInactiveTintColor: COLORS.textLight,
+                tabBarStyle: {
                     backgroundColor: COLORS.white,
                     borderTopColor: COLORS.border,
+                    borderTopWidth: 1,
+                    paddingTop: 8,
+                    paddingBottom: 8,
+                    height: 65,
+                    elevation: 8,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: -2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 3,
+                    borderTopLeftRadius: 20,
+                    borderTopRightRadius: 20,
                 },
-                showIcon: true,
-            }}
+                tabBarLabelStyle: {
+                    fontSize: 11,
+                    fontWeight: '600',
+                    marginTop: 4,
+                    marginBottom: 4,
+                },
+                tabBarIconStyle: {
+                    marginTop: 4,
+                },
+                headerShown: false,
+            })}
         >
             <Tab.Screen name="ServicesTab" component={ServiceStackNavigator} options={{ title: 'Dịch vụ' }} />
             {/* <Tab.Screen name="NewsTab" component={NewsStackNavigator} options={{ title: 'Quá trình' }} /> */}
