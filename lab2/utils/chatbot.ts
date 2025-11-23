@@ -72,7 +72,7 @@ const KEYWORD_CONFIG: KeywordConfig[] = [
   },
   {
     intent: 'health',
-    keywords: ['suc khoe', 'tap luyen', 'tap the duc', 'benh tat', 'khoe manh'],
+    keywords: ['suc khoe', 'tap luyen', 'tap the duc', 'benh tat', 'khoe manh', 'giam', 'tang', 'can nang', 'beo phi', 'gay yeu', 'kg', 'kilogram', 'che do', 'bai tap'],
   },
   {
     intent: 'nutrition',

@@ -331,6 +331,8 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
       } else {
         interpretedIntent = detectIntent(trimmed);
       }
+      
+      console.log('🎯 Detected intent:', interpretedIntent, 'for message:', trimmed);
 
       try {
         switch (interpretedIntent) {
@@ -420,6 +422,43 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
           }
 
           case 'health': {
+            // Nếu câu hỏi chi tiết hoặc có dạng hỏi "làm sao", "cách nào", gọi AI
+            const wordCount = trimmed.split(/\s+/).length;
+            const hasNumbers = /\d/.test(trimmed);
+            const normalized = trimmed.toLowerCase();
+            const isQuestionForm = 
+              normalized.includes('lam sao') || 
+              normalized.includes('làm sao') ||
+              normalized.includes('lam nhu nao') ||
+              normalized.includes('làm như nào') ||
+              normalized.includes('cach nao') ||
+              normalized.includes('cách nào') ||
+              normalized.includes('the nao') ||
+              normalized.includes('thế nào') ||
+              normalized.match(/\?$/);
+            
+            if (wordCount > 10 || hasNumbers || isQuestionForm) {
+              console.log('🤖 Calling Gemini AI for detailed health question:', trimmed);
+              try {
+                const aiResponse = await askGemini(trimmed);
+                console.log('✅ Gemini AI response for health:', aiResponse);
+                
+                return {
+                  text: aiResponse.suggestAdminContact 
+                    ? `${aiResponse.text}\n\n💡 Cần tư vấn chuyên sâu? Nhắn Admin hoặc gọi: 0911550316`
+                    : aiResponse.text,
+                  quickReplyKeys: ['contact_admin', 'nutrition', 'upcoming'],
+                };
+              } catch (error) {
+                console.error('❌ Error calling Gemini AI for health:', error);
+                return {
+                  text: 'Xin lỗi, tôi đang gặp trục trặc kỹ thuật. Bạn có thể:\n• Nhắn cho Admin để được tư vấn trực tiếp\n• Gọi Hotline: 0911550316',
+                  quickReplyKeys: ['contact_admin', 'help'],
+                };
+              }
+            }
+            
+            // Câu hỏi chung về sức khỏe -> trả lời chuẩn
             const profile = await loadUserProfile();
             const name = profile?.name || currentUser?.displayName || 'bạn';
             const personalized = `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
@@ -431,6 +470,43 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
           }
 
           case 'nutrition': {
+            // Nếu câu hỏi chi tiết hoặc có dạng hỏi "làm sao", "cách nào", gọi AI
+            const wordCount = trimmed.split(/\s+/).length;
+            const hasNumbers = /\d/.test(trimmed);
+            const normalized = trimmed.toLowerCase();
+            const isQuestionForm = 
+              normalized.includes('lam sao') || 
+              normalized.includes('làm sao') ||
+              normalized.includes('lam nhu nao') ||
+              normalized.includes('làm như nào') ||
+              normalized.includes('cach nao') ||
+              normalized.includes('cách nào') ||
+              normalized.includes('the nao') ||
+              normalized.includes('thế nào') ||
+              normalized.match(/\?$/);
+            
+            if (wordCount > 10 || hasNumbers || isQuestionForm) {
+              console.log('🤖 Calling Gemini AI for detailed nutrition question:', trimmed);
+              try {
+                const aiResponse = await askGemini(trimmed);
+                console.log('✅ Gemini AI response for nutrition:', aiResponse);
+                
+                return {
+                  text: aiResponse.suggestAdminContact 
+                    ? `${aiResponse.text}\n\n💡 Cần tư vấn chuyên sâu? Nhắn Admin hoặc gọi: 0911550316`
+                    : aiResponse.text,
+                  quickReplyKeys: ['contact_admin', 'health', 'upcoming'],
+                };
+              } catch (error) {
+                console.error('❌ Error calling Gemini AI for nutrition:', error);
+                return {
+                  text: 'Xin lỗi, tôi đang gặp trục trặc kỹ thuật. Bạn có thể:\n• Nhắn cho Admin để được tư vấn trực tiếp\n• Gọi Hotline: 0911550316',
+                  quickReplyKeys: ['contact_admin', 'help'],
+                };
+              }
+            }
+            
+            // Câu hỏi chung về dinh dưỡng -> trả lời chuẩn
             const profile = await loadUserProfile();
             const gender = profile?.gender?.toLowerCase();
             const focus =
