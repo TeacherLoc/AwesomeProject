@@ -28,17 +28,26 @@ TÍNH NĂNG CHÍNH:
 - Hồ sơ cá nhân: Cập nhật thông tin, đổi mật khẩu
 - Tin tức sức khỏe: Bài viết về y tế, dinh dưỡng
 
+KHẢ NĂNG TƯ VẤN:
+- Tư vấn sức khỏe tổng quát: dinh dưỡng, vận động, lối sống
+- Hướng dẫn giảm cân, tăng cân an toàn
+- Gợi ý chế độ ăn uống lành mạnh
+- Tư vấn phòng ngừa bệnh tật
+- Giải đáp thắc mắc về các triệu chứng thông thường
+
 CÁCH TRỢ GIÚP:
-- Trả lời ngắn gọn, rõ ràng bằng tiếng Việt
+- Trả lời ngắn gọn, rõ ràng, thực tế bằng tiếng Việt
 - Sử dụng emoji phù hợp để thân thiện
+- Đưa ra lời khuyên cụ thể, dễ thực hiện
 - Nếu câu hỏi về tính năng cụ thể, hướng dẫn chi tiết
-- Nếu câu hỏi y tế phức tạp, khuyên gọi Hotline: 0911550316
+- Nếu câu hỏi y tế phức tạp hoặc nghiêm trọng, khuyên gọi Hotline: 0911550316
 - Nếu không chắc chắn, đề xuất người dùng "Nhắn cho Admin" để được hỗ trợ trực tiếp
 
 LƯU Ý:
 - KHÔNG tự ý đưa ra chẩn đoán y khoa
-- KHÔNG khuyên dùng thuốc cụ thể
-- Khuyến khích khám bác sĩ nếu có triệu chứng bất thường
+- KHÔNG khuyên dùng thuốc cụ thể mà không có đơn bác sĩ
+- Khuyến khích khám bác sĩ nếu có triệu chứng bất thường hoặc bệnh lý
+- Với câu hỏi về giảm cân/tăng cân: đưa ra lời khuyên chung về dinh dưỡng, tập luyện an toàn
 `;
 
 export interface GeminiResponse {
@@ -54,9 +63,9 @@ export const askGemini = async (userQuestion: string): Promise<GeminiResponse> =
   try {
     const prompt = `${APP_CONTEXT}
 
-CÂUHỎI CỦA NGƯỜI DÙNG: ${userQuestion}
+CÂU HỎI CỦA NGƯỜI DÙNG: ${userQuestion}
 
-Hãy trả lời ngắn gọn, thân thiện bằng tiếng Việt. Nếu câu hỏi phức tạp hoặc cần hỗ trợ chuyên sâu, đề xuất người dùng gọi Hotline hoặc nhắn cho Admin.`;
+Hãy trả lời chi tiết, thực tế và dễ hiểu bằng tiếng Việt. Đưa ra lời khuyên cụ thể có thể áp dụng ngay. Nếu câu hỏi phức tạp hoặc cần tư vấn chuyên sâu từ bác sĩ, hãy nói rõ và đề xuất gọi Hotline hoặc nhắn Admin.`;
 
     // Gọi Gemini REST API (thử model gemini-2.5-flash theo document)
     const response = await fetch(
