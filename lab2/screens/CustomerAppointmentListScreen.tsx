@@ -19,7 +19,7 @@ interface Appointment {
 }
 
 // Define filter types
-type FilterType = 'all' | 'pending' | 'completed' | 'cancelled';
+type FilterType = 'all' | 'pending' | 'confirmed' | 'completed' | 'cancelled';
 
 // Define navigation props
 type CustomerAppointmentListScreenNavigationProp = StackNavigationProp<any>; // Replace 'any' with your RootStackParamList if available
@@ -119,6 +119,9 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
         }
         if (selectedFilter === 'pending') {
             return appointment.status === 'pending';
+        }
+        if (selectedFilter === 'confirmed') {
+            return appointment.status === 'confirmed';
         }
         if (selectedFilter === 'completed') {
             return appointment.status === 'completed';
@@ -237,6 +240,7 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.filterContainer}>
                 {renderFilterButton('all', 'Tất cả', 'list')}
                 {renderFilterButton('pending', 'Chờ xác nhận', 'clock-o')}
+                {renderFilterButton('confirmed', 'Đã xác nhận', 'check-circle-o')}
                 {renderFilterButton('completed', 'Đã hoàn thành', 'check-circle')}
                 {renderFilterButton('cancelled', 'Đã hủy', 'times-circle')}
             </View>

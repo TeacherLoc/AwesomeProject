@@ -21,6 +21,7 @@ import HealthNewsScreen from '../screens/HealthNewsScreen'; // Import màn hình
 import ChatbotScreen from '../screens/ChatbotScreen';
 import NotificationScreen from '../screens/NotificationScreen';
 import ClinicInfoScreen from '../screens/ClinicInfoScreen';
+import HealthStatisticsScreen from '../screens/HealthStatisticsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -68,6 +69,11 @@ const HomeStackNavigator = () => (
             name="ClinicInfo"
             component={ClinicInfoScreen}
             options={{ title: 'Thông tin phòng khám', headerLeft: undefined }}
+        />
+        <Stack.Screen
+            name="HealthStatistics"
+            component={HealthStatisticsScreen}
+            options={{ title: 'Thống kê sức khỏe', headerLeft: undefined }}
         />
     </Stack.Navigator>
 );

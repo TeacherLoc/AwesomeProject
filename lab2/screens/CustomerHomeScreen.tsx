@@ -11,6 +11,8 @@ const { width } = Dimensions.get('window');
 const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
     const [userName, setUserName] = useState('Khách hàng');
     const [unreadCount, setUnreadCount] = useState(0);
+    const [confirmedAppointmentsCount, setConfirmedAppointmentsCount] = useState(0);
+    const [completedAppointmentsCount, setCompletedAppointmentsCount] = useState(0);
     const [avatar, setAvatar] = useState<string | null>(null);
 
     React.useLayoutEffect(() => {
@@ -23,6 +25,8 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
         React.useCallback(() => {
             loadUserData();
             fetchUnreadNotificationsCount();
+            fetchConfirmedAppointmentsCount();
+            fetchCompletedAppointmentsCount();
         }, [])
     );
 
@@ -72,6 +76,52 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
         }
     };
 
+    const fetchConfirmedAppointmentsCount = async () => {
+        const authInstance = getAuth();
+        const currentUser = authInstance.currentUser;
+
+        if (currentUser) {
+            try {
+                const firestoreInstance = getFirestore();
+                const appointmentsRef = collection(firestoreInstance, 'appointments');
+                const confirmedQuery = query(
+                    appointmentsRef,
+                    where('customerId', '==', currentUser.uid),
+                    where('status', '==', 'confirmed')
+                );
+
+                const querySnapshot = await getDocs(confirmedQuery);
+                setConfirmedAppointmentsCount(querySnapshot.size);
+            } catch (error) {
+                console.error('Error fetching confirmed appointments count: ', error);
+                setConfirmedAppointmentsCount(0);
+            }
+        }
+    };
+
+    const fetchCompletedAppointmentsCount = async () => {
+        const authInstance = getAuth();
+        const currentUser = authInstance.currentUser;
+
+        if (currentUser) {
+            try {
+                const firestoreInstance = getFirestore();
+                const appointmentsRef = collection(firestoreInstance, 'appointments');
+                const completedQuery = query(
+                    appointmentsRef,
+                    where('customerId', '==', currentUser.uid),
+                    where('status', '==', 'completed')
+                );
+
+                const querySnapshot = await getDocs(completedQuery);
+                setCompletedAppointmentsCount(querySnapshot.size);
+            } catch (error) {
+                console.error('Error fetching completed appointments count: ', error);
+                setCompletedAppointmentsCount(0);
+            }
+        }
+    };
+
     // Quick action buttons data
     const quickActions = [
         {
@@ -88,6 +138,7 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
             icon: 'calendar-today',
             color: '#3B82F6',
             bgColor: '#DBEAFE',
+            badge: confirmedAppointmentsCount,
             onPress: () => navigation.navigate('ProfileTab', {
                 screen: 'CustomerProfileMenu',
             }),
@@ -130,27 +181,12 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
         },
         {
             id: 4,
-            title: 'Hotline',
-            icon: 'phone',
+            title: 'Thống kê sức khỏe',
+            icon: 'bar-chart',
             color: '#F59E0B',
             bgColor: '#FEF3C7',
             onPress: () => {
-                const phoneNumber = '0911550316';
-                Alert.alert(
-                    'Gọi hotline',
-                    `Bạn muốn gọi đến số ${phoneNumber}?`,
-                    [
-                        { text: 'Hủy', style: 'cancel' },
-                        {
-                            text: 'Gọi',
-                            onPress: () => {
-                                Linking.openURL(`tel:${phoneNumber}`).catch(_err => {
-                                    Alert.alert('Lỗi', 'Không thể thực hiện cuộc gọi');
-                                });
-                            },
-                        },
-                    ]
-                );
+                navigation.navigate('HealthStatistics');
             },
         },
     ];
@@ -188,21 +224,28 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Health Info Card */}
+                {/* Hotline Card */}
                 <View style={styles.pointsCard}>
                     <View style={styles.pointsLeft}>
-                        <Icon name="event-available" size={32} color="#10B981" />
+                        <Icon name="phone" size={32} color="#EF4444" />
                         <View style={styles.pointsInfo}>
-                            <Text style={styles.pointsLabel}>Lịch hẹn sắp tới</Text>
-                            <Text style={styles.pointsValue}>Chưa có lịch</Text>
+                            <Text style={styles.pointsLabel}>Hotline hỗ trợ 24/7</Text>
+                            <Text style={styles.pointsValue}>0911 550 316</Text>
+                            <Text style={styles.appointmentHint}>
+                                Bấm để gọi ngay! ☎️
+                            </Text>
                         </View>
                     </View>
                     <TouchableOpacity
                         style={styles.historyButton}
-                        onPress={() => navigation.navigate('ServicesTab')}
+                        onPress={() => {
+                            Linking.openURL('tel:0911550316').catch((_err) =>
+                                Alert.alert('Lỗi', 'Không thể thực hiện cuộc gọi')
+                            );
+                        }}
                     >
-                        <Text style={styles.historyButtonText}>Đặt lịch</Text>
-                        <Icon name="chevron-right" size={18} color="#FFF" />
+                        <Text style={styles.historyButtonText}>Gọi ngay</Text>
+                        <Icon name="phone-in-talk" size={18} color="#FFF" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -218,6 +261,13 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
                         >
                             <View style={[styles.quickActionIcon, { backgroundColor: action.bgColor }]}>
                                 <Icon name={action.icon} size={28} color={action.color} />
+                                {action.badge !== undefined && action.badge > 0 && (
+                                    <View style={styles.quickActionBadge}>
+                                        <Text style={styles.quickActionBadgeText}>
+                                            {action.badge > 99 ? '99+' : action.badge}
+                                        </Text>
+                                    </View>
+                                )}
                             </View>
                             <Text style={styles.quickActionText}>{action.title}</Text>
                         </TouchableOpacity>
@@ -238,6 +288,11 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
                                 <Text style={[styles.featuredCardText, { color: service.color }]}>
                                     {service.title}
                                 </Text>
+                                {service.id === 4 && (
+                                    <Text style={styles.featuredSubtext}>
+                                        {completedAppointmentsCount} lần khám
+                                    </Text>
+                                )}
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -372,6 +427,12 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#FFF',
     },
+    appointmentHint: {
+        fontSize: 11,
+        color: 'rgba(255, 255, 255, 0.9)',
+        marginTop: 4,
+        fontStyle: 'italic',
+    },
     historyButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -415,6 +476,26 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 8,
+        position: 'relative',
+    },
+    quickActionBadge: {
+        position: 'absolute',
+        top: -4,
+        right: -4,
+        backgroundColor: '#EF4444',
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#FFF',
+    },
+    quickActionBadgeText: {
+        color: '#FFF',
+        fontSize: 11,
+        fontWeight: 'bold',
+        paddingHorizontal: 4,
     },
     quickActionText: {
         fontSize: 12,
@@ -454,12 +535,39 @@ const styles = StyleSheet.create({
         padding: 16,
         justifyContent: 'center',
         alignItems: 'center',
+        position: 'relative',
+    },
+    featuredBadge: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: '#EF4444',
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#FFF',
+    },
+    featuredBadgeText: {
+        color: '#FFF',
+        fontSize: 11,
+        fontWeight: 'bold',
+        paddingHorizontal: 4,
     },
     featuredCardText: {
         fontSize: 14,
         fontWeight: '600',
         marginTop: 12,
         textAlign: 'center',
+    },
+    featuredSubtext: {
+        fontSize: 11,
+        fontWeight: '500',
+        marginTop: 4,
+        textAlign: 'center',
+        opacity: 0.8,
     },
     newsCard: {
         borderRadius: 16,

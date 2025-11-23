@@ -79,6 +79,9 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
             // Tạo thông báo cho lịch hẹn sắp tới
             await createUpcomingAppointmentNotifications(db, currentUser.uid);
 
+            // Tạo thông báo cho lịch hẹn đã hoàn thành
+            await createCompletedAppointmentNotifications(db, currentUser.uid);
+
             // Lấy tất cả thông báo của user
             const notificationsRef = collection(db, 'notifications');
             const notificationsQuery = query(
@@ -216,6 +219,55 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
             }
         } catch (error) {
             console.error('Error creating appointment notifications:', error);
+        }
+    };
+
+    // Tạo thông báo cho lịch hẹn đã hoàn thành
+    const createCompletedAppointmentNotifications = async (db: any, userId: string) => {
+        try {
+            const appointmentsRef = collection(db, 'appointments');
+
+            // Lấy các lịch hẹn đã hoàn thành của user
+            const completedQuery = query(
+                appointmentsRef,
+                where('customerId', '==', userId),
+                where('status', '==', 'completed')
+            );
+
+            const completedSnapshot = await getDocs(completedQuery);
+
+            // Lấy các thông báo status hiện có
+            const notificationsRef = collection(db, 'notifications');
+            const existingNotifsQuery = query(
+                notificationsRef,
+                where('userId', '==', userId),
+                where('type', '==', 'status')
+            );
+            const existingNotifsSnapshot = await getDocs(existingNotifsQuery);
+            const existingRelatedIds = new Set(
+                existingNotifsSnapshot.docs.map((docItem: any) => docItem.data().relatedId)
+            );
+
+            // Tạo thông báo cho các lịch đã hoàn thành chưa có thông báo
+            for (const appointmentDoc of completedSnapshot.docs) {
+                if (!existingRelatedIds.has(appointmentDoc.id)) {
+                    const appointmentData = appointmentDoc.data();
+                    const appointmentDate = appointmentData.appointmentDateTime?.toDate();
+                    const dateStr = appointmentDate ? appointmentDate.toLocaleDateString('vi-VN') : '';
+
+                    await addDoc(notificationsRef, {
+                        userId: userId,
+                        type: 'status',
+                        title: 'Lịch hẹn đã hoàn thành ✅',
+                        message: `Lịch khám "${appointmentData.serviceName}" vào ngày ${dateStr} đã hoàn thành. Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!`,
+                        isRead: false,
+                        createdAt: Timestamp.now(),
+                        relatedId: appointmentDoc.id,
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error creating completed appointment notifications:', error);
         }
     };
 
