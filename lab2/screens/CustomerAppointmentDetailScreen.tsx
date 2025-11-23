@@ -27,6 +27,7 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
     const [loading, setLoading] = useState(true);
     const [isCancelling, setIsCancelling] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const [existingReview, setExistingReview] = useState<Review | null>(null);
     const [loadingReview, setLoadingReview] = useState(true);
@@ -226,7 +227,7 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
                 hasReview: true});
             setAppointment((prev: any) => ({ ...prev, reviewId: docRef.id, hasReview: true }));
 
-            Alert.alert('Thành công', 'Cảm ơn bạn đã gửi đánh giá!');
+            setShowSuccessModal(true);
             setExistingReview({
                 id: docRef.id,
                 ...reviewData,
@@ -259,7 +260,6 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
                 status: 'cancelled_by_customer',
                 cancelledAt: Timestamp.now(),
             });
-            
             // Tạo thông báo huỷ lịch hẹn
             const currentUser = auth().currentUser;
             if (currentUser) {
@@ -270,7 +270,6 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
                     'customer'
                 );
             }
-            
             Alert.alert('Thành công', 'Lịch hẹn của bạn đã được huỷ.');
             setAppointment((prev: any) => ({ ...prev, status: 'cancelled_by_customer' }));
         } catch (error) {
@@ -371,6 +370,33 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
                 </View>
             </Modal>
 
+            {/* Success Modal for Review Submission */}
+            <Modal
+                visible={showSuccessModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowSuccessModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalIconContainerSuccess}>
+                            <Icon name="check-circle" size={80} color="#27ae60" />
+                        </View>
+                        <Text style={styles.modalTitle}>Thành công</Text>
+                        <Text style={styles.modalMessage}>
+                            Cảm ơn bạn đã gửi đánh giá! Đánh giá của bạn sẽ giúp chúng tôi cải thiện chất lượng dịch vụ.
+                        </Text>
+                        <TouchableOpacity
+                            style={[styles.modalButton, styles.modalButtonSuccess]}
+                            onPress={() => setShowSuccessModal(false)}
+                        >
+                            <Icon name="check" size={20} color={COLORS.white} />
+                            <Text style={styles.modalButtonTextPrimary}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
             {/* Header Card */}
             <View style={styles.headerCard}>
                 <View style={styles.headerIconContainer}>
@@ -454,7 +480,7 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
                             {selectedImage?.uri && (
                                 <Image source={{ uri: selectedImage.uri }} style={styles.selectedImagePreview} />
                             )}
-                            <Text style={styles.base64Warning}>Lưu ý: Ảnh chất lượng cao có thể làm tăng kích thước lưu trữ.</Text>
+                            <Text style={styles.base64Warning}>Cảm ơn bạn vì đã giúp chúng tôi cải thiện.</Text>
 
                             <TouchableOpacity
                                 style={[styles.submitReviewButton, isSubmittingReview && styles.disabledButton]}
@@ -527,7 +553,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     headerCard: {
-        backgroundColor: COLORS.primary,
+        backgroundColor: '#6366F1',
         margin: 16,
         borderRadius: 16,
         padding: 24,
@@ -807,6 +833,15 @@ const styles = StyleSheet.create({
     modalIconContainer: {
         marginBottom: 16,
     },
+    modalIconContainerSuccess: {
+        marginBottom: 16,
+        backgroundColor: '#D4EDDA',
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     modalTitle: {
         fontSize: 22,
         fontWeight: 'bold',
@@ -838,6 +873,11 @@ const styles = StyleSheet.create({
     modalButtonDanger: {
         backgroundColor: '#e74c3c',
         elevation: 2,
+    },
+    modalButtonSuccess: {
+        backgroundColor: '#27ae60',
+        elevation: 2,
+        width: '100%',
     },
     modalButtonSecondary: {
         backgroundColor: COLORS.white,

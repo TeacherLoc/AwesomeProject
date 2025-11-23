@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Modal } from 'react-native';
 import { getAuth } from '@react-native-firebase/auth';
 import { getFirestore, doc, getDoc, collection, query, where, getDocs } from '@react-native-firebase/firestore';
 import { COLORS } from '../theme/colors';
@@ -26,6 +26,7 @@ const CustomerProfileMenuScreen = ({ navigation }: { navigation: any }) => {
     const [loading, setLoading] = useState(true);
     const [avatar, setAvatar] = useState<string | null>(null);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     useEffect(() => {
         loadUserProfile();
@@ -117,25 +118,18 @@ const CustomerProfileMenuScreen = ({ navigation }: { navigation: any }) => {
     };
 
     const handleSignOut = () => {
-        Alert.alert(
-            'Đăng xuất',
-            'Bạn có chắc chắn muốn đăng xuất?',
-            [
-                { text: 'Hủy', style: 'cancel' },
-                {
-                    text: 'Đăng xuất',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await getAuth().signOut();
-                            contextSignOut();
-                        } catch (error) {
-                            console.error('Sign out error:', error);
-                        }
-                    },
-                },
-            ]
-        );
+        setShowLogoutModal(true);
+    };
+
+    const confirmLogout = async () => {
+        setShowLogoutModal(false);
+        try {
+            await getAuth().signOut();
+            contextSignOut();
+        } catch (error) {
+            console.error('Sign out error:', error);
+            Alert.alert('Lỗi', 'Không thể đăng xuất. Vui lòng thử lại.');
+        }
     };
 
     if (loading) {
@@ -283,6 +277,40 @@ const CustomerProfileMenuScreen = ({ navigation }: { navigation: any }) => {
             </TouchableOpacity>
 
             <View style={{ height: 40 }} />
+
+            {/* Logout Confirmation Modal */}
+            <Modal
+                visible={showLogoutModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowLogoutModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalIconContainer}>
+                            <Icon name="logout" size={60} color="#EF4444" />
+                        </View>
+                        <Text style={styles.modalTitle}>Đăng xuất</Text>
+                        <Text style={styles.modalMessage}>
+                            Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?
+                        </Text>
+                        <View style={styles.modalButtonContainer}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalButtonSecondary]}
+                                onPress={() => setShowLogoutModal(false)}
+                            >
+                                <Text style={styles.modalButtonTextSecondary}>Hủy</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalButtonPrimary]}
+                                onPress={confirmLogout}
+                            >
+                                <Text style={styles.modalButtonTextPrimary}>Đăng xuất</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </ScrollView>
     );
 };
@@ -471,6 +499,79 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     logoutButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#FFF',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    modalContainer: {
+        backgroundColor: '#FFF',
+        borderRadius: 20,
+        padding: 24,
+        width: '100%',
+        maxWidth: 340,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    modalIconContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: '#FEE2E2',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#1F2937',
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    modalMessage: {
+        fontSize: 15,
+        color: '#6B7280',
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 22,
+    },
+    modalButtonContainer: {
+        flexDirection: 'row',
+        gap: 12,
+        width: '100%',
+    },
+    modalButton: {
+        flex: 1,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    modalButtonSecondary: {
+        backgroundColor: '#F3F4F6',
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+    },
+    modalButtonPrimary: {
+        backgroundColor: '#EF4444',
+    },
+    modalButtonTextSecondary: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#374151',
+    },
+    modalButtonTextPrimary: {
         fontSize: 16,
         fontWeight: '600',
         color: '#FFF',

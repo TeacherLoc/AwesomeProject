@@ -39,12 +39,7 @@ interface LoginScreenProps {
 const LoginScreen = ({ navigation }: LoginScreenProps) => {
   useEffect(() => {
     navigation.setOptions({
-      headerTitle: 'Đăng nhập',
-      headerTitleAlign: 'center',
-      headerTitleStyle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-      },
+      headerShown: false,
     });
   }, [navigation]);
 

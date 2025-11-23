@@ -262,7 +262,7 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
                         />
                         <View style={styles.newsOverlay}>
                             <Text style={styles.newsTitle}>Khám phá các dịch vụ y tế chất lượng cao</Text>
-                            <Text style={styles.newsSubtitle}>Đặt lịch ngay hôm nay</Text>
+                            <Text style={styles.newsSubtitle}>Xem ngay</Text>
                         </View>
                     </TouchableOpacity>
                 </View>
