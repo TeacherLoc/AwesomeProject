@@ -13,7 +13,7 @@
 .services-header h1 {
   font-size: 32px;
   font-weight: bold;
-  color: #333;
+  color: #111827;
   margin: 0;
 }
 
@@ -25,6 +25,7 @@
   font-weight: 600;
   color: white;
   cursor: pointer;
+  background: #88af86;  
   transition: all 0.2s;
 }
 
@@ -40,10 +41,10 @@
 }
 
 .service-card {
-  background: white;
+  background: #ffffff;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.2s;
   display: flex;
   flex-direction: column;
@@ -51,7 +52,7 @@
 
 .service-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .service-image {
@@ -82,17 +83,18 @@
 .service-content h3 {
   font-size: 20px;
   font-weight: bold;
-  color: #333;
+  color: #111827;
   margin: 0 0 12px 0;
 }
 
 .service-description {
   font-size: 14px;
-  color: #666;
+  color: #6b7280;
   line-height: 1.6;
   margin: 0 0 16px 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -100,7 +102,7 @@
 .service-price {
   font-size: 18px;
   font-weight: bold;
-  color: #E0408C;
+  color: #88af86;
   margin: 0;
 }
 
@@ -108,7 +110,7 @@
   display: flex;
   gap: 8px;
   padding: 16px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid #e5e7eb;
 }
 
 .edit-btn,
@@ -149,7 +151,7 @@
   grid-column: 1 / -1;
   text-align: center;
   padding: 80px 20px;
-  background: white;
+  background: #ffffff;
   border-radius: 16px;
 }
 
@@ -160,7 +162,7 @@
 
 .empty-state h3 {
   font-size: 20px;
-  color: #666;
+  color: #6b7280;
   margin: 0 0 24px 0;
 }
 
@@ -189,7 +191,7 @@
 }
 
 .services-loading p {
-  color: #666;
+  color: #6b7280;
   font-size: 16px;
   margin-top: 16px;
 }
@@ -209,7 +211,7 @@
 }
 
 .modal-content {
-  background: white;
+  background: #ffffff;
   border-radius: 20px;
   padding: 32px;
   max-width: 600px;
@@ -221,7 +223,7 @@
 
 .modal-content h2 {
   font-size: 24px;
-  color: #333;
+  color: #111827;
   margin: 0 0 24px 0;
 }
 
@@ -233,7 +235,7 @@
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #333;
+  color: #374151;
   margin-bottom: 8px;
 }
 
@@ -241,12 +243,14 @@
 .form-group textarea {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid #d1d5db;
   border-radius: 10px;
   font-size: 15px;
   font-family: inherit;
   transition: all 0.2s;
   box-sizing: border-box;
+  color: #111827;
+  background: #ffffff;
 }
 
 .form-group input:focus,
@@ -310,5 +314,65 @@
 
   .modal-content {
     padding: 24px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .services-header h1 {
+    color: #1862ad;
+  }
+
+  .service-card {
+    background: #374151;
+  }
+
+  .service-content h3 {
+    color: #F9FAFB;
+  }
+
+  .service-description {
+    color: #D1D5DB;
+  }
+
+  .service-actions {
+    border-top-color: #4B5563;
+  }
+
+  .empty-state h3 {
+    color: #D1D5DB;
+  }
+
+  .modal-content {
+    background: #374151;
+  }
+
+  .modal-content h2 {
+    color: #F9FAFB;
+  }
+
+  .form-group label {
+    color: #E5E7EB;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    background: #1F2937;
+    border-color: #4B5563;
+    color: #F9FAFB;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    background: #111827;
+  }
+
+  .cancel-btn {
+    background: #4B5563;
+    color: #E5E7EB;
+  }
+
+  .cancel-btn:hover {
+    background: #6B7280;
   }
 }

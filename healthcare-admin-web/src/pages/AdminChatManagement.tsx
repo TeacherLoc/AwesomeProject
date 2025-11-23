@@ -127,7 +127,7 @@ const AdminChatManagement: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom fontWeight="bold">
+      <Typography variant="h4" gutterBottom fontWeight="bold" color="text.primary">
         💬 Quản lý tin nhắn từ khách hàng
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
@@ -176,7 +176,7 @@ const AdminChatManagement: React.FC = () => {
               <CardContent>
                 <Stack direction="row" justifyContent="space-between" alignItems="start" mb={2}>
                   <Box>
-                    <Typography variant="h6" fontWeight="600">
+                    <Typography variant="h6" fontWeight="600" color="text.primary">
                       {message.userName}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
@@ -190,19 +190,19 @@ const AdminChatManagement: React.FC = () => {
                   />
                 </Stack>
 
-                <Box sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 1, mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary" fontWeight="500" mb={0.5}>
+                <Box sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 1, mb: 2, border: 1, borderColor: 'divider' }}>
+                  <Typography variant="body2" sx={{ color: 'text.primary', opacity: 0.7 }} fontWeight="600" mb={0.5}>
                     Câu hỏi:
                   </Typography>
-                  <Typography variant="body1">{message.userMessage}</Typography>
+                  <Typography variant="body1" color="text.primary">{message.userMessage}</Typography>
                 </Box>
 
                 {message.adminReply && (
-                  <Box sx={{ bgcolor: '#e3f2fd', p: 2, borderRadius: 1, mb: 2 }}>
-                    <Typography variant="body2" color="primary" fontWeight="500" mb={0.5}>
+                  <Box sx={{ bgcolor: 'primary.50', p: 2, borderRadius: 1, mb: 2, border: 1, borderColor: 'primary.200' }}>
+                    <Typography variant="body2" color="primary.main" fontWeight="600" mb={0.5}>
                       Câu trả lời:
                     </Typography>
-                    <Typography variant="body1">{message.adminReply}</Typography>
+                    <Typography variant="body1" color="text.primary">{message.adminReply}</Typography>
                     {message.answeredAt && (
                       <Typography variant="caption" color="text.secondary" mt={1} display="block">
                         Trả lời bởi {message.answeredBy} • {formatDate(message.answeredAt)}
@@ -239,7 +239,7 @@ const AdminChatManagement: React.FC = () => {
           {selectedMessage && (
             <>
               <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" fontWeight="500">
+                <Typography variant="body2" color="text.primary" fontWeight="600">
                   Từ: {selectedMessage.userName}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -247,11 +247,11 @@ const AdminChatManagement: React.FC = () => {
                 </Typography>
               </Box>
 
-              <Box sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 1, mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" fontWeight="500" mb={0.5}>
+              <Box sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 1, mb: 2, border: 1, borderColor: 'divider' }}>
+                <Typography variant="body2" sx={{ color: 'text.primary', opacity: 0.7 }} fontWeight="600" mb={0.5}>
                   Câu hỏi:
                 </Typography>
-                <Typography variant="body1">{selectedMessage.userMessage}</Typography>
+                <Typography variant="body1" color="text.primary">{selectedMessage.userMessage}</Typography>
               </Box>
 
               <TextField

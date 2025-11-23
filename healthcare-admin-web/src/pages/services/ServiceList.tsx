@@ -144,7 +144,7 @@ const ServiceList: React.FC = () => {
         <button 
           className="add-btn"
           onClick={() => handleOpenModal()}
-          style={{ backgroundColor: COLORS.primary }}
+          
         >
           ➕ Thêm dịch vụ mới
         </button>

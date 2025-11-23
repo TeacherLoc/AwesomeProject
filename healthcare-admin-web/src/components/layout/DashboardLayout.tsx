@@ -34,7 +34,7 @@ const DashboardLayout: React.FC = () => {
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header">
           <div className="logo">
-            <span className="logo-icon" style={{ backgroundColor: COLORS.primary }}>❤️</span>
+            <span className="logo-icon" style={{ backgroundColor: 'rgba(209, 211, 107, 0.87)' }}>❤️</span>
             {sidebarOpen && <span className="logo-text">Healthcare</span>}
           </div>
         </div>
