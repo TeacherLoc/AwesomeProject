@@ -509,17 +509,12 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
 
           case 'fallback':
           default: {
-            // Kiểm tra câu hỏi có liên quan không
-            if (!isRelevantQuestion(trimmed)) {
-              return {
-                text: '🤔 Câu hỏi này có vẻ không liên quan đến sức khỏe hoặc ứng dụng của chúng tôi.\n\nTôi chỉ có thể hỗ trợ bạn về:\n• Hướng dẫn sử dụng app\n• Lịch hẹn khám\n• Tư vấn sức khỏe và dinh dưỡng\n• Thông tin tài khoản\n\nBạn có câu hỏi nào khác không?',
-                quickReplyKeys: QUICK_REPLY_ORDER,
-              };
-            }
-
-            // Gọi AI để trả lời
+            // Gọi AI để trả lời (bỏ kiểm tra isRelevantQuestion)
+            console.log('🤖 Calling Gemini AI for question:', trimmed);
             try {
               const aiResponse = await askGemini(trimmed);
+              console.log('✅ Gemini AI response:', aiResponse);
+              
               // Nếu AI không chắc chắn, đề xuất nhắn Admin
               if (aiResponse.suggestAdminContact) {
                 return {
@@ -533,9 +528,9 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
                 quickReplyKeys: ['contact_admin', 'help', 'upcoming'],
               };
             } catch (error) {
-              console.error('AI fallback error:', error);
+              console.error('❌ AI fallback error:', error);
               return {
-                text: '🤔 Tôi chưa hiểu rõ yêu cầu của bạn.\n\nBạn có thể:\n• Chọn một chủ đề bên dưới\n• Nhắn trực tiếp cho Admin\n• Gọi Hotline: 0911550316',
+                text: '🤔 Xin lỗi, tôi đang gặp chút vấn đề kỹ thuật.\n\nBạn có thể:\n• Chọn một chủ đề bên dưới\n• Nhắn trực tiếp cho Admin\n• Gọi Hotline: 0911550316',
                 quickReplyKeys: ['contact_admin', 'help', 'upcoming'],
               };
             }

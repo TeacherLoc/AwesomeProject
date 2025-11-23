@@ -1,12 +1,4 @@
 import { GOOGLE_GEMINI_API_KEY } from '@env';
-
-// API Key được lấy từ biến môi trường .env
-// ⚠️ LƯU Ý: Cần cấu hình file .env với GOOGLE_GEMINI_API_KEY
-// Hướng dẫn lấy API key:
-// 1. Truy cập: https://aistudio.google.com/app/apikey
-// 2. Đăng nhập tài khoản Google
-// 3. Click "Create API key"
-// 4. Copy API key và thêm vào file .env: GOOGLE_GEMINI_API_KEY=your_key_here
 const API_KEY = GOOGLE_GEMINI_API_KEY;
 
 // Context về ứng dụng để AI hiểu và trả lời chính xác
@@ -60,12 +52,17 @@ export interface GeminiResponse {
  * Gọi Gemini AI để trả lời câu hỏi tự do (dùng REST API thay vì SDK)
  */
 export const askGemini = async (userQuestion: string): Promise<GeminiResponse> => {
+  console.log('🔑 API Key status:', API_KEY ? 'exists' : 'missing');
+  console.log('📝 User question:', userQuestion);
+
   try {
     const prompt = `${APP_CONTEXT}
 
 CÂU HỎI CỦA NGƯỜI DÙNG: ${userQuestion}
 
 Hãy trả lời chi tiết, thực tế và dễ hiểu bằng tiếng Việt. Đưa ra lời khuyên cụ thể có thể áp dụng ngay. Nếu câu hỏi phức tạp hoặc cần tư vấn chuyên sâu từ bác sĩ, hãy nói rõ và đề xuất gọi Hotline hoặc nhắn Admin.`;
+
+    console.log('📡 Calling Gemini API...');
 
     // Gọi Gemini REST API (thử model gemini-2.5-flash theo document)
     const response = await fetch(
@@ -89,16 +86,22 @@ Hãy trả lời chi tiết, thực tế và dễ hiểu bằng tiếng Việt. 
       },
     );
 
+    console.log('📥 API Response status:', response.status);
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('Gemini API Error:', response.status, errorData);
+      console.error('❌ Gemini API Error:', response.status, JSON.stringify(errorData));
       throw new Error(`API Error: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log('✅ Gemini API Response received:', JSON.stringify(data).substring(0, 200));
+
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    console.log('💬 Extracted text length:', text.length);
 
     if (!text) {
+      console.error('❌ Empty response from AI');
       throw new Error('Empty response from AI');
     }
 
