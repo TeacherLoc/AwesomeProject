@@ -57,7 +57,7 @@ const Login: React.FC = () => {
           )}
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">Gmail</label>
             <input
               id="email"
               type="email"

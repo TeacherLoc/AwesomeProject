@@ -41,10 +41,10 @@
 }
 
 .service-card {
-  background: #ffffff;
+  background: #3a4556;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.2s;
   display: flex;
   flex-direction: column;
@@ -83,13 +83,13 @@
 .service-content h3 {
   font-size: 20px;
   font-weight: bold;
-  color: #111827;
+  color: #ffffff;
   margin: 0 0 12px 0;
 }
 
 .service-description {
   font-size: 14px;
-  color: #6b7280;
+  color: #9ca3af;
   line-height: 1.6;
   margin: 0 0 16px 0;
   display: -webkit-box;
@@ -102,15 +102,24 @@
 .service-price {
   font-size: 18px;
   font-weight: bold;
-  color: #88af86;
+  color: #f59e0b;
   margin: 0;
+}
+
+.service-duration {
+  font-size: 14px;
+  color: #cdd3dd;
+  margin: 8px 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .service-actions {
   display: flex;
   gap: 8px;
   padding: 16px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #2d3748;
 }
 
 .edit-btn,
@@ -126,14 +135,14 @@
 }
 
 .edit-btn {
-  background: #6c5ce7;
+  background: #6366f1;
   color: white;
 }
 
 .edit-btn:hover {
-  background: #5f4fd1;
+  background: #4f46e5;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 .delete-btn {
@@ -235,7 +244,7 @@
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: #64748d;
   margin-bottom: 8px;
 }
 
@@ -324,7 +333,7 @@
   }
 
   .service-card {
-    background: #374151;
+    background: #333841;
   }
 
   .service-content h3 {

@@ -15,7 +15,7 @@ import {
   type ChatbotIntent,
 } from '../utils/chatbot';
 
-import { askGemini, isRelevantQuestion } from '../services/geminiService';
+import { askGemini } from '../services/geminiService';
 import { sendMessageToAdmin, listenToAdminReplies } from '../services/adminMessageService';
 
 type AppointmentDocument = {
@@ -272,7 +272,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
     async (rawInput: string): Promise<BotReply> => {
       const trimmed = rawInput.trim();
       console.log('🔍 generateBotReply called:', { trimmed, waitingForAdminMessage });
-      
+
       if (!trimmed) {
         return {
           text: 'Tôi chưa nghe rõ câu hỏi của bạn. Bạn có thể chọn một trong những lựa chọn bên dưới nhé.',
@@ -292,7 +292,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
             quickReplyKeys: QUICK_REPLY_ORDER,
           };
         }
-        
+
         if (!currentUser) {
           setWaitingForAdminMessage(false);
           return {
@@ -331,7 +331,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
       } else {
         interpretedIntent = detectIntent(trimmed);
       }
-      
+
       console.log('🎯 Detected intent:', interpretedIntent, 'for message:', trimmed);
 
       try {
@@ -426,8 +426,8 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
             const wordCount = trimmed.split(/\s+/).length;
             const hasNumbers = /\d/.test(trimmed);
             const normalized = trimmed.toLowerCase();
-            const isQuestionForm = 
-              normalized.includes('lam sao') || 
+            const isQuestionForm =
+              normalized.includes('lam sao') ||
               normalized.includes('làm sao') ||
               normalized.includes('lam nhu nao') ||
               normalized.includes('làm như nào') ||
@@ -436,15 +436,15 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
               normalized.includes('the nao') ||
               normalized.includes('thế nào') ||
               normalized.match(/\?$/);
-            
+
             if (wordCount > 10 || hasNumbers || isQuestionForm) {
               console.log('🤖 Calling Gemini AI for detailed health question:', trimmed);
               try {
                 const aiResponse = await askGemini(trimmed);
                 console.log('✅ Gemini AI response for health:', aiResponse);
-                
+
                 return {
-                  text: aiResponse.suggestAdminContact 
+                  text: aiResponse.suggestAdminContact
                     ? `${aiResponse.text}\n\n💡 Cần tư vấn chuyên sâu? Nhắn Admin hoặc gọi: 0911550316`
                     : aiResponse.text,
                   quickReplyKeys: ['contact_admin', 'nutrition', 'upcoming'],
@@ -457,7 +457,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
                 };
               }
             }
-            
+
             // Câu hỏi chung về sức khỏe -> trả lời chuẩn
             const profile = await loadUserProfile();
             const name = profile?.name || currentUser?.displayName || 'bạn';
@@ -474,8 +474,8 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
             const wordCount = trimmed.split(/\s+/).length;
             const hasNumbers = /\d/.test(trimmed);
             const normalized = trimmed.toLowerCase();
-            const isQuestionForm = 
-              normalized.includes('lam sao') || 
+            const isQuestionForm =
+              normalized.includes('lam sao') ||
               normalized.includes('làm sao') ||
               normalized.includes('lam nhu nao') ||
               normalized.includes('làm như nào') ||
@@ -484,15 +484,15 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
               normalized.includes('the nao') ||
               normalized.includes('thế nào') ||
               normalized.match(/\?$/);
-            
+
             if (wordCount > 10 || hasNumbers || isQuestionForm) {
               console.log('🤖 Calling Gemini AI for detailed nutrition question:', trimmed);
               try {
                 const aiResponse = await askGemini(trimmed);
                 console.log('✅ Gemini AI response for nutrition:', aiResponse);
-                
+
                 return {
-                  text: aiResponse.suggestAdminContact 
+                  text: aiResponse.suggestAdminContact
                     ? `${aiResponse.text}\n\n💡 Cần tư vấn chuyên sâu? Nhắn Admin hoặc gọi: 0911550316`
                     : aiResponse.text,
                   quickReplyKeys: ['contact_admin', 'health', 'upcoming'],
@@ -505,7 +505,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
                 };
               }
             }
-            
+
             // Câu hỏi chung về dinh dưỡng -> trả lời chuẩn
             const profile = await loadUserProfile();
             const gender = profile?.gender?.toLowerCase();
@@ -590,7 +590,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
             try {
               const aiResponse = await askGemini(trimmed);
               console.log('✅ Gemini AI response:', aiResponse);
-              
+
               // Nếu AI không chắc chắn, đề xuất nhắn Admin
               if (aiResponse.suggestAdminContact) {
                 return {
@@ -617,7 +617,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
         return {
           text: 'Xin lỗi, tôi đang gặp chút trục trặc khi truy xuất dữ liệu. Bạn hãy thử lại sau một lát nhé!',
           quickReplyKeys: ['help', 'health', 'nutrition'],
-        }
+        };
       }
     },
     [currentUser, loadAppointments, loadUserProfile, waitingForAdminMessage],

@@ -85,9 +85,9 @@
 
 .form-group label {
   display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a2e !important;
   margin-bottom: 8px;
 }
 
@@ -164,5 +164,11 @@
     width: 60px;
     height: 60px;
     font-size: 30px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .form-group label {
+        color: #234383;
+    }
   }
 }

@@ -10,6 +10,7 @@ interface Service {
   name: string;
   description: string;
   price: number;
+  duration?: string;
   imageUrl?: string;
 }
 
@@ -22,6 +23,7 @@ const ServiceList: React.FC = () => {
     name: '',
     description: '',
     price: '',
+    duration: '',
     imageUrl: ''
   });
 
@@ -56,11 +58,12 @@ const ServiceList: React.FC = () => {
         name: service.name,
         description: service.description,
         price: service.price.toString(),
+        duration: service.duration || '',
         imageUrl: service.imageUrl || ''
       });
     } else {
       setEditingService(null);
-      setFormData({ name: '', description: '', price: '', imageUrl: '' });
+      setFormData({ name: '', description: '', price: '', duration: '', imageUrl: '' });
     }
     setShowModal(true);
   };
@@ -68,13 +71,13 @@ const ServiceList: React.FC = () => {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingService(null);
-    setFormData({ name: '', description: '', price: '', imageUrl: '' });
+    setFormData({ name: '', description: '', price: '', duration: '', imageUrl: '' });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.description || !formData.price) {
+    if (!formData.name || !formData.description || !formData.price || !formData.duration) {
       toast.error('Vui lòng điền đầy đủ thông tin');
       return;
     }
@@ -84,6 +87,7 @@ const ServiceList: React.FC = () => {
         name: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
+        duration: formData.duration,
         imageUrl: formData.imageUrl || ''
       };
 
@@ -180,6 +184,11 @@ const ServiceList: React.FC = () => {
                 <p className="service-price">
                   💰 {service.price.toLocaleString('vi-VN')} VNĐ
                 </p>
+                {service.duration && (
+                  <p className="service-duration">
+                    ⏱️ {service.duration}
+                  </p>
+                )}
               </div>
 
               <div className="service-actions">
@@ -238,6 +247,17 @@ const ServiceList: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                   placeholder="0"
                   min="0"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Thời gian thực hiện *</label>
+                <input
+                  type="text"
+                  value={formData.duration}
+                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                  placeholder="VD: 30 phút, 1 tiếng..."
                   required
                 />
               </div>
