@@ -70,7 +70,7 @@ export const createAppointmentCancelledNotification = async (
 
         const message = cancelledBy === 'customer'
             ? `Lịch hẹn "${serviceName}" của bạn đã được hủy thành công`
-            : `Lịch hẹn "${serviceName}" của bạn đã bị hủy bởi phòng khám. Vui lòng liên hệ để biết thêm chi tiết.`;
+            : `Lịch hẹn "${serviceName}" của bạn đã bị hủy. Lý do: Phòng khám đã đầy lịch hẹn. Vui lòng chọn thời gian khác hoặc liên hệ phòng khám để được hỗ trợ.`;
 
         await addDoc(notificationsRef, {
             userId: userId,
