@@ -46,12 +46,12 @@
   padding: 12px 0;
   font-size: 15px;
   outline: none;
-  color: #111827;
+  color: #c5ccdb;
   background: transparent;
 }
 
 .search-box input::placeholder {
-  color: #9ca3af;
+  color: #f3f4f5 !important;
 }
 
 .export-btn,
