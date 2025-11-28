@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator, Modal } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { COLORS } from '../theme/colors';
@@ -9,6 +9,30 @@ const AdminPasswordRequestsScreen = ({ navigation }: { navigation: any }) => {
     const [requests, setRequests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+    
+    // Custom Modal States
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
+    
+    // Custom Modal Functions
+    const showSuccess = (message: string) => {
+        setSuccessMessage(message);
+        setSuccessModalVisible(true);
+    };
+    
+    const showError = (message: string) => {
+        setErrorMessage(message);
+        setErrorModalVisible(true);
+    };
+    
+    const showConfirm = (requestId: string) => {
+        setPendingRequestId(requestId);
+        setConfirmModalVisible(true);
+    };
 
     useEffect(() => {
         navigation.setOptions({
@@ -34,7 +58,7 @@ const AdminPasswordRequestsScreen = ({ navigation }: { navigation: any }) => {
             setRequests(fetchedRequests);
         } catch (error) {
             console.error('Error fetching password reset requests: ', error);
-            Alert.alert('Lỗi', 'Không thể tải danh sách yêu cầu.');
+            showError('Không thể tải danh sách yêu cầu. Vui lòng thử lại.');
         } finally {
             setLoading(false);
         }
@@ -57,49 +81,44 @@ const AdminPasswordRequestsScreen = ({ navigation }: { navigation: any }) => {
                 approvedTimestamp: firestore.FieldValue.serverTimestamp(),
             });
 
-            Alert.alert('Thành công', `Email đặt lại mật khẩu đã được gửi đến ${request.userEmail}.`);
+            showSuccess(`Email đặt lại mật khẩu đã được gửi đến ${request.userEmail}.`);
             // Refresh list
             setRequests(prevRequests => prevRequests.filter(r => r.id !== request.id));
         } catch (error: any) {
             console.error('Error approving request: ', error);
             if (error.code === 'auth/user-not-found') {
-                 Alert.alert('Lỗi Firebase Auth', `Không tìm thấy người dùng Firebase Auth với email ${request.userEmail}. Điều này không nên xảy ra nếu email đã được xác thực trước đó.`);
+                 showError(`Không tìm thấy người dùng Firebase Auth với email ${request.userEmail}. Điều này không nên xảy ra nếu email đã được xác thực trước đó.`);
             } else {
-                Alert.alert('Lỗi', `Không thể phê duyệt yêu cầu: ${error.message}`);
+                showError(`Không thể phê duyệt yêu cầu: ${error.message}`);
             }
         } finally {
             setActionLoading(null);
         }
     };
 
-    const handleRejectRequest = async (requestId: string) => {
-        Alert.alert(
-            'Xác nhận từ chối',
-            'Bạn có chắc chắn muốn từ chối yêu cầu này không?',
-            [
-                { text: 'Huỷ', style: 'cancel' },
-                {
-                    text: 'Từ chối',
-                    onPress: async () => {
-                        setActionLoading(requestId);
-                        try {
-                            await firestore().collection('passwordResetRequests').doc(requestId).update({
-                                status: 'rejected',
-                                rejectedTimestamp: firestore.FieldValue.serverTimestamp(),
-                            });
-                            Alert.alert('Thành công', 'Yêu cầu đã được từ chối.');
-                            setRequests(prevRequests => prevRequests.filter(r => r.id !== requestId));
-                        } catch (error) {
-                            console.error('Error rejecting request: ', error);
-                            Alert.alert('Lỗi', 'Không thể từ chối yêu cầu.');
-                        } finally {
-                            setActionLoading(null);
-                        }
-                    },
-                    style: 'destructive',
-                },
-            ]
-        );
+    const handleRejectRequest = (requestId: string) => {
+        showConfirm(requestId);
+    };
+    
+    const confirmRejectRequest = async () => {
+        if (!pendingRequestId) return;
+        
+        setConfirmModalVisible(false);
+        setActionLoading(pendingRequestId);
+        try {
+            await firestore().collection('passwordResetRequests').doc(pendingRequestId).update({
+                status: 'rejected',
+                rejectedTimestamp: firestore.FieldValue.serverTimestamp(),
+            });
+            showSuccess('Yêu cầu đã được từ chối.');
+            setRequests(prevRequests => prevRequests.filter(r => r.id !== pendingRequestId));
+        } catch (error) {
+            console.error('Error rejecting request: ', error);
+            showError('Không thể từ chối yêu cầu. Vui lòng thử lại.');
+        } finally {
+            setActionLoading(null);
+            setPendingRequestId(null);
+        }
     };
 
     const renderItem = ({ item }: { item: any }) => (
@@ -176,6 +195,92 @@ const AdminPasswordRequestsScreen = ({ navigation }: { navigation: any }) => {
                     showsVerticalScrollIndicator={false}
                 />
             )}
+
+            {/* Success Modal */}
+            <Modal
+                visible={successModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setSuccessModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.successModal}>
+                        <View style={styles.modalIcon}>
+                            <Icon name="check-circle-outline" size={64} color="#27ae60" />
+                        </View>
+                        <Text style={styles.modalTitle}>Thành công!</Text>
+                        <Text style={styles.modalMessage}>{successMessage}</Text>
+                        <TouchableOpacity
+                            style={[styles.modalButton, styles.successButton]}
+                            onPress={() => setSuccessModalVisible(false)}
+                        >
+                            <Text style={styles.successButtonText}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Error Modal */}
+            <Modal
+                visible={errorModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setErrorModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.errorModal}>
+                        <View style={styles.modalIcon}>
+                            <Icon name="error-outline" size={64} color="#e74c3c" />
+                        </View>
+                        <Text style={styles.modalTitle}>Có lỗi xảy ra</Text>
+                        <Text style={styles.modalMessage}>{errorMessage}</Text>
+                        <TouchableOpacity
+                            style={[styles.modalButton, styles.errorButton]}
+                            onPress={() => setErrorModalVisible(false)}
+                        >
+                            <Text style={styles.errorButtonText}>Đóng</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Confirm Reject Modal */}
+            <Modal
+                visible={confirmModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setConfirmModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.confirmModal}>
+                        <View style={styles.modalIcon}>
+                            <Icon name="help-outline" size={64} color="#f39c12" />
+                        </View>
+                        <Text style={styles.modalTitle}>Xác nhận từ chối</Text>
+                        <Text style={styles.modalMessage}>
+                            Bạn có chắc chắn muốn từ chối yêu cầu này không?{'\n'}
+                            Hành động này không thể hoàn tác.
+                        </Text>
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.cancelButton]}
+                                onPress={() => {
+                                    setConfirmModalVisible(false);
+                                    setPendingRequestId(null);
+                                }}
+                            >
+                                <Text style={styles.cancelButtonText}>Hủy</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.rejectButton]}
+                                onPress={confirmRejectRequest}
+                            >
+                                <Text style={styles.rejectButtonText}>Từ chối</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -328,6 +433,121 @@ const styles = StyleSheet.create({
         color: COLORS.textMedium,
         textAlign: 'center',
         lineHeight: 22,
+    },
+    // Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    successModal: {
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 30,
+        alignItems: 'center',
+        width: '90%',
+        maxWidth: 400,
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+    },
+    errorModal: {
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 30,
+        alignItems: 'center',
+        width: '90%',
+        maxWidth: 400,
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+    },
+    confirmModal: {
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 30,
+        alignItems: 'center',
+        width: '90%',
+        maxWidth: 400,
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+    },
+    modalIcon: {
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#333',
+        textAlign: 'center',
+        marginBottom: 12,
+    },
+    modalMessage: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 22,
+    },
+    modalButton: {
+        flex: 1,
+        paddingVertical: 14,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 48,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+        gap: 12,
+    },
+    successButton: {
+        backgroundColor: '#27ae60',
+        minWidth: 120,
+    },
+    errorButton: {
+        backgroundColor: '#e74c3c',
+        minWidth: 120,
+    },
+    cancelButton: {
+        backgroundColor: '#f0f0f0',
+        borderWidth: 1,
+        borderColor: '#ddd',
+    },
+    rejectButton: {
+        backgroundColor: '#e74c3c',
+    },
+    successButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    errorButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    cancelButtonText: {
+        color: '#666',
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    rejectButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
     },
 });
 

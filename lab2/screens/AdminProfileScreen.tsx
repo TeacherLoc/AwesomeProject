@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView, Modal } from 'react-native';
 import { getAuth, updateProfile as updateUserProfileAuth, signOut as firebaseSignOut } from '@react-native-firebase/auth';
 import { getFirestore, doc, getDoc, updateDoc } from '@react-native-firebase/firestore';
 import { COLORS } from '../theme/colors';
@@ -14,6 +14,23 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    
+    // Custom Modal States
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    
+    // Custom Modal Functions
+    const showSuccess = (message: string) => {
+        setSuccessMessage(message);
+        setSuccessModalVisible(true);
+    };
+    
+    const showError = (message: string) => {
+        setErrorMessage(message);
+        setErrorModalVisible(true);
+    };
 
     useEffect(() => {
         navigation.setOptions({
@@ -40,12 +57,12 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
                     setName(userData?.name || '');
                     setPhone(userData?.phone || '');
                 } else {
-                    Alert.alert('Error', 'Profile không tồn tại.');
-                    contextSignOut();
+                    showError('Profile không tồn tại.');
+                    setTimeout(() => contextSignOut(), 2000);
                 }
             } catch (error) {
                 console.error('Error fetching admin profile: ', error);
-                Alert.alert('Error', 'Không thể tải.');
+                showError('Không thể tải thông tin profile. Vui lòng thử lại.');
                 // Cân nhắc contextSignOut() ở đây nếu lỗi nghiêm trọng
             }
         } else {
@@ -71,12 +88,12 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
         const currentUser = authInstance.currentUser;
 
         if (!currentUser) {
-            Alert.alert('Error', 'Quyền truy cập bị giới hạn.');
-            contextSignOut();
+            showError('Quyền truy cập bị giới hạn.');
+            setTimeout(() => contextSignOut(), 2000);
             return;
         }
         if (!name.trim()) {
-            Alert.alert('Error', 'Tên không thể để trống.');
+            showError('Tên không thể để trống.');
             return;
         }
 
@@ -95,12 +112,12 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
                 });
             }
 
-            Alert.alert('Success', 'Cập nhật profile thành công!');
+            showSuccess('Cập nhật profile thành công!');
             setProfile((prev: any) => ({ ...prev, name: name.trim(), phone: phone.trim() }));
             setEditing(false);
         } catch (error) {
             console.error('Lỗi profile: ', error);
-            Alert.alert('Error', 'Không thể cập nhật profile.');
+            showError('Không thể cập nhật profile. Vui lòng thử lại.');
         } finally {
             setIsSaving(false);
         }
@@ -113,7 +130,7 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
             contextSignOut();
         } catch (error) {
             console.error('Error signing out: ', error);
-            Alert.alert('Lỗi', 'Không thể đăng xuất.');
+            showError('Không thể đăng xuất. Vui lòng thử lại.');
         }
     };
 
@@ -126,6 +143,7 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
     }
 
     return (
+        <>
         <ScrollView style={styles.container}>
             <View style={styles.avatarSection}>
                 <View style={styles.avatarCircle}>
@@ -248,6 +266,55 @@ const AdminProfileScreen = ({ navigation }: { navigation: any }) => {
                 <Text style={styles.buttonText}>Đăng xuất</Text>
             </TouchableOpacity>
         </ScrollView>
+
+        {/* Success Modal */}
+        <Modal
+            visible={successModalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setSuccessModalVisible(false)}
+        >
+            <View style={styles.modalOverlay}>
+                <View style={styles.successModal}>
+                    <View style={styles.modalIcon}>
+                        <Icon name="check-circle-outline" size={64} color="#2ed573" />
+                    </View>
+                    <Text style={styles.modalTitle}>Thành công!</Text>
+                    <Text style={styles.modalMessage}>{successMessage}</Text>
+                    <TouchableOpacity
+                        style={[styles.modalButton, styles.successButton]}
+                        onPress={() => setSuccessModalVisible(false)}
+                    >
+                        <Text style={styles.successButtonText}>OK</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </Modal>
+
+        {/* Error Modal */}
+        <Modal
+            visible={errorModalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setErrorModalVisible(false)}
+        >
+            <View style={styles.modalOverlay}>
+                <View style={styles.errorModal}>
+                    <View style={styles.modalIcon}>
+                        <Icon name="error-outline" size={64} color="#ff4757" />
+                    </View>
+                    <Text style={styles.modalTitle}>Có lỗi xảy ra</Text>
+                    <Text style={styles.modalMessage}>{errorMessage}</Text>
+                    <TouchableOpacity
+                        style={[styles.modalButton, styles.errorButton]}
+                        onPress={() => setErrorModalVisible(false)}
+                    >
+                        <Text style={styles.errorButtonText}>Đóng</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </Modal>
+        </>
     );
 };
 
@@ -378,6 +445,81 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         marginLeft: 8,
+    },
+    // Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    successModal: {
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 30,
+        alignItems: 'center',
+        width: '90%',
+        maxWidth: 400,
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+    },
+    errorModal: {
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 30,
+        alignItems: 'center',
+        width: '90%',
+        maxWidth: 400,
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+    },
+    modalIcon: {
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#333',
+        textAlign: 'center',
+        marginBottom: 12,
+    },
+    modalMessage: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 22,
+    },
+    modalButton: {
+        paddingVertical: 14,
+        paddingHorizontal: 32,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: 120,
+    },
+    successButton: {
+        backgroundColor: '#2ed573',
+    },
+    errorButton: {
+        backgroundColor: '#ff4757',
+    },
+    successButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    errorButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
     },
 });
 
