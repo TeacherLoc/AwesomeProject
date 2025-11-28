@@ -348,7 +348,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
           case 'help': {
             return {
               text:
-                '📱 Ứng dụng có 5 tab chính:\n\n🏠 Trang chủ: Xem lịch hẹn sắp tới, tin tức sức khỏe, và truy cập nhanh các tính năng.\n💬 Hỗ trợ: Chat với tôi để được tư vấn và hướng dẫn.\n📅 Đặt lịch: Xem danh sách dịch vụ và đặt lịch hẹn khám.\n📰 Tin tức: Đọc các bài viết về sức khỏe và y tế.\n👤 Cá nhân: Quản lý hồ sơ, xem lịch hẹn, thông báo và đổi mật khẩu.\n\n✨ Tính năng nổi bật:\n• Hotline: Gọi điện trực tiếp 0911550316 từ trang chủ\n• Thông báo: Nhận thông báo về lịch hẹn và nhắc uống nước\n• Lịch hẹn thông minh: Theo dõi trạng thái và lịch sử đặt lịch\n\nCần hỗ trợ gì thêm không?',
+                '📱 Ứng dụng có 5 tab chính:\n\n🏠 Trang chủ: Xem lịch hẹn sắp tới, tin tức sức khỏe, và truy cập nhanh các tính năng.\n💬 Hỗ trợ: Chat với tôi để được tư vấn và hướng dẫn.\n📅 Đặt lịch: Xem danh sách dịch vụ và đặt lịch hẹn khám.\n📰 Tin tức: Đọc các bài viết về sức khỏe và y tế.\n👤 Cá nhân: Quản lý hồ sơ, xem lịch hẹn, thông báo và đổi mật khẩu.\n\n✨ Tính năng nổi bật:\n• 📞 Hotline: Gọi điện trực tiếp 0911550316 từ trang chủ\n• 🔔 Thông báo thông minh: Cập nhật kịp thời và nhanh chóng\n• 🚀 Lịch hẹn thông minh: Theo dõi trạng thái và lịch sử đặt lịch\n• 🎨 UI/UX chuyên nghiệp: Giao diện dễ tiếp cận và thân thiện\n\nCần hỗ trợ gì thêm không?',
               quickReplyKeys: ['upcoming', 'history', 'account', 'health', 'nutrition'],
             };
           }
@@ -548,7 +548,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
               text:
                 '👤 Tôi đã kiểm tra hồ sơ của bạn:\n' +
                 details.join('\n') +
-                '\n\n📱 Tính năng trong tab Cá nhân:\n• Chỉnh sửa thông tin cá nhân\n• Xem và quản lý lịch hẹn khám\n• Xem thông báo (có bộ lọc: Tất cả/Chưa đọc/Đã đọc)\n• Đổi mật khẩu\n• Đăng xuất\n\nBạn có thể cập nhật thông tin bất cứ lúc nào!',
+                '\n\n📱 Tính năng trong tab Cá nhân:\n• ✏️ Chỉnh sửa thông tin cá nhân\n• 📅 Xem và quản lý lịch hẹn khám\n• 🔔 Thông báo: Lọc (Tất cả/Chưa đọc/Đã đọc), xóa đơn lẻ/tất cả với giao diện đẹp\n• 🔐 Đổi mật khẩu: Thông báo lỗi rõ ràng (VD: "Mật khẩu không đúng" thay vì mã lỗi)\n• 📊 Hiệu suất tối ưu: Tải thông báo nhanh 60-80% hơn trước\n• 🚪 Đăng xuất\n\nBạn có thể cập nhật thông tin bất cứ lúc nào!',
               quickReplyKeys: ['help', 'upcoming', 'history'],
             };
           }

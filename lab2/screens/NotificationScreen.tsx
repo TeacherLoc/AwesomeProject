@@ -54,50 +54,52 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
     }, []);
 
     const confirmDeleteAllNotifications = useCallback(async () => {
-                        try {
-                            const db = getFirestore(getApp());
-                            if (!currentUser) {return;}
+        try {
+            const db = getFirestore(getApp());
+            if (!currentUser) {
+                return;
+            }
 
-                            // Cố gắng lưu thông tin tất cả thông báo đã xóa (có thể fail nếu không có quyền)
-                            try {
-                                const deleteRecordPromises = notifications.map(notification => {
-                                    const deletedNotificationData: any = {
-                                        userId: currentUser.uid,
-                                        originalNotificationId: notification.id,
-                                        notificationType: notification.type,
-                                        deletedAt: Timestamp.now(),
-                                        title: notification.title,
-                                        message: notification.message,
-                                    };
+            // Cố gắng lưu thông tin tất cả thông báo đã xóa (có thể fail nếu không có quyền)
+            try {
+                const deleteRecordPromises = notifications.map(notification => {
+                    const deletedNotificationData: any = {
+                        userId: currentUser.uid,
+                        originalNotificationId: notification.id,
+                        notificationType: notification.type,
+                        deletedAt: Timestamp.now(),
+                        title: notification.title,
+                        message: notification.message,
+                    };
 
-                                    // Chỉ thêm relatedId nếu nó tồn tại và không phải undefined
-                                    if (notification.relatedId) {
-                                        deletedNotificationData.relatedId = notification.relatedId;
-                                    }
+                    // Chỉ thêm relatedId nếu nó tồn tại và không phải undefined
+                    if (notification.relatedId) {
+                        deletedNotificationData.relatedId = notification.relatedId;
+                    }
 
-                                    return addDoc(collection(db, 'deletedNotifications'), deletedNotificationData);
-                                });
-                                await Promise.all(deleteRecordPromises);
-                            } catch (saveError) {
-                                console.warn('Cannot save to deletedNotifications (permission issue):', saveError);
-                                // Tiếp tục xóa thông báo dù không lưu được vào deletedNotifications
-                            }
+                    return addDoc(collection(db, 'deletedNotifications'), deletedNotificationData);
+                });
+                await Promise.all(deleteRecordPromises);
+            } catch (saveError) {
+                console.warn('Cannot save to deletedNotifications (permission issue):', saveError);
+                // Tiếp tục xóa thông báo dù không lưu được vào deletedNotifications
+            }
 
-                            // Xóa tất cả thông báo khỏi database
-                            const deletePromises = notifications.map(notification =>
-                                deleteDoc(doc(db, 'notifications', notification.id))
-                            );
+            // Xóa tất cả thông báo khỏi database
+            const deletePromises = notifications.map(notification =>
+                deleteDoc(doc(db, 'notifications', notification.id))
+            );
 
-                            await Promise.all(deletePromises);
+            await Promise.all(deletePromises);
 
-                            // Cập nhật UI
-                            setNotifications([]);
-                        } catch (error) {
-                            console.error('Error deleting all notifications:', error);
-                            Alert.alert('Lỗi', 'Không thể xóa thông báo');
-                        } finally {
-                            setDeleteAllModalVisible(false);
-                        }
+            // Cập nhật UI
+            setNotifications([]);
+        } catch (error) {
+            console.error('Error deleting all notifications:', error);
+            Alert.alert('Lỗi', 'Không thể xóa thông báo');
+        } finally {
+            setDeleteAllModalVisible(false);
+        }
     }, [notifications, currentUser]);
 
     React.useLayoutEffect(() => {
