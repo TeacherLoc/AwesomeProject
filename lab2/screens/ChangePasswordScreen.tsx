@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Modal } from 'react-native';
 import auth, { firebase } from '@react-native-firebase/auth';
 import { COLORS } from '../theme/colors';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -12,6 +12,10 @@ const ChangePasswordScreen = ({ navigation }: { navigation: any }) => {
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [errorModalVisible, setErrorModalVisible] = useState(false);
+    const [errorTitle, setErrorTitle] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
 
     useEffect(() => {
         navigation.setOptions({
@@ -20,6 +24,16 @@ const ChangePasswordScreen = ({ navigation }: { navigation: any }) => {
             headerTitleStyle: { fontSize: 20, fontWeight: 'bold' },
         });
     }, [navigation]);
+
+    const showError = useCallback((title: string, message: string) => {
+        setErrorTitle(title);
+        setErrorMessage(message);
+        setErrorModalVisible(true);
+    }, []);
+
+    const showSuccess = () => {
+        setSuccessModalVisible(true);
+    };
 
     const reauthenticate = (currentPass: string) => {
         const user = auth().currentUser;
@@ -32,15 +46,15 @@ const ChangePasswordScreen = ({ navigation }: { navigation: any }) => {
 
     const handleChangePassword = async () => {
         if (!currentPassword || !newPassword || !confirmPassword) {
-            Alert.alert('Lỗi', 'Vui lòng điền đầy đủ các trường.');
+            showError('Thông tin chưa đầy đủ', 'Vui lòng điền đầy đủ các trường.');
             return;
         }
         if (newPassword !== confirmPassword) {
-            Alert.alert('Lỗi', 'Mật khẩu mới và xác nhận mật khẩu không khớp.');
+            showError('Mật khẩu không khớp', 'Mật khẩu mới và xác nhận mật khẩu không giống nhau.');
             return;
         }
         if (newPassword.length < 6) {
-            Alert.alert('Lỗi', 'Mật khẩu mới phải có ít nhất 6 ký tự.');
+            showError('Mật khẩu quá ngắn', 'Mật khẩu mới phải có ít nhất 6 ký tự.');
             return;
         }
 
@@ -50,29 +64,43 @@ const ChangePasswordScreen = ({ navigation }: { navigation: any }) => {
             const user = auth().currentUser;
             if (user) {
                 await user.updatePassword(newPassword);
-                Alert.alert('Thành công', 'Mật khẩu đã được thay đổi thành công.');
-                navigation.goBack();
+                showSuccess();
             } else {
-                Alert.alert('Lỗi', 'Không tìm thấy người dùng để cập nhật mật khẩu.');
+                showError('Lỗi hệ thống', 'Không tìm thấy người dùng để cập nhật mật khẩu.');
             }
         } catch (error: any) {
-            console.error('Password change error: ', error);
-            if (error.code === 'auth/wrong-password') {
-                Alert.alert('Lỗi', 'Mật khẩu hiện tại không đúng.');
+            // Kiểm tra tất cả các error code có thể xảy ra với invalid credential
+            if (error.code === 'auth/wrong-password' ||
+                error.code === 'auth/invalid-credential' ||
+                error.code === 'auth/user-mismatch' ||
+                error.message?.includes('credential')) {
+                // Sử dụng setTimeout để đảm bảo state đã được reset
+                setTimeout(() => {
+                    showError('Mật khẩu không đúng', 'Mật khẩu hiện tại bạn nhập không chính xác. Vui lòng kiểm tra lại.');
+                }, 200);
             } else if (error.code === 'auth/too-many-requests') {
-                Alert.alert('Lỗi', 'Quá nhiều yêu cầu. Vui lòng thử lại sau.');
+                setTimeout(() => {
+                    showError('Đã vượt giới hạn', 'Bạn đã thử quá nhiều lần. Vui lòng chờ 15 phút rồi thử lại.');
+                }, 200);
             } else if (error.code === 'auth/network-request-failed') {
-                Alert.alert('Lỗi', 'Lỗi mạng. Vui lòng kiểm tra kết nối và thử lại.');
+                setTimeout(() => {
+                    showError('Lỗi kết nối', 'Không thể kết nối mạng. Vui lòng kiểm tra Internet và thử lại.');
+                }, 200);
             } else {
-                Alert.alert('Lỗi', `Không thể thay đổi mật khẩu: ${error.message}`);
+                // Hiển thị error code để debug
+                setTimeout(() => {
+                    showError('Lỗi không xác định', `Lỗi: ${error.code || 'unknown'}\n${error.message || 'Vui lòng thử lại sau.'}`);
+                }, 200);
             }
         } finally {
+            // Luôn tắt loading ở finally
             setLoading(false);
         }
     };
 
     return (
-        <ScrollView style={styles.container}>
+        <View style={styles.container}>
+            <ScrollView>
             <View style={styles.headerCard}>
                 <View style={styles.iconContainer}>
                     <Icon name="lock-reset" size={48} color={COLORS.primary} />
@@ -173,6 +201,61 @@ const ChangePasswordScreen = ({ navigation }: { navigation: any }) => {
                 </TouchableOpacity>
             )}
         </ScrollView>
+
+        {/* Error Modal - Đưa ra ngoài ScrollView */}
+        <Modal
+            visible={errorModalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setErrorModalVisible(false)}
+        >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.errorModal}>
+                        <View style={styles.modalIcon}>
+                            <Icon name="error-outline" size={48} color="#ff4757" />
+                        </View>
+                        <Text style={styles.modalTitle}>{errorTitle}</Text>
+                        <Text style={styles.modalMessage}>{errorMessage}</Text>
+                        <TouchableOpacity
+                            style={[styles.modalButton, styles.errorButton]}
+                            onPress={() => setErrorModalVisible(false)}
+                        >
+                            <Text style={styles.errorButtonText}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Success Modal */}
+            <Modal
+                visible={successModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => {
+                    setSuccessModalVisible(false);
+                    navigation.goBack();
+                }}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.successModal}>
+                        <View style={styles.modalIcon}>
+                            <Icon name="check-circle-outline" size={48} color="#2ed573" />
+                        </View>
+                        <Text style={styles.modalTitle}>Thành công!</Text>
+                        <Text style={styles.modalMessage}>Mật khẩu đã được thay đổi thành công.</Text>
+                        <TouchableOpacity
+                            style={[styles.modalButton, styles.successButton]}
+                            onPress={() => {
+                                setSuccessModalVisible(false);
+                                navigation.goBack();
+                            }}
+                        >
+                            <Text style={styles.successButtonText}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+        </View>
     );
 };
 
@@ -287,6 +370,89 @@ const styles = StyleSheet.create({
         marginTop: 20,
         marginBottom: 32,
     },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        zIndex: 9999,
+        elevation: 9999,
+    },
+    errorModal: {
+        backgroundColor: 'white',
+        borderRadius: 16,
+        padding: 24,
+        width: '90%',
+        maxWidth: 320,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    successModal: {
+        backgroundColor: 'white',
+        borderRadius: 16,
+        padding: 24,
+        width: '90%',
+        maxWidth: 320,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    modalIcon: {
+        marginBottom: 16,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    modalMessage: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 22,
+    },
+    modalButton: {
+        paddingVertical: 12,
+        paddingHorizontal: 32,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: 100,
+    },
+    errorButton: {
+        backgroundColor: '#ff4757',
+    },
+    successButton: {
+        backgroundColor: '#2ed573',
+    },
+    errorButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    successButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+
 });
 
 export default ChangePasswordScreen;
