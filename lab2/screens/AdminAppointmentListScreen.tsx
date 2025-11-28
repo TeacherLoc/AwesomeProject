@@ -1,12 +1,18 @@
 /* eslint-disable react/no-unstable-nested-components */
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert, Modal, TextInput } from 'react-native';
 import { getApp } from '@react-native-firebase/app';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import { useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { COLORS } from '../theme/colors';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {
+    createAppointmentConfirmedNotification,
+    createAppointmentCompletedNotification,
+    createAppointmentCancelledNotification,
+    createAppointmentRejectedNotification
+} from '../utils/notificationHelper';
 
 interface Appointment {
     id: string;
@@ -44,6 +50,8 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
     const [refreshing, setRefreshing] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showReasonModal, setShowReasonModal] = useState(false);
+    const [reason, setReason] = useState('');
     const [pendingUpdate, setPendingUpdate] = useState<{ appointmentId: string; newStatus: Appointment['status'] } | null>(null);
 
     const fetchAppointmentsForAdmin = useCallback(async () => {
@@ -93,7 +101,18 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
     }, [fetchAppointmentsForAdmin]);
 
     const handleUpdateAppointmentStatus = async (appointmentId: string, newStatus: Appointment['status']) => {
-        setPendingUpdate({ appointmentId, newStatus });
+        if (newStatus === 'cancelled_by_admin' || newStatus === 'rejected') {
+            setPendingUpdate({ appointmentId, newStatus });
+            setReason('');
+            setShowReasonModal(true);
+        } else {
+            setPendingUpdate({ appointmentId, newStatus });
+            setShowConfirmModal(true);
+        }
+    };
+
+    const handleConfirmWithReason = () => {
+        setShowReasonModal(false);
         setShowConfirmModal(true);
     };
 
@@ -104,6 +123,7 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
 
         setShowConfirmModal(false);
         const { appointmentId, newStatus } = pendingUpdate;
+        const appointment = appointments.find(a => a.id === appointmentId);
 
         try {
             const app = getApp();
@@ -115,6 +135,41 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
                 ...(newStatus === 'cancelled_by_admin' && { cancelledAt: firestore.FieldValue.serverTimestamp() }),
                 ...(newStatus === 'completed' && { completedAt: firestore.FieldValue.serverTimestamp() }),
             });
+
+            if (appointment && appointment.customerId) {
+                const appointmentDate = appointment.appointmentDateTime.toDate();
+
+                if (newStatus === 'confirmed') {
+                    await createAppointmentConfirmedNotification(
+                        appointment.customerId,
+                        appointmentId,
+                        appointment.serviceName,
+                        appointmentDate
+                    );
+                } else if (newStatus === 'completed') {
+                    await createAppointmentCompletedNotification(
+                        appointment.customerId,
+                        appointmentId,
+                        appointment.serviceName
+                    );
+                } else if (newStatus === 'cancelled_by_admin') {
+                    await createAppointmentCancelledNotification(
+                        appointment.customerId,
+                        appointmentId,
+                        appointment.serviceName,
+                        'admin',
+                        reason.trim() || undefined
+                    );
+                } else if (newStatus === 'rejected') {
+                    await createAppointmentRejectedNotification(
+                        appointment.customerId,
+                        appointmentId,
+                        appointment.serviceName,
+                        reason.trim() || undefined
+                    );
+                }
+            }
+
             setShowSuccessModal(true);
             setAppointments(prevAppointments =>
                 prevAppointments.map(apt =>
@@ -126,6 +181,7 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
             Alert.alert('Lỗi', 'Không thể cập nhật trạng thái lịch hẹn.');
         } finally {
             setPendingUpdate(null);
+            setReason('');
         }
     };
 
@@ -325,6 +381,69 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
                         >
                             <Text style={styles.modalButtonText}>OK</Text>
                         </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Reason Modal */}
+            <Modal
+                visible={showReasonModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => {
+                    setShowReasonModal(false);
+                    setPendingUpdate(null);
+                    setReason('');
+                }}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalIconContainer}>
+                            <Icon 
+                                name={pendingUpdate?.newStatus === 'cancelled_by_admin' ? 'block' : 'cancel'} 
+                                size={60} 
+                                color={COLORS.error} 
+                            />
+                        </View>
+                        <Text style={styles.modalTitle}>
+                            {pendingUpdate?.newStatus === 'cancelled_by_admin' ? 'Hủy lịch hẹn' : 'Từ chối lịch hẹn'}
+                        </Text>
+                        <Text style={styles.modalMessage}>
+                            Vui lòng nhập lý do để khách hàng được thông báo chi tiết:
+                        </Text>
+                        
+                        <TextInput
+                            style={styles.reasonInput}
+                            placeholder="Nhập lý do (tùy chọn)..."
+                            placeholderTextColor={COLORS.textLight}
+                            value={reason}
+                            onChangeText={setReason}
+                            multiline
+                            numberOfLines={4}
+                            textAlignVertical="top"
+                        />
+                        
+                        <View style={styles.modalButtonContainer}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalCancelButton]}
+                                onPress={() => {
+                                    setShowReasonModal(false);
+                                    setPendingUpdate(null);
+                                    setReason('');
+                                }}
+                            >
+                                <Text style={styles.modalCancelButtonText}>Hủy bỏ</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.modalConfirmButton]}
+                                onPress={handleConfirmWithReason}
+                            >
+                                <Text style={styles.modalButtonText}>
+                                    {pendingUpdate?.newStatus === 'cancelled_by_admin' ? 'Hủy lịch' : 'Từ chối'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
             </Modal>
@@ -559,6 +678,19 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         textAlign: 'center',
+    },
+    reasonInput: {
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        borderRadius: 12,
+        padding: 16,
+        fontSize: 14,
+        color: COLORS.textDark,
+        backgroundColor: '#F9FAFB',
+        minHeight: 100,
+        marginBottom: 20,
+        width: '100%',
+        textAlignVertical: 'top',
     },
 });
 

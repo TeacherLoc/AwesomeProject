@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Linking, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Linking, Image, Modal, TextInput } from 'react-native';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -63,6 +63,11 @@ const AdminAppointmentDetailScreen: React.FC = () => {
 
     const [existingReview, setExistingReview] = useState<Review | null>(null);
     const [loadingReview, setLoadingReview] = useState(false);
+
+    // States for reason modal
+    const [showReasonModal, setShowReasonModal] = useState(false);
+    const [reason, setReason] = useState('');
+    const [pendingAction, setPendingAction] = useState<'cancel' | 'reject' | null>(null);
 
     const fetchExistingReview = useCallback(async (currentAppointmentId: string, reviewId?: string) => {
         if (!reviewId && !currentAppointmentId) {
@@ -156,7 +161,7 @@ const AdminAppointmentDetailScreen: React.FC = () => {
         });
     }, [navigation]);
 
-    const handleUpdateStatus = async (newStatus: Appointment['status']) => {
+    const handleUpdateStatus = async (newStatus: Appointment['status'], reasonText?: string) => {
         if (!appointment) { return; }
         setUpdating(true);
         Alert.alert(
@@ -197,13 +202,15 @@ const AdminAppointmentDetailScreen: React.FC = () => {
                                     appointment.customerId,
                                     appointment.id,
                                     appointment.serviceName,
-                                    'admin'
+                                    'admin',
+                                    reasonText
                                 );
                             } else if (newStatus === 'rejected') {
                                 await createAppointmentRejectedNotification(
                                     appointment.customerId,
                                     appointment.id,
-                                    appointment.serviceName
+                                    appointment.serviceName,
+                                    reasonText
                                 );
                             }
                             
@@ -224,6 +231,25 @@ const AdminAppointmentDetailScreen: React.FC = () => {
                         }
                     }}]
         );
+    };
+
+    const handleCancelOrReject = (action: 'cancel' | 'reject') => {
+        setPendingAction(action);
+        setReason('');
+        setShowReasonModal(true);
+    };
+
+    const handleConfirmAction = () => {
+        if (!pendingAction) return;
+
+        setShowReasonModal(false);
+        
+        const newStatus = pendingAction === 'cancel' ? 'cancelled_by_admin' : 'rejected';
+        handleUpdateStatus(newStatus, reason.trim() || undefined);
+        
+        // Reset states
+        setPendingAction(null);
+        setReason('');
     };
 
     const getStatusStyle = (status?: Appointment['status']) => {
@@ -349,18 +375,82 @@ const AdminAppointmentDetailScreen: React.FC = () => {
                         {appointment.status === 'pending' && (
                             <View style={styles.actionRow}>
                                 <ActionButton title="Xác nhận" icon="check-circle" color="#27ae60" onPress={() => handleUpdateStatus('confirmed')} />
-                                <ActionButton title="Từ chối" icon="cancel" color="#e74c3c" onPress={() => handleUpdateStatus('rejected')} />
+                                <ActionButton title="Từ chối" icon="cancel" color="#e74c3c" onPress={() => handleCancelOrReject('reject')} />
                             </View>
                         )}
                         {appointment.status === 'confirmed' && (
                             <ActionButton title="Đánh dấu Hoàn thành" icon="check-box" color="#3498db" onPress={() => handleUpdateStatus('completed')} />
                         )}
                         {(appointment.status === 'confirmed' || appointment.status === 'pending') && (
-                            <ActionButton title="Hủy (Admin)" icon="block" color="#f39c12" onPress={() => handleUpdateStatus('cancelled_by_admin')} />
+                            <ActionButton title="Hủy (Admin)" icon="block" color="#f39c12" onPress={() => handleCancelOrReject('cancel')} />
                         )}
                     </>
                 )}
             </View>
+
+            {/* Reason Modal */}
+            <Modal
+                visible={showReasonModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => {
+                    setShowReasonModal(false);
+                    setPendingAction(null);
+                    setReason('');
+                }}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Icon 
+                                name={pendingAction === 'cancel' ? 'block' : 'cancel'} 
+                                size={30} 
+                                color={COLORS.error} 
+                            />
+                            <Text style={styles.modalTitle}>
+                                {pendingAction === 'cancel' ? 'Hủy lịch hẹn' : 'Từ chối lịch hẹn'}
+                            </Text>
+                        </View>
+                        
+                        <Text style={styles.modalSubtitle}>
+                            Vui lòng nhập lý do để khách hàng được thông báo chi tiết:
+                        </Text>
+                        
+                        <TextInput
+                            style={styles.reasonInput}
+                            placeholder="Nhập lý do (tùy chọn)..."
+                            placeholderTextColor={COLORS.textLight}
+                            value={reason}
+                            onChangeText={setReason}
+                            multiline
+                            numberOfLines={4}
+                            textAlignVertical="top"
+                        />
+                        
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.cancelButton]}
+                                onPress={() => {
+                                    setShowReasonModal(false);
+                                    setPendingAction(null);
+                                    setReason('');
+                                }}
+                            >
+                                <Text style={styles.cancelButtonText}>Hủy bỏ</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.confirmButton]}
+                                onPress={handleConfirmAction}
+                            >
+                                <Text style={styles.confirmButtonText}>
+                                    {pendingAction === 'cancel' ? 'Hủy lịch' : 'Từ chối'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </ScrollView>
     );
 };
@@ -608,6 +698,85 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: 'bold',
         marginLeft: 8,
+    },
+    // Modal styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    modalContent: {
+        backgroundColor: COLORS.white,
+        borderRadius: 16,
+        padding: 24,
+        width: '100%',
+        maxWidth: 400,
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: COLORS.textDark,
+        marginLeft: 12,
+        flex: 1,
+    },
+    modalSubtitle: {
+        fontSize: 14,
+        color: COLORS.textMedium,
+        marginBottom: 16,
+        lineHeight: 20,
+    },
+    reasonInput: {
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        borderRadius: 8,
+        padding: 12,
+        fontSize: 14,
+        color: COLORS.textDark,
+        backgroundColor: '#f9f9f9',
+        minHeight: 80,
+        marginBottom: 20,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
+    modalButton: {
+        flex: 1,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    cancelButton: {
+        backgroundColor: '#f0f0f0',
+        borderWidth: 1,
+        borderColor: '#d0d0d0',
+    },
+    confirmButton: {
+        backgroundColor: COLORS.error,
+    },
+    cancelButtonText: {
+        color: COLORS.textMedium,
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    confirmButtonText: {
+        color: COLORS.white,
+        fontSize: 14,
+        fontWeight: 'bold',
     },
 });
 

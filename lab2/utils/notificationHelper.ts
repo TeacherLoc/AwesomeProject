@@ -62,20 +62,29 @@ export const createAppointmentCancelledNotification = async (
     userId: string,
     appointmentId: string,
     serviceName: string,
-    cancelledBy: 'customer' | 'admin'
+    cancelledBy: 'customer' | 'admin',
+    reason?: string
 ) => {
     try {
         const db = getFirestore(getApp());
         const notificationsRef = collection(db, 'notifications');
 
-        const message = cancelledBy === 'customer'
-            ? `Lịch hẹn "${serviceName}" của bạn đã được hủy thành công`
-            : `Lịch hẹn "${serviceName}" của bạn đã bị hủy. Lý do: Phòng khám đã đầy lịch hẹn. Vui lòng chọn thời gian khác hoặc liên hệ phòng khám để được hỗ trợ.`;
+        let message: string;
+        let title: string;
+
+        if (cancelledBy === 'customer') {
+            title = 'Lịch hẹn đã hủy ✓';
+            message = `Lịch hẹn "${serviceName}" của bạn đã được hủy thành công.`;
+        } else {
+            title = 'Lịch hẹn bị hủy bởi Admin ❌';
+            const defaultReason = 'Phòng khám có vấn đề về lịch trình không thể thực hiện được.';
+            message = `Rất tiếc! Lịch hẹn "${serviceName}" của bạn đã bị hủy bởi admin.\n\n📝 Lý do: ${reason || defaultReason}\n\n🙏 Chúng tôi rất xin lỗi vì sự bất tiện này. Quý khách có thể đặt lại lịch hẹn khác.`;
+        }
 
         await addDoc(notificationsRef, {
             userId: userId,
             type: 'status',
-            title: 'Lịch hẹn đã hủy ✗',
+            title: title,
             message: message,
             isRead: false,
             createdAt: Timestamp.now(),
@@ -92,17 +101,21 @@ export const createAppointmentCancelledNotification = async (
 export const createAppointmentRejectedNotification = async (
     userId: string,
     appointmentId: string,
-    serviceName: string
+    serviceName: string,
+    reason?: string
 ) => {
     try {
         const db = getFirestore(getApp());
         const notificationsRef = collection(db, 'notifications');
 
+        const defaultReason = 'Lịch khám trong thời gian này đã đầy hoặc không phù hợp.';
+        const message = `Rất tiếc! Lịch hẹn "${serviceName}" của bạn đã bị từ chối.\n\n📝 Lý do: ${reason || defaultReason}\n\n🙏 Quý khách vui lòng chọn thời gian khác hoặc liên hệ để được hỗ trợ.`;
+
         await addDoc(notificationsRef, {
             userId: userId,
             type: 'status',
-            title: 'Lịch hẹn bị từ chối ✗',
-            message: `Lịch hẹn "${serviceName}" của bạn đã bị từ chối. Vui lòng chọn thời gian khác hoặc liên hệ phòng khám.`,
+            title: 'Lịch hẹn bị từ chối ❌',
+            message: message,
             isRead: false,
             createdAt: Timestamp.now(),
             relatedId: appointmentId,
@@ -125,8 +138,8 @@ export const createAdminReplyNotification = async (
         const db = getFirestore(getApp());
         const notificationsRef = collection(db, 'notifications');
 
-        const shortQuestion = userQuestion.length > 50 
-            ? userQuestion.substring(0, 50) + '...' 
+        const shortQuestion = userQuestion.length > 50
+            ? userQuestion.substring(0, 50) + '...'
             : userQuestion;
 
         await addDoc(notificationsRef, {

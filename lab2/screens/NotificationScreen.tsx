@@ -45,6 +45,64 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
         }
     }, [notifications]);
 
+    const handleDeleteAllNotifications = useCallback(async () => {
+        Alert.alert(
+            'Xóa tất cả thông báo',
+            'Bạn có chắc chắn muốn xóa tất cả thông báo? Hành động này không thể hoàn tác.',
+            [
+                { text: 'Hủy', style: 'cancel' },
+                {
+                    text: 'Xóa tất cả',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const db = getFirestore(getApp());
+                            if (!currentUser) return;
+
+                            // Cố gắng lưu thông tin tất cả thông báo đã xóa (có thể fail nếu không có quyền)
+                            try {
+                                const deleteRecordPromises = notifications.map(notification => {
+                                    const deletedNotificationData: any = {
+                                        userId: currentUser.uid,
+                                        originalNotificationId: notification.id,
+                                        notificationType: notification.type,
+                                        deletedAt: Timestamp.now(),
+                                        title: notification.title,
+                                        message: notification.message,
+                                    };
+                                    
+                                    // Chỉ thêm relatedId nếu nó tồn tại và không phải undefined
+                                    if (notification.relatedId) {
+                                        deletedNotificationData.relatedId = notification.relatedId;
+                                    }
+                                    
+                                    return addDoc(collection(db, 'deletedNotifications'), deletedNotificationData);
+                                });
+                                await Promise.all(deleteRecordPromises);
+                            } catch (saveError) {
+                                console.warn('Cannot save to deletedNotifications (permission issue):', saveError);
+                                // Tiếp tục xóa thông báo dù không lưu được vào deletedNotifications
+                            }
+
+                            // Xóa tất cả thông báo khỏi database
+                            const deletePromises = notifications.map(notification =>
+                                deleteDoc(doc(db, 'notifications', notification.id))
+                            );
+
+                            await Promise.all(deletePromises);
+
+                            // Cập nhật UI
+                            setNotifications([]);
+                        } catch (error) {
+                            console.error('Error deleting all notifications:', error);
+                            Alert.alert('Lỗi', 'Không thể xóa thông báo');
+                        }
+                    },
+                },
+            ]
+        );
+    }, [notifications, currentUser]);
+
     React.useLayoutEffect(() => {
         navigation.setOptions({
             headerTitle: 'Thông báo',
@@ -53,15 +111,52 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                 fontSize: 20,
             },
             headerRight: () => (
-                <TouchableOpacity
-                    style={styles.headerButton}
-                    onPress={handleMarkAllAsRead}
-                >
-                    <Icon name="done-all" size={24} color={COLORS.primary} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <TouchableOpacity
+                        style={styles.headerButton}
+                        onPress={handleMarkAllAsRead}
+                    >
+                        <Icon name="done-all" size={24} color={COLORS.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.headerButton}
+                        onPress={handleDeleteAllNotifications}
+                    >
+                        <Icon name="delete-sweep" size={24} color={COLORS.error} />
+                    </TouchableOpacity>
+                </View>
             ),
         });
-    }, [navigation, handleMarkAllAsRead]);
+    }, [navigation, handleMarkAllAsRead, handleDeleteAllNotifications]);
+
+    // Dọn dẹp các bản ghi deletedNotifications cũ (>30 ngày)
+    const cleanupOldDeletedNotifications = async (db: any, userId: string) => {
+        try {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            const deletedNotificationsRef = collection(db, 'deletedNotifications');
+            const oldDeletedQuery = query(
+                deletedNotificationsRef,
+                where('userId', '==', userId)
+            );
+
+            const snapshot = await getDocs(oldDeletedQuery);
+            
+            const deletePromises: Promise<void>[] = [];
+            snapshot.docs.forEach((docItem) => {
+                const deletedAt = docItem.data().deletedAt?.toDate();
+                if (deletedAt && deletedAt < thirtyDaysAgo) {
+                    deletePromises.push(deleteDoc(doc(db, 'deletedNotifications', docItem.id)));
+                }
+            });
+
+            await Promise.all(deletePromises);
+        } catch (error) {
+            console.warn('Cannot cleanup deleted notifications (permission issue):', error);
+            // Bỏ qua lỗi này vì không ảnh hưởng đến chức năng chính
+        }
+    };
 
     const fetchNotifications = useCallback(async () => {
         if (!currentUser) {
@@ -73,13 +168,22 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
         try {
             const db = getFirestore(getApp());
 
+            // Dọn dẹp các bản ghi deletedNotifications cũ
+            await cleanupOldDeletedNotifications(db, currentUser.uid);
+
+            // TEMPORARY DISABLE: Tạm thời disable để test
+            console.log('[Debug] Starting notification creation checks...');
+            
             // Tạo thông báo nhắc uống nước hàng ngày nếu chưa có hôm nay
+            console.log('[Debug] Checking daily water reminder...');
             await createDailyWaterReminder(db, currentUser.uid);
 
             // Tạo thông báo cho lịch hẹn sắp tới
+            console.log('[Debug] Checking upcoming appointments...');
             await createUpcomingAppointmentNotifications(db, currentUser.uid);
 
             // Tạo thông báo cho lịch hẹn đã hoàn thành
+            console.log('[Debug] Checking completed appointments...');
             await createCompletedAppointmentNotifications(db, currentUser.uid);
 
             // Lấy tất cả thông báo của user
@@ -116,12 +220,72 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
         }
     }, [currentUser]);
 
+    // Kiểm tra xem thông báo đã bị xóa hay chưa
+    const isNotificationDeleted = async (db: any, userId: string, type: string, relatedId?: string, title?: string) => {
+        try {
+            const deletedNotificationsRef = collection(db, 'deletedNotifications');
+            const deletedQuery = query(
+                deletedNotificationsRef,
+                where('userId', '==', userId),
+                where('notificationType', '==', type)
+            );
+
+            const snapshot = await getDocs(deletedQuery);
+            
+            console.log(`[Debug] Checking deleted notifications for type: ${type}, relatedId: ${relatedId}, title: ${title}`);
+            console.log(`[Debug] Found ${snapshot.docs.length} deleted notifications of this type`);
+            
+            const isDeleted = snapshot.docs.some((docItem: any) => {
+                const data = docItem.data();
+                console.log(`[Debug] Checking deleted notification:`, { 
+                    type: data.notificationType, 
+                    relatedId: data.relatedId, 
+                    title: data.title 
+                });
+                
+                // Kiểm tra theo relatedId nếu có (ưu tiên cao nhất)
+                if (relatedId && data.relatedId) {
+                    const match = data.relatedId === relatedId;
+                    console.log(`[Debug] RelatedId match: ${match}`);
+                    return match;
+                }
+                
+                // Kiểm tra theo title nếu có (cho reminder)
+                if (title && data.title) {
+                    const match = data.title === title;
+                    console.log(`[Debug] Title match: ${match}`);
+                    return match;
+                }
+                
+                // Fallback: Kiểm tra chung theo type (ít chính xác)
+                const match = data.notificationType === type;
+                console.log(`[Debug] Type match: ${match}`);
+                return match;
+            });
+            
+            console.log(`[Debug] Final result - isDeleted: ${isDeleted}`);
+            return isDeleted;
+        } catch (error) {
+            console.warn('Cannot access deletedNotifications collection:', error);
+            // Nếu không có quyền truy cập, trả về false để cho phép tạo thông báo
+            return false;
+        }
+    };
+
     // Tạo thông báo nhắc uống nước hàng ngày
     const createDailyWaterReminder = async (db: any, userId: string) => {
         try {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const todayTimestamp = today.getTime();
+
+            const reminderTitle = 'Nhắc nhở sức khỏe 💧';
+
+            // Kiểm tra xem thông báo reminder đã bị xóa hay chưa
+            const isDeleted = await isNotificationDeleted(db, userId, 'reminder', undefined, reminderTitle);
+            if (isDeleted) {
+                return; // Không tạo lại thông báo đã bị xóa
+            }
 
             const notificationsRef = collection(db, 'notifications');
             const reminderQuery = query(
@@ -147,7 +311,7 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                 await addDoc(notificationsRef, {
                     userId: userId,
                     type: 'reminder',
-                    title: 'Nhắc nhở sức khỏe 💧',
+                    title: reminderTitle,
                     message: 'Đã đến lúc uống nước! Hãy uống ít nhất 2 lít nước mỗi ngày để duy trì sức khỏe tốt nhất.',
                     isRead: false,
                     createdAt: Timestamp.now(),
@@ -201,6 +365,12 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
             // Tạo thông báo cho các lịch chưa có thông báo
             for (const appointmentDoc of upcomingAppointments) {
                 if (!existingRelatedIds.has(appointmentDoc.id)) {
+                    // Kiểm tra xem thông báo cho lịch hẹn này đã bị xóa hay chưa
+                    const isDeleted = await isNotificationDeleted(db, userId, 'appointment', appointmentDoc.id);
+                    if (isDeleted) {
+                        continue; // Bỏ qua việc tạo thông báo đã bị xóa
+                    }
+
                     const appointmentData = appointmentDoc.data();
                     const appointmentDate = appointmentData.appointmentDateTime.toDate();
                     const dateStr = appointmentDate.toLocaleDateString('vi-VN');
@@ -251,6 +421,12 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
             // Tạo thông báo cho các lịch đã hoàn thành chưa có thông báo
             for (const appointmentDoc of completedSnapshot.docs) {
                 if (!existingRelatedIds.has(appointmentDoc.id)) {
+                    // Kiểm tra xem thông báo cho lịch hẹn này đã bị xóa hay chưa
+                    const isDeleted = await isNotificationDeleted(db, userId, 'status', appointmentDoc.id);
+                    if (isDeleted) {
+                        continue; // Bỏ qua việc tạo thông báo đã bị xóa
+                    }
+
                     const appointmentData = appointmentDoc.data();
                     const appointmentDate = appointmentData.appointmentDateTime?.toDate();
                     const dateStr = appointmentDate ? appointmentDate.toLocaleDateString('vi-VN') : '';
@@ -329,7 +505,36 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                     onPress: async () => {
                         try {
                             const db = getFirestore(getApp());
-                            await deleteDoc(doc(db, 'notifications', notificationId));
+                            const notificationToDelete = notifications.find(n => n.id === notificationId);
+                            
+                            if (notificationToDelete && currentUser) {
+                                // Cố gắng lưu thông tin thông báo đã xóa (có thể fail nếu không có quyền)
+                                try {
+                                    const deletedNotificationData: any = {
+                                        userId: currentUser.uid,
+                                        originalNotificationId: notificationId,
+                                        notificationType: notificationToDelete.type,
+                                        deletedAt: Timestamp.now(),
+                                        title: notificationToDelete.title,
+                                        message: notificationToDelete.message,
+                                    };
+                                    
+                                    // Chỉ thêm relatedId nếu nó tồn tại và không phải undefined
+                                    if (notificationToDelete.relatedId) {
+                                        deletedNotificationData.relatedId = notificationToDelete.relatedId;
+                                    }
+                                    
+                                    await addDoc(collection(db, 'deletedNotifications'), deletedNotificationData);
+                                } catch (saveError) {
+                                    console.warn('Cannot save to deletedNotifications (permission issue):', saveError);
+                                    // Tiếp tục xóa thông báo dù không lưu được vào deletedNotifications
+                                }
+                                
+                                // Xóa thông báo khỏi database
+                                await deleteDoc(doc(db, 'notifications', notificationId));
+                            }
+                            
+                            // Cập nhật UI
                             setNotifications(prev => prev.filter(n => n.id !== notificationId));
                         } catch (error) {
                             console.error('Error deleting notification:', error);
@@ -351,7 +556,13 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
         switch (notification.type) {
             case 'appointment':
             case 'status':
-                navigation.navigate('AppointmentsTab');
+                if (notification.relatedId) {
+                    navigation.navigate('CustomerAppointmentDetail', {
+                        appointmentId: notification.relatedId,
+                    });
+                } else {
+                    navigation.navigate('CustomerAppointmentList');
+                }
                 break;
             case 'news':
                 navigation.navigate('HealthNewsTab');
