@@ -66,6 +66,11 @@ const HomeStackNavigator = () => (
             options={{ headerShown: false }}
         />
         <Stack.Screen
+            name="NotificationScreen"
+            component={NotificationScreen}
+            options={{ title: 'Thông báo' }}
+        />
+        <Stack.Screen
             name="ClinicInfo"
             component={ClinicInfoScreen}
             options={{ title: 'Thông tin phòng khám', headerLeft: undefined }}
@@ -136,7 +141,7 @@ const ProfileStackNavigator = () => (
         <Stack.Screen
             name="NotificationScreen"
             component={NotificationScreen}
-            options={{ title: 'Thông báo', headerLeft: undefined }}
+            options={{ title: 'Thông báo' }}
         />
         <Stack.Screen
             name="CustomerAppointmentList"

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react/no-unstable-nested-components */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { getFirestore, collection, query, where, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp } from '@react-native-firebase/firestore';
 import { getAuth } from '@react-native-firebase/auth';
@@ -24,6 +24,7 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
+    const [backgroundTasksCompleted, setBackgroundTasksCompleted] = useState(false);
     const currentUser = getAuth().currentUser;
 
     const handleMarkAllAsRead = useCallback(async () => {
@@ -57,7 +58,7 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                     onPress: async () => {
                         try {
                             const db = getFirestore(getApp());
-                            if (!currentUser) return;
+                            if (!currentUser) {return;}
 
                             // Cố gắng lưu thông tin tất cả thông báo đã xóa (có thể fail nếu không có quyền)
                             try {
@@ -70,12 +71,12 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                                         title: notification.title,
                                         message: notification.message,
                                     };
-                                    
+
                                     // Chỉ thêm relatedId nếu nó tồn tại và không phải undefined
                                     if (notification.relatedId) {
                                         deletedNotificationData.relatedId = notification.relatedId;
                                     }
-                                    
+
                                     return addDoc(collection(db, 'deletedNotifications'), deletedNotificationData);
                                 });
                                 await Promise.all(deleteRecordPromises);
@@ -111,7 +112,7 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                 fontSize: 20,
             },
             headerRight: () => (
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={styles.headerButtonsContainer}>
                     <TouchableOpacity
                         style={styles.headerButton}
                         onPress={handleMarkAllAsRead}
@@ -134,7 +135,7 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
         try {
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            
+
             const deletedNotificationsRef = collection(db, 'deletedNotifications');
             const oldDeletedQuery = query(
                 deletedNotificationsRef,
@@ -142,9 +143,9 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
             );
 
             const snapshot = await getDocs(oldDeletedQuery);
-            
+
             const deletePromises: Promise<void>[] = [];
-            snapshot.docs.forEach((docItem) => {
+            snapshot.docs.forEach((docItem: { data: () => { (): any; new(): any; deletedAt: { (): any; new(): any; toDate: { (): any; new(): any; }; }; }; id: string; }) => {
                 const deletedAt = docItem.data().deletedAt?.toDate();
                 if (deletedAt && deletedAt < thirtyDaysAgo) {
                     deletePromises.push(deleteDoc(doc(db, 'deletedNotifications', docItem.id)));
@@ -158,7 +159,7 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
         }
     };
 
-    const fetchNotifications = useCallback(async () => {
+    const fetchNotifications = useCallback(async (fastMode = false) => {
         if (!currentUser) {
             setLoading(false);
             setRefreshing(false);
@@ -168,29 +169,29 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
         try {
             const db = getFirestore(getApp());
 
-            // Dọn dẹp các bản ghi deletedNotifications cũ
-            await cleanupOldDeletedNotifications(db, currentUser.uid);
+            // Fast mode: Chỉ lấy thông báo, không tạo mới
+            if (!fastMode && !backgroundTasksCompleted) {
+                // Chạy các tác vụ nặng song song trong background
+                Promise.allSettled([
+                    cleanupOldDeletedNotifications(db, currentUser.uid),
+                    createDailyWaterReminder(db, currentUser.uid),
+                    createUpcomingAppointmentNotifications(db, currentUser.uid),
+                    createCompletedAppointmentNotifications(db, currentUser.uid),
+                ]).then(() => {
+                    setBackgroundTasksCompleted(true);
+                    // Reload thông báo sau khi hoàn thành background tasks
+                    if (!refreshing) {
+                        fetchNotifications(true);
+                    }
+                });
+            }
 
-            // TEMPORARY DISABLE: Tạm thời disable để test
-            console.log('[Debug] Starting notification creation checks...');
-            
-            // Tạo thông báo nhắc uống nước hàng ngày nếu chưa có hôm nay
-            console.log('[Debug] Checking daily water reminder...');
-            await createDailyWaterReminder(db, currentUser.uid);
-
-            // Tạo thông báo cho lịch hẹn sắp tới
-            console.log('[Debug] Checking upcoming appointments...');
-            await createUpcomingAppointmentNotifications(db, currentUser.uid);
-
-            // Tạo thông báo cho lịch hẹn đã hoàn thành
-            console.log('[Debug] Checking completed appointments...');
-            await createCompletedAppointmentNotifications(db, currentUser.uid);
-
-            // Lấy tất cả thông báo của user
+            // Lấy thông báo với sắp xếp tối ưu
             const notificationsRef = collection(db, 'notifications');
             const notificationsQuery = query(
                 notificationsRef,
                 where('userId', '==', currentUser.uid)
+                // Không dùng orderBy trong query để tránh lỗi index
             );
 
             const querySnapshot = await getDocs(notificationsQuery);
@@ -204,21 +205,28 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                 relatedId: docSnap.data().relatedId,
             }));
 
-            // Sort ở client thay vì dùng orderBy trong query
+            // Sort nhanh ở client và giới hạn số lượng
             fetchedNotifications.sort((a, b) => {
                 const timeA = a.createdAt?.toMillis() || 0;
                 const timeB = b.createdAt?.toMillis() || 0;
                 return timeB - timeA;
             });
 
-            setNotifications(fetchedNotifications);
+            // Giới hạn 100 thông báo mới nhất để tăng hiệu suất render
+            const limitedNotifications = fetchedNotifications.slice(0, 100);
+            setNotifications(limitedNotifications);
         } catch (error) {
             console.error('Error fetching notifications: ', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [currentUser]);
+    }, [currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Hàm load nhanh cho lần đầu
+    const quickFetchNotifications = useCallback(async () => {
+        await fetchNotifications(true); // Bỏ qua các tác vụ tạo thông báo
+    }, [fetchNotifications]);
 
     // Kiểm tra xem thông báo đã bị xóa hay chưa
     const isNotificationDeleted = async (db: any, userId: string, type: string, relatedId?: string, title?: string) => {
@@ -231,38 +239,38 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
             );
 
             const snapshot = await getDocs(deletedQuery);
-            
+
             console.log(`[Debug] Checking deleted notifications for type: ${type}, relatedId: ${relatedId}, title: ${title}`);
             console.log(`[Debug] Found ${snapshot.docs.length} deleted notifications of this type`);
-            
+
             const isDeleted = snapshot.docs.some((docItem: any) => {
                 const data = docItem.data();
-                console.log(`[Debug] Checking deleted notification:`, { 
-                    type: data.notificationType, 
-                    relatedId: data.relatedId, 
-                    title: data.title 
+                console.log('[Debug] Checking deleted notification:', {
+                    type: data.notificationType,
+                    relatedId: data.relatedId,
+                    title: data.title,
                 });
-                
+
                 // Kiểm tra theo relatedId nếu có (ưu tiên cao nhất)
                 if (relatedId && data.relatedId) {
                     const match = data.relatedId === relatedId;
                     console.log(`[Debug] RelatedId match: ${match}`);
                     return match;
                 }
-                
+
                 // Kiểm tra theo title nếu có (cho reminder)
                 if (title && data.title) {
                     const match = data.title === title;
                     console.log(`[Debug] Title match: ${match}`);
                     return match;
                 }
-                
+
                 // Fallback: Kiểm tra chung theo type (ít chính xác)
                 const match = data.notificationType === type;
                 console.log(`[Debug] Type match: ${match}`);
                 return match;
             });
-            
+
             console.log(`[Debug] Final result - isDeleted: ${isDeleted}`);
             return isDeleted;
         } catch (error) {
@@ -450,13 +458,16 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
     useFocusEffect(
         useCallback(() => {
             setLoading(true);
-            fetchNotifications();
+            // Lần đầu dùng fast mode để hiển thị nhanh
+            fetchNotifications(true);
         }, [fetchNotifications])
     );
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
-        fetchNotifications();
+        setBackgroundTasksCompleted(false);
+        // Refresh chạy full mode để cập nhật đầy đủ
+        fetchNotifications(false);
     }, [fetchNotifications]);
 
     const getNotificationIcon = (type: Notification['type']) => {
@@ -476,7 +487,7 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
         }
     };
 
-    const handleMarkAsRead = async (notificationId: string) => {
+    const handleMarkAsRead = useCallback(async (notificationId: string) => {
         try {
             const db = getFirestore(getApp());
             const notifRef = doc(db, 'notifications', notificationId);
@@ -491,9 +502,9 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
         } catch (error) {
             console.error('Error marking notification as read:', error);
         }
-    };
+    }, []);
 
-    const handleDeleteNotification = (notificationId: string) => {
+    const handleDeleteNotification = useCallback((notificationId: string) => {
         Alert.alert(
             'Xóa thông báo',
             'Bạn có chắc chắn muốn xóa thông báo này?',
@@ -506,7 +517,7 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                         try {
                             const db = getFirestore(getApp());
                             const notificationToDelete = notifications.find(n => n.id === notificationId);
-                            
+
                             if (notificationToDelete && currentUser) {
                                 // Cố gắng lưu thông tin thông báo đã xóa (có thể fail nếu không có quyền)
                                 try {
@@ -518,22 +529,22 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                                         title: notificationToDelete.title,
                                         message: notificationToDelete.message,
                                     };
-                                    
+
                                     // Chỉ thêm relatedId nếu nó tồn tại và không phải undefined
                                     if (notificationToDelete.relatedId) {
                                         deletedNotificationData.relatedId = notificationToDelete.relatedId;
                                     }
-                                    
+
                                     await addDoc(collection(db, 'deletedNotifications'), deletedNotificationData);
                                 } catch (saveError) {
                                     console.warn('Cannot save to deletedNotifications (permission issue):', saveError);
                                     // Tiếp tục xóa thông báo dù không lưu được vào deletedNotifications
                                 }
-                                
+
                                 // Xóa thông báo khỏi database
                                 await deleteDoc(doc(db, 'notifications', notificationId));
                             }
-                            
+
                             // Cập nhật UI
                             setNotifications(prev => prev.filter(n => n.id !== notificationId));
                         } catch (error) {
@@ -544,9 +555,9 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                 },
             ]
         );
-    };
+    }, [notifications, currentUser]);
 
-    const handleNotificationPress = (notification: Notification) => {
+    const handleNotificationPress = useCallback((notification: Notification) => {
         // Mark as read when clicked
         if (!notification.isRead) {
             handleMarkAsRead(notification.id);
@@ -571,9 +582,9 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                 navigation.navigate('ServicesTab');
                 break;
         }
-    };
+    }, [handleMarkAsRead, navigation]);
 
-    const getTimeAgo = (timestamp: Timestamp) => {
+    const getTimeAgo = useCallback((timestamp: Timestamp) => {
         const now = new Date();
         const notifDate = timestamp.toDate();
         const diffMs = now.getTime() - notifDate.getTime();
@@ -594,15 +605,19 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
             return `${diffDays} ngày trước`;
         }
         return notifDate.toLocaleDateString('vi-VN');
-    };
+    }, []);
 
-    const filteredNotifications = notifications.filter(n =>
-        filter === 'all' ? true : !n.isRead
+    const filteredNotifications = useMemo(() =>
+        notifications.filter(n => filter === 'all' ? true : !n.isRead),
+        [notifications, filter]
     );
 
-    const unreadCount = notifications.filter(n => !n.isRead).length;
+    const unreadCount = useMemo(() =>
+        notifications.filter(n => !n.isRead).length,
+        [notifications]
+    );
 
-    const renderNotificationItem = ({ item }: { item: Notification }) => {
+    const renderNotificationItem = useCallback(({ item }: { item: Notification }) => {
         const iconData = getNotificationIcon(item.type);
 
         return (
@@ -636,7 +651,7 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                 </TouchableOpacity>
             </TouchableOpacity>
         );
-    };
+    }, [handleNotificationPress, handleDeleteNotification, getTimeAgo]);
 
     if (loading) {
         return (
@@ -692,6 +707,17 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                             colors={[COLORS.primary]}
                         />
                     }
+                    // Performance optimizations
+                    removeClippedSubviews={true}
+                    maxToRenderPerBatch={10}
+                    windowSize={10}
+                    initialNumToRender={15}
+                    updateCellsBatchingPeriod={50}
+                    getItemLayout={(data, index) => ({
+                        length: 88, // Độ cao cố định của mỗi item (80px + 8px margin)
+                        offset: 88 * index,
+                        index,
+                    })}
                 />
             )}
         </View>
@@ -713,6 +739,10 @@ const styles = StyleSheet.create({
         marginTop: 16,
         fontSize: 16,
         color: '#6B7280',
+    },
+    headerButtonsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     headerButton: {
         padding: 8,

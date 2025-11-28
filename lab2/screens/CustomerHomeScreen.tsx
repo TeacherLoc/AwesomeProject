@@ -213,7 +213,7 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
                     </View>
                     <TouchableOpacity
                         style={styles.notificationButton}
-                        onPress={() => navigation.navigate('ProfileTab', { screen: 'NotificationScreen' })}
+                        onPress={() => navigation.navigate('NotificationScreen')}
                     >
                         <Icon name="notifications-none" size={28} color="#FFF" />
                         {unreadCount > 0 && (
