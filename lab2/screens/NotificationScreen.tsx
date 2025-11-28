@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react/no-unstable-nested-components */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert, Modal } from 'react-native';
 import { getFirestore, collection, query, where, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp } from '@react-native-firebase/firestore';
 import { getAuth } from '@react-native-firebase/auth';
 import { getApp } from '@react-native-firebase/app';
@@ -25,6 +25,9 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
     const [refreshing, setRefreshing] = useState(false);
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
     const [backgroundTasksCompleted, setBackgroundTasksCompleted] = useState(false);
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [notificationToDelete, setNotificationToDelete] = useState<string | null>(null);
+    const [deleteAllModalVisible, setDeleteAllModalVisible] = useState(false);
     const currentUser = getAuth().currentUser;
 
     const handleMarkAllAsRead = useCallback(async () => {
@@ -46,16 +49,11 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
         }
     }, [notifications]);
 
-    const handleDeleteAllNotifications = useCallback(async () => {
-        Alert.alert(
-            'Xóa tất cả thông báo',
-            'Bạn có chắc chắn muốn xóa tất cả thông báo? Hành động này không thể hoàn tác.',
-            [
-                { text: 'Hủy', style: 'cancel' },
-                {
-                    text: 'Xóa tất cả',
-                    style: 'destructive',
-                    onPress: async () => {
+    const handleDeleteAllNotifications = useCallback(() => {
+        setDeleteAllModalVisible(true);
+    }, []);
+
+    const confirmDeleteAllNotifications = useCallback(async () => {
                         try {
                             const db = getFirestore(getApp());
                             if (!currentUser) {return;}
@@ -97,11 +95,9 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                         } catch (error) {
                             console.error('Error deleting all notifications:', error);
                             Alert.alert('Lỗi', 'Không thể xóa thông báo');
+                        } finally {
+                            setDeleteAllModalVisible(false);
                         }
-                    },
-                },
-            ]
-        );
     }, [notifications, currentUser]);
 
     React.useLayoutEffect(() => {
@@ -179,9 +175,11 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                     createCompletedAppointmentNotifications(db, currentUser.uid),
                 ]).then(() => {
                     setBackgroundTasksCompleted(true);
-                    // Reload thông báo sau khi hoàn thành background tasks
+                    // Reload thông báo ngay sau khi hoàn thành background tasks
                     if (!refreshing) {
-                        fetchNotifications(true);
+                        setTimeout(() => {
+                            fetchNotifications(true);
+                        }, 500); // Delay ngắn để đảm bảo Firestore đã sync
                     }
                 });
             }
@@ -505,57 +503,56 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
     }, []);
 
     const handleDeleteNotification = useCallback((notificationId: string) => {
-        Alert.alert(
-            'Xóa thông báo',
-            'Bạn có chắc chắn muốn xóa thông báo này?',
-            [
-                { text: 'Hủy', style: 'cancel' },
-                {
-                    text: 'Xóa',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            const db = getFirestore(getApp());
-                            const notificationToDelete = notifications.find(n => n.id === notificationId);
+        setNotificationToDelete(notificationId);
+        setDeleteModalVisible(true);
+    }, []);
 
-                            if (notificationToDelete && currentUser) {
-                                // Cố gắng lưu thông tin thông báo đã xóa (có thể fail nếu không có quyền)
-                                try {
-                                    const deletedNotificationData: any = {
-                                        userId: currentUser.uid,
-                                        originalNotificationId: notificationId,
-                                        notificationType: notificationToDelete.type,
-                                        deletedAt: Timestamp.now(),
-                                        title: notificationToDelete.title,
-                                        message: notificationToDelete.message,
-                                    };
+    const confirmDeleteNotification = useCallback(async () => {
+        if (!notificationToDelete) {
+            return;
+        }
 
-                                    // Chỉ thêm relatedId nếu nó tồn tại và không phải undefined
-                                    if (notificationToDelete.relatedId) {
-                                        deletedNotificationData.relatedId = notificationToDelete.relatedId;
-                                    }
+        try {
+            const db = getFirestore(getApp());
+            const notificationToDeleteObj = notifications.find(n => n.id === notificationToDelete);
 
-                                    await addDoc(collection(db, 'deletedNotifications'), deletedNotificationData);
-                                } catch (saveError) {
-                                    console.warn('Cannot save to deletedNotifications (permission issue):', saveError);
-                                    // Tiếp tục xóa thông báo dù không lưu được vào deletedNotifications
-                                }
+            if (notificationToDeleteObj && currentUser) {
+                // Cố gắng lưu thông tin thông báo đã xóa (có thể fail nếu không có quyền)
+                try {
+                    const deletedNotificationData: any = {
+                        userId: currentUser.uid,
+                        originalNotificationId: notificationToDelete,
+                        notificationType: notificationToDeleteObj.type,
+                        deletedAt: Timestamp.now(),
+                        title: notificationToDeleteObj.title,
+                        message: notificationToDeleteObj.message,
+                    };
 
-                                // Xóa thông báo khỏi database
-                                await deleteDoc(doc(db, 'notifications', notificationId));
-                            }
+                    // Chỉ thêm relatedId nếu nó tồn tại và không phải undefined
+                    if (notificationToDeleteObj.relatedId) {
+                        deletedNotificationData.relatedId = notificationToDeleteObj.relatedId;
+                    }
 
-                            // Cập nhật UI
-                            setNotifications(prev => prev.filter(n => n.id !== notificationId));
-                        } catch (error) {
-                            console.error('Error deleting notification:', error);
-                            Alert.alert('Lỗi', 'Không thể xóa thông báo');
-                        }
-                    },
-                },
-            ]
-        );
-    }, [notifications, currentUser]);
+                    await addDoc(collection(db, 'deletedNotifications'), deletedNotificationData);
+                } catch (saveError) {
+                    console.warn('Cannot save to deletedNotifications (permission issue):', saveError);
+                    // Tiếp tục xóa thông báo dù không lưu được vào deletedNotifications
+                }
+
+                // Xóa thông báo khỏi database
+                await deleteDoc(doc(db, 'notifications', notificationToDelete));
+            }
+
+            // Cập nhật UI
+            setNotifications(prev => prev.filter(n => n.id !== notificationToDelete));
+        } catch (error) {
+            console.error('Error deleting notification:', error);
+            Alert.alert('Lỗi', 'Không thể xóa thông báo');
+        } finally {
+            setDeleteModalVisible(false);
+            setNotificationToDelete(null);
+        }
+    }, [notifications, currentUser, notificationToDelete]);
 
     const handleNotificationPress = useCallback((notification: Notification) => {
         // Mark as read when clicked
@@ -579,7 +576,8 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                 navigation.navigate('HealthNewsTab');
                 break;
             case 'promotion':
-                navigation.navigate('ServicesTab');
+                // Navigate to Service tab (need to check if exists)
+                navigation.navigate('HomeTab');
                 break;
         }
     }, [handleMarkAsRead, navigation]);
@@ -720,6 +718,78 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                     })}
                 />
             )}
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                visible={deleteModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setDeleteModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.deleteModal}>
+                        <View style={styles.modalIcon}>
+                            <Icon name="delete" size={48} color="#EF4444" />
+                        </View>
+                        <Text style={styles.modalTitle}>Xóa thông báo</Text>
+                        <Text style={styles.modalMessage}>
+                            Bạn có chắc chắn muốn xóa thông báo này không?
+                        </Text>
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.cancelButton]}
+                                onPress={() => {
+                                    setDeleteModalVisible(false);
+                                    setNotificationToDelete(null);
+                                }}
+                            >
+                                <Text style={styles.cancelButtonText}>Hủy</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.deleteModalButton]}
+                                onPress={confirmDeleteNotification}
+                            >
+                                <Text style={styles.deleteButtonText}>Xóa</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Delete All Modal */}
+            <Modal
+                visible={deleteAllModalVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setDeleteAllModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.deleteModal}>
+                        <View style={styles.modalIcon}>
+                            <Icon name="delete-sweep" size={48} color="#ff4757" />
+                        </View>
+                        <Text style={styles.modalTitle}>Xóa tất cả thông báo</Text>
+                        <Text style={styles.modalMessage}>
+                            Bạn có chắc chắn muốn xóa tất cả thông báo?{'\n'}
+                            Hành động này không thể hoàn tác.
+                        </Text>
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.cancelButton]}
+                                onPress={() => setDeleteAllModalVisible(false)}
+                            >
+                                <Text style={styles.cancelButtonText}>Hủy</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.deleteModalButton]}
+                                onPress={confirmDeleteAllNotifications}
+                            >
+                                <Text style={styles.deleteButtonText}>Xóa tất cả</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -861,6 +931,75 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: '#6B7280',
         textAlign: 'center',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    deleteModal: {
+        backgroundColor: 'white',
+        borderRadius: 15,
+        padding: 20,
+        width: '90%',
+        maxWidth: 300,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    modalIcon: {
+        marginBottom: 15,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 10,
+        textAlign: 'center',
+    },
+    modalMessage: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 20,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+    },
+    modalButton: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    cancelButton: {
+        backgroundColor: '#f0f0f0',
+        marginRight: 10,
+    },
+    deleteModalButton: {
+        backgroundColor: '#ff4757',
+        marginLeft: 10,
+    },
+    cancelButtonText: {
+        color: '#666',
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    deleteButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '500',
     },
 });
 

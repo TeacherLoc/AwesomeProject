@@ -71,6 +71,16 @@ const HomeStackNavigator = () => (
             options={{ title: 'Thông báo' }}
         />
         <Stack.Screen
+            name="CustomerAppointmentDetail"
+            component={CustomerAppointmentDetailScreen}
+            options={{ title: 'Chi tiết lịch hẹn' }}
+        />
+        <Stack.Screen
+            name="CustomerAppointmentList"
+            component={CustomerAppointmentListScreen}
+            options={{ title: 'Lịch hẹn của tôi' }}
+        />
+        <Stack.Screen
             name="ClinicInfo"
             component={ClinicInfoScreen}
             options={{ title: 'Thông tin phòng khám', headerLeft: undefined }}
