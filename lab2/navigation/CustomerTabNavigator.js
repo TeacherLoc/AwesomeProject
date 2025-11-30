@@ -4,7 +4,9 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Image, StyleSheet, View, TouchableOpacity } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Or your preferred icon set
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../theme/colors';
 
 // Import Customer Screens
@@ -207,31 +209,65 @@ const CustomerTabNavigator = () => {
                     }
                     return <Icon name={iconName} size={size} color={color} />;
                 },
-                tabBarActiveTintColor: COLORS.primary,
-                tabBarInactiveTintColor: COLORS.textLight,
+                tabBarActiveTintColor: '#8B5A83',
+                tabBarInactiveTintColor: 'rgba(139, 90, 131, 0.6)',
                 tabBarStyle: {
-                    backgroundColor: COLORS.white,
-                    borderTopColor: COLORS.border,
-                    borderTopWidth: 1,
-                    paddingTop: 8,
-                    paddingBottom: 8,
-                    height: 65,
-                    elevation: 8,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: -2 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 3,
-                    borderTopLeftRadius: 20,
-                    borderTopRightRadius: 20,
+                    backgroundColor: 'transparent',
+                    borderTopWidth: 0,
+                    paddingTop: 5,
+                    paddingBottom: 5,
+                    paddingHorizontal: 0,
+                    height: 70,
+                    elevation: 0,
+                    shadowOpacity: 0,
                 },
+                tabBarBackground: () => (
+                    <View style={styles.tabBarContainer}>
+                        {/* Base glass morphism background */}
+                        <LinearGradient
+                            colors={['rgba(255, 182, 193, 0.85)', 'rgba(255, 192, 203, 0.8)', 'rgba(255, 218, 225, 0.85)']}
+                            start={{x: 0, y: 0}}
+                            end={{x: 1, y: 0}}
+                            style={styles.tabBarGlassBg}
+                        />
+                        
+                        {/* Frosted glass overlay */}
+                        <LinearGradient
+                            colors={['rgba(255, 255, 255, 0.3)', 'rgba(255, 255, 255, 0.15)', 'rgba(255, 255, 255, 0.25)']}
+                            start={{x: 0, y: 0}}
+                            end={{x: 0, y: 1}}
+                            style={styles.tabBarFrostedOverlay}
+                        />
+                        
+                        {/* Subtle shimmer */}
+                        <LinearGradient
+                            colors={['transparent', 'rgba(255, 255, 255, 0.2)', 'transparent']}
+                            start={{x: 0, y: 0}}
+                            end={{x: 1, y: 0}}
+                            style={styles.tabBarSubtleShimmer}
+                        />
+                        
+                        {/* Top highlight border */}
+                        <View style={styles.tabBarTopHighlight} />
+                    </View>
+                ),
                 tabBarLabelStyle: {
-                    fontSize: 11,
-                    fontWeight: '600',
-                    marginTop: 4,
-                    marginBottom: 4,
+                    fontSize: 10,
+                    fontWeight: '700',
+                    marginTop: 2,
+                    marginBottom: 6,
+                    textShadowColor: 'rgba(255, 255, 255, 0.8)',
+                    textShadowOffset: { width: 0, height: 1 },
+                    textShadowRadius: 1,
+                    letterSpacing: 0.3,
                 },
                 tabBarIconStyle: {
-                    marginTop: 4,
+                    marginTop: 8,
+                    marginBottom: 2,
+                    shadowColor: 'rgba(255, 255, 255, 0.6)',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.6,
+                    shadowRadius: 1,
                 },
                 headerShown: false, // Stack Navigators sẽ quản lý header
             })}
@@ -245,9 +281,15 @@ const CustomerTabNavigator = () => {
                     title: 'Đặt lịch',
                     tabBarIcon: ({ focused }) => (
                         <View style={styles.centerButtonContainer}>
-                            <View style={styles.centerButton}>
-                                <Icon name="briefcase" size={26} color={COLORS.white} />
-                            </View>
+                            <LinearGradient
+                                colors={['#E91E63', '#F48FB1', '#F8BBD9']}
+                                start={{x: 0, y: 0}}
+                                end={{x: 1, y: 1}}
+                                style={styles.centerButton}
+                            >
+                                <MaterialIcons name="local-florist" size={24} color="#ffffff" />
+                            </LinearGradient>
+                            <View style={styles.lotusGlow} />
                         </View>
                     ),
                 }}
@@ -269,25 +311,86 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     centerButtonContainer: {
-        top: -20,
+        top: -22,
         justifyContent: 'center',
         alignItems: 'center',
+        position: 'relative',
     },
     centerButton: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: COLORS.primary,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
         justifyContent: 'center',
         alignItems: 'center',
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 3,
-        borderWidth: 4,
-        borderColor: COLORS.white,
+        elevation: 15,
+        shadowColor: 'rgba(233, 30, 99, 0.5)',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.7,
+        shadowRadius: 12,
+        borderWidth: 2.5,
+        borderColor: 'rgba(255, 255, 255, 0.8)',
     },
+    lotusGlow: {
+        position: 'absolute',
+        width: 70,
+        height: 70,
+        borderRadius: 35,
+        backgroundColor: 'rgba(244, 143, 177, 0.3)',
+        top: -7,
+        zIndex: -1,
+        shadowColor: 'rgba(233, 30, 99, 0.4)',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 1,
+        shadowRadius: 16,
+        elevation: 8,
+    },
+    // Tab Bar Container Styles
+    tabBarContainer: {
+        flex: 1,
+        position: 'relative',
+        overflow: 'hidden',
+    },
+    tabBarGlassBg: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1,
+        shadowColor: 'rgba(255, 182, 193, 0.3)',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.6,
+        shadowRadius: 10,
+        elevation: 8,
+    },
+    tabBarFrostedOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 2,
+        backdropFilter: 'blur(15px)',
+    },
+    tabBarSubtleShimmer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '100%',
+        zIndex: 3,
+        opacity: 0.7,
+    },
+    tabBarTopHighlight: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.6)',
+        zIndex: 4,
+    },
+    // Removed floating dots for cleaner rectangle design
 });
 
 export default CustomerTabNavigator;

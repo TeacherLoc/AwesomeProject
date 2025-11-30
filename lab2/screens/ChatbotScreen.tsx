@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GiftedChat, IMessage, Reply, Bubble, Send, InputToolbar } from 'react-native-gifted-chat';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image, StatusBar, Text } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
@@ -140,16 +141,31 @@ const formatAppointmentLine = (serviceName: string, date: Date, status?: string)
   return `• ${serviceName} vào ${dateText} lúc ${timeText}${statusText ? ` (${statusText})` : ''}`;
 };
 
+// Custom Header Component với logo và gradient
+const CustomHeader = ({ title }: { title: string }) => {
+    return (
+        <LinearGradient
+            colors={['rgba(120, 220, 215, 0.98)', 'rgba(254, 214, 227, 0.9)', 'rgba(255, 236, 210, 0.95)']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 0}}
+            style={styles.customHeader}
+        >
+            <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+            <View style={styles.headerContent}>
+                <View style={styles.headerCenter}>
+                    <Image source={require('../assets/logo3.png')} style={styles.headerLogo} resizeMode="contain" />
+                    <Text style={styles.headerTitle}>{title}</Text>
+                </View>
+            </View>
+        </LinearGradient>
+    );
+};
+
 const ChatbotScreen = ({ navigation }: { navigation: any }) => {
-  // Căn giữa tiêu đề ở header
+  // Ẩn header cũ để dùng custom header
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: 'Hỗ trợ',
-      headerTitleAlign: 'center',
-      headerTitleStyle: {
-        fontWeight: '600',
-        fontSize: 18,
-      },
+      headerShown: false,
     });
   }, [navigation]);
 
@@ -680,7 +696,14 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
   );
 
   return (
-    <GiftedChat
+    <LinearGradient 
+      colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+      start={{x: 0, y: 0}} 
+      end={{x: 1, y: 1}}
+      style={styles.container}
+    >
+      <CustomHeader title="Hỗ trợ" />
+      <GiftedChat
       messages={messages}
       onSend={onSend}
       onQuickReply={handleQuickReply}
@@ -704,21 +727,57 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
       maxComposerHeight={100}
       minComposerHeight={40}
     />
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  customHeader: {
+    paddingTop: 35,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+    shadowColor: 'rgba(0, 0, 0, 0.1)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  headerContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerLogo: {
+    width: 28,
+    height: 28,
+    marginRight: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2D3748',
+    textShadowColor: 'rgba(255, 255, 255, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
   listView: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: 'transparent',
   },
   textInput: {
-    color: '#333',
-    backgroundColor: '#FFF',
     borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
     paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: 8,
-    marginRight: 8,
+    marginHorizontal: 8,
+    color: '#333',
     fontSize: 16,
   },
   sendContainer: {
@@ -741,12 +800,16 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   inputToolbar: {
-    backgroundColor: '#FFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 25,
+    marginHorizontal: 8,
+    marginBottom: 8,
     paddingVertical: 4,
-    paddingHorizontal: 8,
-    marginBottom: 20,
+  },
+  inputPrimaryStyle: {
+    alignItems: 'center',
   },
   bubbleLeft: {
     backgroundColor: '#FFF',

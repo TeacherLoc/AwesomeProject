@@ -9,7 +9,9 @@ import {
     ActivityIndicator,
     Alert,
     Image,
-    RefreshControl} from 'react-native';
+    RefreshControl,
+    StatusBar} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import axios from 'axios';
 import { parseString } from 'react-native-xml2js';
 import { useFocusEffect } from '@react-navigation/native';
@@ -33,6 +35,26 @@ interface Article {
     enclosure?: [{ $: { url: string, type?: string } }]; // Cũng có thể chứa ảnh
 }
 
+// Custom Header Component với logo và gradient
+const CustomHeader = ({ title }: { title: string }) => {
+    return (
+        <LinearGradient
+            colors={['rgba(120, 220, 215, 0.98)', 'rgba(254, 214, 227, 0.9)', 'rgba(255, 236, 210, 0.95)']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 0}}
+            style={styles.customHeader}
+        >
+            <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+            <View style={styles.headerContent}>
+                <View style={styles.headerCenter}>
+                    <Image source={require('../assets/logo3.png')} style={styles.headerLogo} resizeMode="contain" />
+                    <Text style={styles.headerTitle}>{title}</Text>
+                </View>
+            </View>
+        </LinearGradient>
+    );
+};
+
 const HealthNewsScreen = ({ navigation }: { navigation: any }) => {
     const [articles, setArticles] = useState<Article[]>([]);
     const [loading, setLoading] = useState(true);
@@ -41,11 +63,7 @@ const HealthNewsScreen = ({ navigation }: { navigation: any }) => {
 
     useEffect(() => {
         navigation.setOptions({
-            headerTitle: 'Tin tức',
-            headerTitleAlign: 'center',
-            headerTitleStyle: {
-                fontSize: 20,
-            },
+            headerShown: false, // Ẩn header cũ để dùng custom header
         });
     }, [navigation]);
 
@@ -185,7 +203,14 @@ const HealthNewsScreen = ({ navigation }: { navigation: any }) => {
     }
 
     return (
-        <View style={styles.container}>
+        <LinearGradient 
+            colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+            start={{x: 0, y: 0}} 
+            end={{x: 1, y: 1}}
+            style={styles.container}
+        >
+            <CustomHeader title="Tin tức" />
+            <View style={styles.contentContainer}>
             <FlatList
                 data={articles}
                 renderItem={renderItem}
@@ -196,16 +221,53 @@ const HealthNewsScreen = ({ navigation }: { navigation: any }) => {
                 }
             />
         </View>
+        </LinearGradient>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.backgroundMain || '#f4f6f8',
+    },
+    customHeader: {
+        paddingTop: 35,
+        paddingBottom: 12,
+        paddingHorizontal: 16,
+        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    headerContent: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headerCenter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headerLogo: {
+        width: 28,
+        height: 28,
+        marginRight: 8,
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#2D3748',
+        textShadowColor: 'rgba(255, 255, 255, 0.8)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
+    },
+    contentContainer: {
+        flex: 1,
+        backgroundColor: 'transparent',
     },
     listContentContainer: {
         paddingVertical: 8,
+        paddingBottom: 75, // Để tránh bị che bởi tab bar
     },
     centered: {
         flex: 1,

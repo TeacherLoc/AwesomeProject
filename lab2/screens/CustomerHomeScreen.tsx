@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, Linking, Alert } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { getAuth } from '@react-native-firebase/auth';
 import { getFirestore, doc, getDoc, collection, query, where, getDocs } from '@react-native-firebase/firestore';
 import { COLORS } from '../theme/colors';
@@ -192,7 +193,16 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
     ];
 
     return (
-        <View style={styles.container}>
+        <LinearGradient 
+            colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+            start={{x: 0, y: 0}} 
+            end={{x: 1, y: 1}}
+            style={styles.container}
+        >
+            {/* Decorative Elements */}
+            <View style={styles.decorativeCircle1} />
+            <View style={styles.decorativeCircle2} />
+            <View style={styles.decorativeCircle3} />
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerTop}>
@@ -215,7 +225,7 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
                         style={styles.notificationButton}
                         onPress={() => navigation.navigate('NotificationScreen')}
                     >
-                        <Icon name="notifications-none" size={28} color="#FFF" />
+                        <Icon name="notifications-none" size={28} color="#4a5568" />
                         {unreadCount > 0 && (
                             <View style={styles.notificationBadge}>
                                 <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
@@ -245,7 +255,7 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
                         }}
                     >
                         <Text style={styles.historyButtonText}>Gọi ngay</Text>
-                        <Icon name="phone-in-talk" size={18} color="#FFF" />
+                        <Icon name="phone-in-talk" size={18} color="#2d3748" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -324,20 +334,53 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
 
                 <View style={styles.bottomSpacing} />
             </ScrollView>
-        </View>
+        </LinearGradient>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F5F7FA',
+        position: 'relative',
+    },
+    decorativeCircle1: {
+        position: 'absolute',
+        top: 100,
+        right: -50,
+        width: 150,
+        height: 150,
+        borderRadius: 75,
+        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        opacity: 0.7,
+    },
+    decorativeCircle2: {
+        position: 'absolute',
+        top: 300,
+        left: -80,
+        width: 200,
+        height: 200,
+        borderRadius: 100,
+        backgroundColor: 'rgba(255, 255, 255, 0.25)',
+        opacity: 0.6,
+    },
+    decorativeCircle3: {
+        position: 'absolute',
+        bottom: 200,
+        right: -60,
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: 'rgba(255, 255, 255, 0.35)',
+        opacity: 0.8,
     },
     header: {
-        backgroundColor: '#6366F1',
+        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        backdropFilter: 'blur(15px)',
         paddingTop: 50,
         paddingHorizontal: 20,
         paddingBottom: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255, 255, 255, 0.6)',
     },
     headerTop: {
         flexDirection: 'row',
@@ -369,13 +412,14 @@ const styles = StyleSheet.create({
     },
     greetingText: {
         fontSize: 14,
-        color: '#FFF',
-        opacity: 0.9,
+        color: '#4a5568',
+        opacity: 0.8,
+        fontWeight: '500',
     },
     userName: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#FFF',
+        color: '#2d3748',
     },
     notificationButton: {
         position: 'relative',
@@ -401,14 +445,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: 4,
     },
     pointsCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        backgroundColor: 'rgba(255, 255, 255, 0.6)',
         borderRadius: 16,
         padding: 16,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
+        borderColor: 'rgba(255, 255, 255, 0.8)',
+        elevation: 3,
+        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
     pointsLeft: {
         flexDirection: 'row',
@@ -419,52 +468,63 @@ const styles = StyleSheet.create({
     },
     pointsLabel: {
         fontSize: 13,
-        color: '#FFF',
-        opacity: 0.95,
+        color: '#4a5568',
+        opacity: 0.9,
+        fontWeight: '500',
     },
     pointsValue: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#FFF',
+        color: '#2d3748',
     },
     appointmentHint: {
         fontSize: 11,
-        color: 'rgba(255, 255, 255, 0.9)',
+        color: '#718096',
         marginTop: 4,
         fontStyle: 'italic',
+        fontWeight: '400',
     },
     historyButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
+        borderColor: 'rgba(255, 255, 255, 0.9)',
+        elevation: 2,
+        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
     },
     historyButtonText: {
-        color: '#FFF',
+        color: '#2d3748',
         fontSize: 14,
         fontWeight: '600',
         marginRight: 4,
     },
     content: {
         flex: 1,
+        paddingBottom: 20, // Giảm padding để loại bỏ khoảng trắng thừa
     },
     quickActionsContainer: {
-        backgroundColor: '#FFF',
-        borderRadius: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: 25,
         marginHorizontal: 16,
         marginTop: -10,
-        padding: 20,
+        padding: 24,
         flexDirection: 'row',
         justifyContent: 'space-around',
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        elevation: 8,
+        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.8)',
     },
     quickActionItem: {
         alignItems: 'center',
@@ -499,8 +559,12 @@ const styles = StyleSheet.create({
     },
     quickActionText: {
         fontSize: 12,
-        color: COLORS.textDark,
+        color: '#4a5568',
         textAlign: 'center',
+        fontWeight: '600',
+        textShadowColor: 'rgba(255, 255, 255, 0.8)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 1,
     },
     section: {
         marginTop: 24,
@@ -510,18 +574,24 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 40,
+        marginBottom: 16,
     },
     sectionTitle: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: 'bold',
-        color: COLORS.textDark,
+        color: '#2d3748',
         marginBottom: 20,
+        textShadowColor: 'rgba(255, 255, 255, 0.5)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
     },
     seeAllText: {
         fontSize: 14,
-        color: COLORS.primary,
+        color: '#667eea',
         fontWeight: '600',
+        textShadowColor: 'rgba(255, 255, 255, 0.8)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 1,
     },
     featuredGrid: {
         flexDirection: 'row',
@@ -530,12 +600,19 @@ const styles = StyleSheet.create({
     },
     featuredCard: {
         width: (width - 44) / 2,
-        height: 120,
-        borderRadius: 16,
-        padding: 16,
+        height: 130,
+        borderRadius: 20,
+        padding: 18,
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.6)',
+        elevation: 6,
+        shadowColor: 'rgba(0, 0, 0, 0.08)',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
     },
     featuredBadge: {
         position: 'absolute',
@@ -570,10 +647,18 @@ const styles = StyleSheet.create({
         opacity: 0.8,
     },
     newsCard: {
-        borderRadius: 16,
+        borderRadius: 20,
         overflow: 'hidden',
-        height: 180,
+        height: 190,
         marginBottom: 24,
+        elevation: 8,
+        shadowColor: 'rgba(0, 0, 0, 0.15)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.4)',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
     },
     newsImage: {
         width: '100%',
@@ -584,8 +669,8 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        padding: 16,
+        backgroundColor: 'rgba(45, 55, 72, 0.85)',
+        padding: 20,
     },
     newsTitle: {
         fontSize: 16,
@@ -599,7 +684,7 @@ const styles = StyleSheet.create({
         opacity: 0.9,
     },
     bottomSpacing: {
-        height: 20,
+        height: 10,
     },
 });
 

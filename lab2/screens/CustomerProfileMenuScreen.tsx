@@ -1,6 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Modal, StatusBar } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { getAuth } from '@react-native-firebase/auth';
 import { getFirestore, doc, getDoc, collection, query, where, getDocs } from '@react-native-firebase/firestore';
 import { COLORS } from '../theme/colors';
@@ -10,14 +11,30 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import { updateDoc } from '@react-native-firebase/firestore';
 import { useFocusEffect } from '@react-navigation/native';
 
+// Custom Header Component với logo và gradient
+const CustomHeader = ({ title }: { title: string }) => {
+    return (
+        <LinearGradient
+            colors={['rgba(120, 220, 215, 0.98)', 'rgba(254, 214, 227, 0.9)', 'rgba(255, 236, 210, 0.95)']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 0}}
+            style={styles.customHeader}
+        >
+            <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+            <View style={styles.headerContent}>
+                <View style={styles.headerCenter}>
+                    <Image source={require('../assets/logo3.png')} style={styles.headerLogo} resizeMode="contain" />
+                    <Text style={styles.headerTitle}>{title}</Text>
+                </View>
+            </View>
+        </LinearGradient>
+    );
+};
+
 const CustomerProfileMenuScreen = ({ navigation }: { navigation: any }) => {
     React.useLayoutEffect(() => {
         navigation.setOptions({
-            headerTitle: 'Cá nhân',
-            headerTitleAlign: 'center',
-            headerTitleStyle: {
-                fontSize: 20,
-            },
+            headerShown: false, // Ẩn header cũ để dùng custom header
         });
     }, [navigation]);
 
@@ -141,7 +158,14 @@ const CustomerProfileMenuScreen = ({ navigation }: { navigation: any }) => {
     }
 
     return (
-        <ScrollView style={styles.container}>
+        <LinearGradient 
+            colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+            start={{x: 0, y: 0}} 
+            end={{x: 1, y: 1}}
+            style={styles.container}
+        >
+            <CustomHeader title="Cá nhân" />
+            <ScrollView style={styles.scrollContent}>
             {/* Header Card với Avatar và Thông tin */}
             <View style={styles.headerCard}>
                 <TouchableOpacity style={styles.avatarContainer} onPress={handleChangeAvatar}>
@@ -312,13 +336,50 @@ const CustomerProfileMenuScreen = ({ navigation }: { navigation: any }) => {
                 </View>
             </Modal>
         </ScrollView>
+        </LinearGradient>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F5F7FA',
+    },
+    customHeader: {
+        paddingTop: 35,
+        paddingBottom: 12,
+        paddingHorizontal: 16,
+        shadowColor: 'rgba(0, 0, 0, 0.1)',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    headerContent: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headerCenter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headerLogo: {
+        width: 28,
+        height: 28,
+        marginRight: 8,
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#2D3748',
+        textShadowColor: 'rgba(255, 255, 255, 0.8)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
+    },
+    scrollContent: {
+        flex: 1,
+        backgroundColor: 'transparent',
+        paddingBottom: 70, // Để tránh bị che bởi tab bar
     },
     centered: {
         flex: 1,
