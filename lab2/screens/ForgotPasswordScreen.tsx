@@ -1,6 +1,7 @@
 // filepath: screens/Auth/ForgotPasswordScreen.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import firestore from '@react-native-firebase/firestore';
 import { COLORS } from '../theme/colors';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -8,6 +9,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 const ForgotPasswordScreen = ({ navigation }: { navigation: any }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({
@@ -44,11 +46,7 @@ const ForgotPasswordScreen = ({ navigation }: { navigation: any }) => {
         // Không cần userId hay userName ở bước này từ client
       });
 
-      Alert.alert(
-        'Yêu cầu đã được gửi',
-        'Yêu cầu đặt lại mật khẩu của bạn đã được gửi đến quản trị viên. Bạn sẽ nhận được email hướng dẫn nếu yêu cầu được chấp thuận.'
-      );
-      navigation.goBack(); // Hoặc điều hướng đến màn hình chờ nếu bạn muốn làm phức tạp hơn
+      setShowSuccessModal(true);
 
     } catch (error: any) {
       console.error('Forgot Password Request Error: ', error);
@@ -65,11 +63,52 @@ const ForgotPasswordScreen = ({ navigation }: { navigation: any }) => {
   };
 
   return (
-    <KeyboardAvoidingView
+    <LinearGradient
+      colors={['#a8edea', '#fed6e3', '#ffecd2']}
+      start={{x: 0, y: 0}}
+      end={{x: 1, y: 1}}
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView
+      {/* Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSuccessModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <LinearGradient
+            colors={['rgba(168, 237, 234, 0.95)', 'rgba(254, 214, 227, 0.95)', 'rgba(255, 236, 210, 0.95)']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.modalContainer}
+          >
+            <View style={styles.modalIconContainer}>
+              <Icon name="check-circle" size={80} color="#27ae60" />
+            </View>
+            <Text style={styles.modalTitle}>Yêu cầu đã được gửi</Text>
+            <Text style={styles.modalMessage}>
+              Yêu cầu đặt lại mật khẩu của bạn đã được gửi đến quản trị viên. Bạn sẽ nhận được email hướng dẫn nếu yêu cầu được chấp thuận.
+            </Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setShowSuccessModal(false);
+                navigation.goBack();
+              }}
+            >
+              <Icon name="check" size={20} color="#FFFFFF" />
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
+      </Modal>
+
+      <KeyboardAvoidingView
+        style={styles.keyboardContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
@@ -132,19 +171,78 @@ const ForgotPasswordScreen = ({ navigation }: { navigation: any }) => {
           <Text style={styles.link}>Quay lại Đăng nhập</Text>
         </TouchableOpacity>
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+  },
+  keyboardContainer: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     padding: 20,
     justifyContent: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    maxWidth: 350,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalIconContainer: {
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#2D3748',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#4A5568',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 25,
+  },
+  modalButton: {
+    flexDirection: 'row',
+    backgroundColor: '#27ae60',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#27ae60',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+    gap: 8,
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   iconContainer: {
     alignItems: 'center',
@@ -154,25 +252,29 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   infoCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
-    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   title: {
     fontSize: 24,
@@ -188,15 +290,17 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   inputCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
-    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -229,15 +333,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: COLORS.primary,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
     gap: 8,
   },
   buttonText: {
