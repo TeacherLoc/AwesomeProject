@@ -2,6 +2,7 @@
 /* eslint-disable quotes */
 import React, { useState, useEffect, useCallback, JSX } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Image, TextInput, Modal } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { getFirestore, doc, getDoc, updateDoc, Timestamp, collection, addDoc, query, where, getDocs, serverTimestamp } from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { launchImageLibrary, ImagePickerResponse, Asset } from 'react-native-image-picker';
@@ -298,11 +299,29 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
     };
 
     if (loading) {
-        return <View style={styles.loadingContainer}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
+        return (
+            <LinearGradient 
+                colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+                start={{x: 0, y: 0}} 
+                end={{x: 1, y: 1}}
+                style={styles.loadingContainer}
+            >
+                <ActivityIndicator size="large" color={COLORS.primary} />
+            </LinearGradient>
+        );
     }
 
     if (!appointment) {
-        return <View style={styles.loadingContainer}><Text style={styles.errorText}>Không có dữ liệu lịch hẹn.</Text></View>;
+        return (
+            <LinearGradient 
+                colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+                start={{x: 0, y: 0}} 
+                end={{x: 1, y: 1}}
+                style={styles.loadingContainer}
+            >
+                <Text style={styles.errorText}>Không có dữ liệu lịch hẹn.</Text>
+            </LinearGradient>
+        );
     }
 
     const statusInfo = getStatusStyle(appointment?.status);
@@ -326,7 +345,13 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
     };
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <LinearGradient 
+            colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+            start={{x: 0, y: 0}} 
+            end={{x: 1, y: 1}}
+            style={styles.container}
+        >
+            <ScrollView contentContainerStyle={styles.scrollContent}>
             {/* Cancel Confirmation Modal */}
             <Modal
                 visible={showCancelModal}
@@ -517,7 +542,8 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
                     )}
                 </TouchableOpacity>
             )}
-        </ScrollView>
+            </ScrollView>
+        </LinearGradient>
     );
 };
 
@@ -536,7 +562,6 @@ const InfoRow = ({ icon, label, value, valueComponent }: { icon: string, label: 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
     },
     scrollContent: {
         paddingBottom: 20,

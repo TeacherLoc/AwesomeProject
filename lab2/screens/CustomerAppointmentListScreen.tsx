@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { getFirestore, collection, query, where, orderBy, getDocs, FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import { getApp } from '@react-native-firebase/app';
 import { getAuth } from '@react-native-firebase/auth';
@@ -202,23 +203,38 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
 
     if (loading && !refreshing) {
         return (
-            <View style={styles.centered}>
+            <LinearGradient 
+                colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+                start={{x: 0, y: 0}} 
+                end={{x: 1, y: 1}}
+                style={styles.centered}
+            >
                 <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
+            </LinearGradient>
         );
     }
 
     if (!currentUser) {
         return (
-            <View style={styles.centered}>
+            <LinearGradient 
+                colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+                start={{x: 0, y: 0}} 
+                end={{x: 1, y: 1}}
+                style={styles.centered}
+            >
                 <Text style={styles.emptyText}>Vui lòng đăng nhập để xem lịch hẹn.</Text>
-            </View>
+            </LinearGradient>
         );
     }
 
     if (appointments.length === 0) {
         return (
-            <View style={styles.centered}>
+            <LinearGradient 
+                colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+                start={{x: 0, y: 0}} 
+                end={{x: 1, y: 1}}
+                style={styles.centered}
+            >
                 <View style={styles.emptyIconContainer}>
                     <Icon name="calendar-times-o" size={64} color={COLORS.primary} />
                 </View>
@@ -231,12 +247,17 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
                     <Icon name="add-circle-outline" size={20} color="#FFF" />
                     <Text style={styles.bookButtonText}>Đặt dịch vụ ngay</Text>
                 </TouchableOpacity>
-            </View>
+            </LinearGradient>
         );
     }
 
     return (
-        <View style={styles.container}>
+        <LinearGradient 
+            colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+            start={{x: 0, y: 0}} 
+            end={{x: 1, y: 1}}
+            style={styles.container}
+        >
             <View style={styles.filterContainer}>
                 {renderFilterButton('all', 'Tất cả', 'list')}
                 {renderFilterButton('pending', 'Chờ xác nhận', 'clock-o')}
@@ -259,14 +280,13 @@ const CustomerAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
                     </View>
                 }
             />
-        </View>
+        </LinearGradient>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F5F7FA',
     },
     filterContainer: {
         flexDirection: 'row',
@@ -311,7 +331,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 32,
-        backgroundColor: '#F5F7FA',
     },
     emptyIconContainer: {
         width: 120,
