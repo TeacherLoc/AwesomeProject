@@ -45,6 +45,8 @@ interface Appointment {
     notes?: string;
     reviewId?: string;
     hasReview?: boolean;
+    cancelReason?: string;
+    rejectReason?: string;
 }
 
 interface AppointmentDetail extends Appointment {
@@ -176,10 +178,17 @@ const AdminAppointmentDetailScreen: React.FC = () => {
                             const updateData: any = {
                                 status: newStatus,
                             };
-                            if (newStatus === 'confirmed') {updateData.confirmedAt = firestore.FieldValue.serverTimestamp();}
-                            else if (newStatus === 'rejected') {updateData.rejectedAt = firestore.FieldValue.serverTimestamp();}
-                            else if (newStatus === 'cancelled_by_admin') {updateData.cancelledAt = firestore.FieldValue.serverTimestamp();}
-                            else if (newStatus === 'completed') {updateData.completedAt = firestore.FieldValue.serverTimestamp();}
+                            if (newStatus === 'confirmed') {
+                                updateData.confirmedAt = firestore.FieldValue.serverTimestamp();
+                            } else if (newStatus === 'rejected') {
+                                updateData.rejectedAt = firestore.FieldValue.serverTimestamp();
+                                if (reasonText) updateData.rejectReason = reasonText;
+                            } else if (newStatus === 'cancelled_by_admin') {
+                                updateData.cancelledAt = firestore.FieldValue.serverTimestamp();
+                                if (reasonText) updateData.cancelReason = reasonText;
+                            } else if (newStatus === 'completed') {
+                                updateData.completedAt = firestore.FieldValue.serverTimestamp();
+                            }
 
                             await firestore().collection('appointments').doc(appointment.id).update(updateData);
                             

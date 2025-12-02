@@ -24,6 +24,8 @@ interface Appointment {
     customerName?: string;
     customerEmail?: string;
     requestTimestamp?: FirebaseFirestoreTypes.Timestamp;
+    cancelReason?: string;
+    rejectReason?: string;
 }
 
 type AdminAppointmentListScreenNavigationProp = StackNavigationProp<any>;
@@ -131,8 +133,14 @@ const AdminAppointmentListScreen: React.FC<Props> = ({ navigation }) => {
             await db.collection('appointments').doc(appointmentId).update({
                 status: newStatus,
                 ...(newStatus === 'confirmed' && { confirmedAt: firestore.FieldValue.serverTimestamp() }),
-                ...(newStatus === 'rejected' && { rejectedAt: firestore.FieldValue.serverTimestamp() }),
-                ...(newStatus === 'cancelled_by_admin' && { cancelledAt: firestore.FieldValue.serverTimestamp() }),
+                ...(newStatus === 'rejected' && { 
+                    rejectedAt: firestore.FieldValue.serverTimestamp(),
+                    rejectReason: reason.trim() || null 
+                }),
+                ...(newStatus === 'cancelled_by_admin' && { 
+                    cancelledAt: firestore.FieldValue.serverTimestamp(),
+                    cancelReason: reason.trim() || null 
+                }),
                 ...(newStatus === 'completed' && { completedAt: firestore.FieldValue.serverTimestamp() }),
             });
 

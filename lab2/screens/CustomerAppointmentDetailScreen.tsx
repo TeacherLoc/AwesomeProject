@@ -21,6 +21,20 @@ interface Review {
     createdAt: Date;
 }
 
+interface AppointmentData {
+    id: string;
+    serviceName: string;
+    appointmentDateTime: any;
+    status: string;
+    servicePrice?: number;
+    customerId: string;
+    customerName?: string;
+    customerEmail?: string;
+    requestTimestamp?: any;
+    cancelReason?: string;
+    rejectReason?: string;
+}
+
 const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, navigation: any }) => {
     const { appointmentId, appointmentData: initialAppointmentData } = route.params;
 
@@ -454,6 +468,20 @@ const CustomerAppointmentDetailScreen = ({ route, navigation }: { route: any, na
                 <InfoRow icon="bookmark-outline" label="Mã lịch hẹn:" value={appointment.id?.substring(0, 10) + "..."} />
                 {appointment.requestTimestamp && (
                     <InfoRow icon="event-available" label="Ngày đặt:" value={new Date(appointment.requestTimestamp).toLocaleString('vi-VN')} />
+                )}
+                {(appointment.status === 'cancelled_by_admin' && appointment.cancelReason) && (
+                    <InfoRow icon="info-outline" label="Lý do hủy:" valueComponent={
+                        <View style={styles.reasonContainer}>
+                            <Text style={styles.reasonText}>{appointment.cancelReason}</Text>
+                        </View>
+                    } />
+                )}
+                {(appointment.status === 'rejected' && appointment.rejectReason) && (
+                    <InfoRow icon="info-outline" label="Lý do từ chối:" valueComponent={
+                        <View style={styles.reasonContainer}>
+                            <Text style={styles.reasonText}>{appointment.rejectReason}</Text>
+                        </View>
+                    } />
                 )}
             </View>
 
@@ -917,7 +945,21 @@ const styles = StyleSheet.create({
     modalButtonTextSecondary: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: COLORS.textDark,
+        color: COLORS.primary,
+    },
+    reasonContainer: {
+        backgroundColor: '#FFF3E0',
+        padding: 12,
+        borderRadius: 8,
+        borderLeftWidth: 4,
+        borderLeftColor: '#FF9800',
+        marginTop: 4,
+    },
+    reasonText: {
+        fontSize: 15,
+        color: '#E65100',
+        fontStyle: 'italic',
+        lineHeight: 20,
     },
 });
 
