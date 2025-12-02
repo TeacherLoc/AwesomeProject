@@ -2,6 +2,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert, Modal } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { getFirestore, collection, query, where, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp } from '@react-native-firebase/firestore';
 import { getAuth } from '@react-native-firebase/auth';
 import { getApp } from '@react-native-firebase/app';
@@ -655,15 +656,27 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
 
     if (loading) {
         return (
-            <View style={styles.centered}>
-                <Icon name="notifications" size={64} color={COLORS.primary} />
-                <Text style={styles.loadingText}>Đang tải thông báo...</Text>
-            </View>
+            <LinearGradient
+                colors={['#a8edea', '#fed6e3', '#ffecd2']}
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 1}}
+                style={styles.container}
+            >
+                <View style={styles.centered}>
+                    <Icon name="notifications" size={64} color={COLORS.primary} />
+                    <Text style={styles.loadingText}>Đang tải thông báo...</Text>
+                </View>
+            </LinearGradient>
         );
     }
 
     return (
-        <View style={styles.container}>
+        <LinearGradient
+            colors={['#a8edea', '#fed6e3', '#ffecd2']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.container}
+        >
             {/* Filter Tabs */}
             <View style={styles.filterContainer}>
                 <TouchableOpacity
@@ -792,14 +805,13 @@ const NotificationScreen = ({ navigation }: { navigation: any }) => {
                     </View>
                 </View>
             </Modal>
-        </View>
+        </LinearGradient>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F5F7FA',
     },
     centered: {
         flex: 1,
@@ -822,24 +834,36 @@ const styles = StyleSheet.create({
     },
     filterContainer: {
         flexDirection: 'row',
-        backgroundColor: '#FFF',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
         paddingHorizontal: 16,
         paddingTop: 12,
         paddingBottom: 8,
         gap: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#E5E7EB',
+        borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
     filterTab: {
         flex: 1,
         paddingVertical: 8,
         paddingHorizontal: 16,
-        borderRadius: 8,
+        borderRadius: 12,
         alignItems: 'center',
-        backgroundColor: '#F3F4F6',
+        backgroundColor: 'rgba(255, 255, 255, 0.6)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
     },
     activeFilterTab: {
         backgroundColor: COLORS.primary,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 3,
     },
     filterText: {
         fontSize: 14,
@@ -854,15 +878,17 @@ const styles = StyleSheet.create({
     },
     notificationItem: {
         flexDirection: 'row',
-        backgroundColor: '#FFF',
-        borderRadius: 12,
-        padding: 12,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 16,
+        padding: 16,
         marginBottom: 12,
-        elevation: 2,
+        elevation: 5,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.3)',
     },
     unreadItem: {
         backgroundColor: '#FFF',

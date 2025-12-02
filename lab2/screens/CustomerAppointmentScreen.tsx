@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Alert, ActivityIndicator, ScrollView, Touchable
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import DatePicker from 'react-native-date-picker';
+import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -118,22 +119,38 @@ const CustomerAppointmentScreen: React.FC<CustomerAppointmentScreenProps> = ({ r
 
     if (!authChecked) {
         return (
-            <View style={styles.loadingContainer}>
+            <LinearGradient 
+                colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+                start={{x: 0, y: 0}} 
+                end={{x: 1, y: 1}}
+                style={styles.loadingContainer}
+            >
                 <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
+            </LinearGradient>
         );
     }
 
     if (!currentUser) {
         return (
-            <View style={styles.loadingContainer}>
+            <LinearGradient 
+                colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+                start={{x: 0, y: 0}} 
+                end={{x: 1, y: 1}}
+                style={styles.loadingContainer}
+            >
                 <Text style={styles.errorText}>Bạn cần đăng nhập để thực hiện chức năng này.</Text>
-            </View>
+            </LinearGradient>
         );
     }
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <LinearGradient 
+            colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+            start={{x: 0, y: 0}} 
+            end={{x: 1, y: 1}}
+            style={styles.container}
+        >
+            <ScrollView contentContainerStyle={styles.scrollContent}>
             {/* Success Modal */}
             <Modal
                 visible={showSuccessModal}
@@ -155,20 +172,19 @@ const CustomerAppointmentScreen: React.FC<CustomerAppointmentScreenProps> = ({ r
                                 style={[styles.modalButton, styles.modalButtonSecondary]}
                                 onPress={() => {
                                     setShowSuccessModal(false);
-                                    navigation.navigate('ProfileTab', {
-                                        screen: 'CustomerAppointmentDetail',
-                                        params: { appointmentId: newAppointmentId },
-                                    });
+                                    // Navigate về HomeTab, user có thể tự vào ProfileTab để xem lịch hẹn
+                                    navigation.navigate('HomeTab');
                                 }}
                             >
                                 <Icon name="visibility" size={18} color={COLORS.primary} />
-                                <Text style={styles.modalButtonTextSecondary}>Xem chi tiết</Text>
+                                <Text style={styles.modalButtonTextSecondary}>Xem lịch hẹn</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.modalButton, styles.modalButtonPrimary]}
                                 onPress={() => {
                                     setShowSuccessModal(false);
-                                    navigation.navigate('ProfileTab', { screen: 'CustomerAppointmentList' });
+                                    // Navigate về HomeTab thay vì ProfileTab để user có thể điều hướng bình thường
+                                    navigation.navigate('HomeTab');
                                 }}
                             >
                                 <Icon name="check" size={18} color={COLORS.white} />
@@ -264,14 +280,14 @@ const CustomerAppointmentScreen: React.FC<CustomerAppointmentScreenProps> = ({ r
                     <Text style={styles.confirmButtonText}>Xác nhận đặt lịch</Text>
                 </TouchableOpacity>
             )}
-        </ScrollView>
+            </ScrollView>
+        </LinearGradient>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
     },
     scrollContent: {
         padding: 16,
@@ -281,7 +297,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f5f5f5',
     },
     errorText: {
         fontSize: 16,

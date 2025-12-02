@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Alert, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { getFirestore, doc, getDoc } from '@react-native-firebase/firestore';
+import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../theme/colors'; // Import COLORS
 
 const CustomerServiceDetailScreen = ({ route, navigation }: { route: any, navigation: any }) => {
@@ -55,15 +56,39 @@ const CustomerServiceDetailScreen = ({ route, navigation }: { route: any, naviga
     };
 
     if (loading) {
-        return <View style={styles.centered}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
+        return (
+            <LinearGradient 
+                colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+                start={{x: 0, y: 0}} 
+                end={{x: 1, y: 1}}
+                style={styles.centered}
+            >
+                <ActivityIndicator size="large" color={COLORS.primary} />
+            </LinearGradient>
+        );
     }
 
     if (!service) {
-        return <View style={styles.centered}><Text style={{color: COLORS.textMedium}}>Không có dữ liệu dịch vụ.</Text></View>;
+        return (
+            <LinearGradient 
+                colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+                start={{x: 0, y: 0}} 
+                end={{x: 1, y: 1}}
+                style={styles.centered}
+            >
+                <Text style={{color: COLORS.textMedium}}>Không có dữ liệu dịch vụ.</Text>
+            </LinearGradient>
+        );
     }
 
     return (
-        <ScrollView style={styles.container}>
+        <LinearGradient 
+            colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+            start={{x: 0, y: 0}} 
+            end={{x: 1, y: 1}}
+            style={styles.container}
+        >
+            <ScrollView style={styles.scrollContent}>
             <Text style={styles.title}>{service.name}</Text>
             <View style={styles.detailCard}>
                 <View style={styles.detailItem}>
@@ -83,22 +108,23 @@ const CustomerServiceDetailScreen = ({ route, navigation }: { route: any, naviga
             <TouchableOpacity style={styles.bookButton} onPress={handleBookAppointment}>
                 <Text style={styles.bookButtonText}>Đặt lịch hẹn ngay</Text>
             </TouchableOpacity>
-        </ScrollView>
+            </ScrollView>
+        </LinearGradient>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    scrollContent: {
         paddingVertical: 20,
         paddingHorizontal: 15,
-        backgroundColor: COLORS.backgroundLight || '#f4f6f8',
     },
     centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.backgroundLight || '#f4f6f8',
     },
     title: {
         fontSize: 26,

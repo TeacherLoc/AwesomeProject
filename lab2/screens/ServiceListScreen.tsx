@@ -9,6 +9,7 @@ import {
     TouchableOpacity,
     Alert,
     Image} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../theme/colors';
 import { getFirestore, collection, getDocs, query, orderBy } from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -117,11 +118,25 @@ const CustomerServiceListScreen = ({ navigation }: { navigation: any }) => {
     );
 
     if (loading) {
-        return <View style={styles.centered}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
+        return (
+            <LinearGradient 
+                colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+                start={{x: 0, y: 0}} 
+                end={{x: 1, y: 1}}
+                style={styles.centered}
+            >
+                <ActivityIndicator size="large" color={COLORS.primary} />
+            </LinearGradient>
+        );
     }
 
     return (
-        <View style={styles.container}>
+        <LinearGradient 
+            colors={['#a8edea', '#fed6e3', '#ffecd2']} 
+            start={{x: 0, y: 0}} 
+            end={{x: 1, y: 1}}
+            style={styles.container}
+        >
             <View style={styles.searchContainer}>
                 <Icon name="search" size={20} color={COLORS.textMedium} style={styles.searchIcon} />
                 <TextInput
@@ -144,14 +159,13 @@ const CustomerServiceListScreen = ({ navigation }: { navigation: any }) => {
                 }
                 contentContainerStyle={styles.listContentContainer}
             />
-        </View>
+        </LinearGradient>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F5F7FA',
     },
     listContentContainer: {
         paddingHorizontal: 16,
