@@ -17,6 +17,8 @@ interface Appointment {
   customerName?: string;
   customerEmail?: string;
   requestTimestamp?: { seconds: number };
+  cancelReason?: string;
+  rejectReason?: string;
 }
 
 const AppointmentList: React.FC = () => {
@@ -143,11 +145,18 @@ const AppointmentList: React.FC = () => {
       const appointmentRef = doc(db, 'appointments', selectedAppointment.id);
       const updateData: any = { status: newStatus };
       
-      // Add timestamp for status change
-      if (newStatus === 'confirmed') updateData.confirmedAt = Timestamp.now();
-      else if (newStatus === 'rejected') updateData.rejectedAt = Timestamp.now();
-      else if (newStatus === 'cancelled_by_admin') updateData.cancelledAt = Timestamp.now();
-      else if (newStatus === 'completed') updateData.completedAt = Timestamp.now();
+      // Add timestamp for status change and reason if applicable
+      if (newStatus === 'confirmed') {
+        updateData.confirmedAt = Timestamp.now();
+      } else if (newStatus === 'rejected') {
+        updateData.rejectedAt = Timestamp.now();
+        if (reason.trim()) updateData.rejectReason = reason.trim();
+      } else if (newStatus === 'cancelled_by_admin') {
+        updateData.cancelledAt = Timestamp.now();
+        if (reason.trim()) updateData.cancelReason = reason.trim();
+      } else if (newStatus === 'completed') {
+        updateData.completedAt = Timestamp.now();
+      }
       
       await updateDoc(appointmentRef, updateData);
       
