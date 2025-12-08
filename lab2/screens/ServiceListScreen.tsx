@@ -119,9 +119,9 @@ const CustomerServiceListScreen = ({ navigation }: { navigation: any }) => {
 
     if (loading) {
         return (
-            <LinearGradient 
-                colors={['#a8edea', '#fed6e3', '#ffecd2']} 
-                start={{x: 0, y: 0}} 
+            <LinearGradient
+                colors={['#a8edea', '#fed6e3', '#ffecd2']}
+                start={{x: 0, y: 0}}
                 end={{x: 1, y: 1}}
                 style={styles.centered}
             >
@@ -131,9 +131,9 @@ const CustomerServiceListScreen = ({ navigation }: { navigation: any }) => {
     }
 
     return (
-        <LinearGradient 
-            colors={['#a8edea', '#fed6e3', '#ffecd2']} 
-            start={{x: 0, y: 0}} 
+        <LinearGradient
+            colors={['#a8edea', '#fed6e3', '#ffecd2']}
+            start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.container}
         >
