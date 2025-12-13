@@ -173,6 +173,14 @@ const CustomerHomeScreen = ({ navigation }: { navigation: any }) => {
             onPress: () => navigation.navigate('ServicesTab'),
         },
         {
+            id: 2,
+            title: 'AI Phân tích\ntriệu chứng',
+            icon: 'biotech',
+            color: '#8B5CF6',
+            bgColor: '#EDE9FE',
+            onPress: () => navigation.navigate('SymptomAnalysis'),
+        },
+        {
             id: 3,
             title: 'Hỗ trợ trực tuyến',
             icon: 'chat',

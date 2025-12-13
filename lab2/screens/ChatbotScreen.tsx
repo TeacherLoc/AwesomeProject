@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GiftedChat, IMessage, Reply, Bubble, Send, InputToolbar } from 'react-native-gifted-chat';
 import { View, StyleSheet, Image, StatusBar, Text } from 'react-native';
@@ -184,7 +185,7 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
       new Date(Date.now() - 1000),
     );
     const suggestions = createBotMessage(
-      'Bạn có thể hỏi tôi về:\n• Lịch hẹn sắp tới\n• Lịch sử khám\n• Tư vấn sức khỏe & dinh dưỡng\n• Hướng dẫn sử dụng ứng dụng',
+      'Bạn có thể hỏi tôi về:\n• Lịch hẹn sắp tới\n• Lịch sử khám\n• Tư vấn sức khỏe & dinh dưỡng\n• Hướng dẫn sử dụng ứng dụng\n• 🔬 Phân tích triệu chứng bằng AI (chụp ảnh)',
       QUICK_REPLY_ORDER,
     );
 
@@ -696,9 +697,9 @@ const ChatbotScreen = ({ navigation }: { navigation: any }) => {
   );
 
   return (
-    <LinearGradient 
-      colors={['#a8edea', '#fed6e3', '#ffecd2']} 
-      start={{x: 0, y: 0}} 
+    <LinearGradient
+      colors={['#a8edea', '#fed6e3', '#ffecd2']}
+      start={{x: 0, y: 0}}
       end={{x: 1, y: 1}}
       style={styles.container}
     >
@@ -807,9 +808,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     marginBottom: 8,
     paddingVertical: 4,
-  },
-  inputPrimaryStyle: {
-    alignItems: 'center',
   },
   bubbleLeft: {
     backgroundColor: '#FFF',

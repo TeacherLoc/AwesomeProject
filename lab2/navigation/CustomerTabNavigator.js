@@ -24,6 +24,7 @@ import ChatbotScreen from '../screens/ChatbotScreen';
 import NotificationScreen from '../screens/NotificationScreen';
 import ClinicInfoScreen from '../screens/ClinicInfoScreen';
 import HealthStatisticsScreen from '../screens/HealthStatisticsScreen';
+import SymptomAnalysisScreen from '../screens/SymptomAnalysisScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -91,6 +92,11 @@ const HomeStackNavigator = () => (
             name="HealthStatistics"
             component={HealthStatisticsScreen}
             options={{ title: 'Thống kê sức khỏe', headerLeft: undefined }}
+        />
+        <Stack.Screen
+            name="SymptomAnalysis"
+            component={SymptomAnalysisScreen}
+            options={{ title: 'Phân tích triệu chứng', headerLeft: undefined }}
         />
     </Stack.Navigator>
 );

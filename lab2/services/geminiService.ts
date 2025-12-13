@@ -15,11 +15,21 @@ THÔNG TIN ỨNG DỤNG:
 
 TÍNH NĂNG CHÍNH:
 - Hotline khẩn cấp: 0911550316 (có thể gọi trực tiếp từ app)
-- Thông báo tự động: Nhắc uống nước hàng ngày, thông báo lịch hẹn (24h trước)
+- Thông báo tự động: thông báo lịch hẹn (24h trước)
 - Quản lý thông báo: Xem, lọc (Tất cả/Chưa đọc/Đã đọc), xóa đơn lẻ hoặc xóa tất cả với giao diện đẹp
 - Quản lý lịch hẹn: Đặt lịch, xem trạng thái, lọc theo trạng thái (Tất cả/Chờ xác nhận/Hoàn thành/Đã hủy)
 - Hồ sơ cá nhân: Cập nhật thông tin, đổi mật khẩu với thông báo lỗi thân thiện
 - Tin tức sức khỏe: Bài viết về y tế, dinh dưỡng
+
+TÍNH NĂNG AI PHÂN TÍCH TRIỆU CHỨNG:
+- Từ Trang chủ → nhấn nút "AI Phân tích triệu chứng" (icon màu tím)
+- Cho phép người dùng chọn ảnh vết thương, tổn thương da, phát ban, mụn, vết bầm, bỏng, côn trùng cắn, dị ứng, nấm da từ thư viện ảnh
+- AI Gemini Vision sẽ phân tích ảnh và đưa ra nhận định sơ bộ
+- Hiển thị mức độ nghiêm trọng (Nhẹ/Trung bình/Nghiêm trọng) và độ tin cậy
+- Đưa ra khuyến nghị hành động cụ thể
+- Có thể chọn loại triệu chứng và thêm mô tả để AI phân tích chính xác hơn
+- LƯU Ý: Kết quả chỉ mang tính tham khảo, không thay thế chẩn đoán của bác sĩ
+- Nếu người dùng hỏi về tính năng này, hướng dẫn họ vào Trang chủ → AI Phân tích triệu chứng
 
 KHẢ NĂNG TƯ VẤN:
 - Tư vấn sức khỏe tổng quát: dinh dưỡng, vận động, lối sống
